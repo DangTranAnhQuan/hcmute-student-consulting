@@ -1,7 +1,9 @@
 const express = require("express");
 const mongoose = require("mongoose");
 const cookieParser = require("cookie-parser");
-require("dotenv").config();
+
+const path = require("path");
+require("dotenv").config({ path: path.join(__dirname, "..", "..", ".env") });
 
 const authRoutes = require("./routes/authRoutes");
 
@@ -19,7 +21,7 @@ mongoose
 
 app.use("/api/auth", authRoutes);
 
-// Khởi chạy Server
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`🚀 Server đang chạy tại http://localhost:${PORT}`);
