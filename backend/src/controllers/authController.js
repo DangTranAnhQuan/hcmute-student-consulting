@@ -1,5 +1,7 @@
 const User = require("../models/User");
 const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
+const { validationResult } = require("express-validator");
 const nodemailer = require("nodemailer");
 
 const transporter = nodemailer.createTransport({
@@ -13,34 +15,99 @@ const transporter = nodemailer.createTransport({
 const generateOTP = () =>
   Math.floor(100000 + Math.random() * 900000).toString();
 
-// --- QUÊN MẬT KHẨU ---
-exports.forgotPassword = async (req, res) => {
-  const { email } = req.body;
-  const otp = generateOTP();
-  const user = await User.findOneAndUpdate(
-    { email },
-    { otp, otpExpires: Date.now() + 5 * 60 * 1000 },
-  );
-  if (!user) return res.status(404).json({ message: "Không tìm thấy email" });
+exports.login = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    const user = await User.findOne({ email });
 
-  await transporter.sendMail({
-    to: email,
-    subject: "Cấp lại mật khẩu Website Tư vấn SV",
-    text: `Mã OTP để đổi mật khẩu là: ${otp}`,
-  });
-  res.json({ message: "Đã gửi OTP đổi mật khẩu!" });
+    if (!user || !(await bcrypt.compare(password, user.password))) {
+      return res.status(401).json({ message: "Sai tài khoản hoặc mật khẩu" });
+    }
+
+    if (!user.isActivated)
+      return res.status(403).json({ message: "Tài khoản chưa kích hoạt OTP" });
+
+    const accessToken = jwt.sign(
+      { id: user._id, role: user.role },
+      process.env.ACCESS_TOKEN_SECRET,
+      { expiresIn: "15m" }
+    );
+
+    res.cookie("accessToken", accessToken, {
+      httpOnly: true,
+      secure: false, 
+      sameSite: "strict",
+      maxAge: 15 * 60 * 1000,
+    });
+
+    res.json({ message: "Đăng nhập thành công!", role: user.role });
+  } catch (err) {
+    res.status(500).json({ message: "Lỗi server" });
+  }
 };
 
-// --- XÁC NHẬN OTP VÀ ĐỔI MẬT KHẨU MỚI ---
+exports.register = async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty())
+    return res.status(400).json({ errors: errors.array() });
+
+  try {
+    const { username, email, password } = req.body;
+    let user = await User.findOne({ email });
+    if (user) return res.status(400).json({ message: "Email đã được sử dụng" });
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const otp = generateOTP();
+
+    user = new User({
+      username,
+      email,
+      password: hashedPassword,
+      otp,
+      otpExpires: Date.now() + 5 * 60 * 1000,
+    });
+
+    await user.save();
+    await transporter.sendMail({
+      to: email,
+      subject: "Mã xác thực tài khoản Website Tư vấn SV",
+      text: `Mã OTP của bạn là: ${otp}. Hiệu lực trong 5 phút.`,
+    });
+
+    res.status(201).json({ message: "Đã gửi mã OTP qua email, vui lòng kiểm tra!" });
+  } catch (err) {
+    res.status(500).json({ message: "Lỗi server" });
+  }
+};
+
+exports.forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+    const otp = generateOTP();
+    const user = await User.findOneAndUpdate(
+      { email },
+      { otp, otpExpires: Date.now() + 5 * 60 * 1000 }
+    );
+    if (!user) return res.status(404).json({ message: "Không tìm thấy email" });
+
+    await transporter.sendMail({
+      to: email,
+      subject: "Cấp lại mật khẩu Website Tư vấn SV",
+      text: `Mã OTP để đổi mật khẩu là: ${otp}`,
+    });
+    res.json({ message: "Đã gửi OTP đổi mật khẩu!" });
+  } catch (err) {
+    res.status(500).json({ message: "Lỗi server" });
+  }
+};
+
 exports.resetPassword = async (req, res) => {
   try {
     const { email, otp, newPassword } = req.body;
     const user = await User.findOne({ email });
 
     if (!user || user.otp !== otp || user.otpExpires < Date.now()) {
-      return res
-        .status(400)
-        .json({ message: "Mã OTP không đúng hoặc đã hết hạn" });
+      return res.status(400).json({ message: "Mã OTP không đúng hoặc đã hết hạn" });
     }
 
     user.password = await bcrypt.hash(newPassword, 10);
