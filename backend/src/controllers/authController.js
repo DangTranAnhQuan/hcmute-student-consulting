@@ -30,26 +30,36 @@ exports.login = async (req, res) => {
     const accessToken = jwt.sign(
       { id: user._id, role: user.role },
       process.env.ACCESS_TOKEN_SECRET,
-      { expiresIn: "15m" }
+      { expiresIn: "15m" },
     );
 
     res.cookie("accessToken", accessToken, {
       httpOnly: true,
-      secure: false, 
+      secure: false,
       sameSite: "strict",
       maxAge: 15 * 60 * 1000,
     });
 
     res.json({ message: "Đăng nhập thành công!", role: user.role });
   } catch (err) {
-    res.status(500).json({ message: "Lỗi server" });
+    console.error("[auth:login] server error", {
+      message: err.message,
+      stack: err.stack,
+    });
+    res.status(500).json({
+      message: "Lỗi server",
+      details: err.message,
+    });
   }
 };
 
 exports.register = async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty())
-    return res.status(400).json({ errors: errors.array() });
+    return res.status(400).json({
+      message: "Dữ liệu không hợp lệ",
+      errors: errors.array(),
+    });
 
   try {
     const { username, email, password } = req.body;
@@ -74,9 +84,20 @@ exports.register = async (req, res) => {
       text: `Mã OTP của bạn là: ${otp}. Hiệu lực trong 5 phút.`,
     });
 
-    res.status(201).json({ message: "Đã gửi mã OTP qua email, vui lòng kiểm tra!" });
+    res
+      .status(201)
+      .json({ message: "Đã gửi mã OTP qua email, vui lòng kiểm tra!" });
   } catch (err) {
-    res.status(500).json({ message: "Lỗi server" });
+    console.error("[auth:register] server error", {
+      message: err.message,
+      stack: err.stack,
+      email: req.body?.email,
+      username: req.body?.username,
+    });
+    res.status(500).json({
+      message: "Lỗi server",
+      details: err.message,
+    });
   }
 };
 
@@ -86,7 +107,7 @@ exports.forgotPassword = async (req, res) => {
     const otp = generateOTP();
     const user = await User.findOneAndUpdate(
       { email },
-      { otp, otpExpires: Date.now() + 5 * 60 * 1000 }
+      { otp, otpExpires: Date.now() + 5 * 60 * 1000 },
     );
     if (!user) return res.status(404).json({ message: "Không tìm thấy email" });
 
@@ -97,7 +118,15 @@ exports.forgotPassword = async (req, res) => {
     });
     res.json({ message: "Đã gửi OTP đổi mật khẩu!" });
   } catch (err) {
-    res.status(500).json({ message: "Lỗi server" });
+    console.error("[auth:forgotPassword] server error", {
+      message: err.message,
+      stack: err.stack,
+      email: req.body?.email,
+    });
+    res.status(500).json({
+      message: "Lỗi server",
+      details: err.message,
+    });
   }
 };
 
@@ -107,7 +136,9 @@ exports.resetPassword = async (req, res) => {
     const user = await User.findOne({ email });
 
     if (!user || user.otp !== otp || user.otpExpires < Date.now()) {
-      return res.status(400).json({ message: "Mã OTP không đúng hoặc đã hết hạn" });
+      return res
+        .status(400)
+        .json({ message: "Mã OTP không đúng hoặc đã hết hạn" });
     }
 
     user.password = await bcrypt.hash(newPassword, 10);
@@ -117,6 +148,132 @@ exports.resetPassword = async (req, res) => {
 
     res.json({ message: "Đổi mật khẩu thành công!" });
   } catch (err) {
-    res.status(500).json({ message: "Lỗi server" });
+    console.error("[auth:resetPassword] server error", {
+      message: err.message,
+      stack: err.stack,
+      email: req.body?.email,
+    });
+    res.status(500).json({
+      message: "Lỗi server",
+      details: err.message,
+    });
+  }
+};
+
+exports.verifyOTP = async (req, res) => {
+  try {
+    const { email, otp } = req.body;
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      return res.status(404).json({ message: "Không tìm thấy người dùng" });
+    }
+
+    if (user.otp !== otp || user.otpExpires < Date.now()) {
+      return res
+        .status(400)
+        .json({ message: "Mã OTP không đúng hoặc đã hết hạn" });
+    }
+
+    user.isActivated = true;
+    user.otp = undefined;
+    user.otpExpires = undefined;
+    await user.save();
+
+    const accessToken = jwt.sign(
+      { id: user._id, role: user.role },
+      process.env.ACCESS_TOKEN_SECRET,
+      { expiresIn: "15m" },
+    );
+
+    res.cookie("accessToken", accessToken, {
+      httpOnly: true,
+      secure: false,
+      sameSite: "strict",
+      maxAge: 15 * 60 * 1000,
+    });
+
+    res.json({
+      message: "Xác thực OTP thành công!",
+      role: user.role,
+      accessToken,
+    });
+  } catch (err) {
+    console.error("[auth:verifyOTP] server error", {
+      message: err.message,
+      stack: err.stack,
+      email: req.body?.email,
+    });
+    res.status(500).json({
+      message: "Lỗi server",
+      details: err.message,
+    });
+  }
+};
+
+exports.getProfile = async (req, res) => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ message: "Không được xác thực" });
+    }
+
+    const user = await User.findById(userId).select(
+      "-password -otp -otpExpires",
+    );
+    if (!user) {
+      return res.status(404).json({ message: "Không tìm thấy người dùng" });
+    }
+
+    res.json(user);
+  } catch (err) {
+    console.error("[auth:getProfile] server error", {
+      message: err.message,
+      stack: err.stack,
+      userId: req.user?.id,
+    });
+    res.status(500).json({
+      message: "Lỗi server",
+      details: err.message,
+    });
+  }
+};
+
+exports.updateProfile = async (req, res) => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ message: "Không được xác thực" });
+    }
+
+    const { username, fullName, phone, address } = req.body;
+
+    const user = await User.findByIdAndUpdate(
+      userId,
+      {
+        username,
+        fullName,
+        phone,
+        address,
+        updatedAt: Date.now(),
+      },
+      { new: true },
+    ).select("-password -otp -otpExpires");
+
+    if (!user) {
+      return res.status(404).json({ message: "Không tìm thấy người dùng" });
+    }
+
+    res.json(user);
+  } catch (err) {
+    console.error("[auth:updateProfile] server error", {
+      message: err.message,
+      stack: err.stack,
+      userId: req.user?.id,
+    });
+    res.status(500).json({
+      message: "Lỗi server",
+      details: err.message,
+    });
   }
 };
