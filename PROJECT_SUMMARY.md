@@ -359,5 +359,5 @@ All core features implemented and ready for team development:
 
 **Project**: Tư vấn Sinh viên HCMUTE  
 **Version**: 1.0.0  
-**Last Updated**: 2024  
+**Last Updated**: 2026
 **Team**: Group 6 - HCMUTE
