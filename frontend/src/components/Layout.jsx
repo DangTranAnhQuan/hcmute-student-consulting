@@ -57,7 +57,7 @@ export const Footer = () => {
         </div>
         <hr className="border-gray-700 my-8" />
         <div className="text-center text-gray-400">
-          <p>&copy; 2024 HCMUTE. Tất cả quyền được bảo lưu.</p>
+          <p>&copy; 2026 HCMUTE. Tất cả quyền được bảo lưu.</p>
         </div>
       </div>
     </footer>
