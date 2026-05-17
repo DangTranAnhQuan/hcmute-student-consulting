@@ -13,6 +13,14 @@ import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import ProfilePage from "./pages/ProfilePage";
+import DashboardPage from "./pages/DashboardPage";
+import NewsPage from "./pages/NewsPage";
+import ArticlesPage from "./pages/ArticlesPage";
+import DetailPage from "./pages/DetailPage";
+import SearchPage from "./pages/SearchPage";
+import FAQPage from "./pages/FAQPage";
+import AdminPage from "./pages/AdminPage";
+import ForumPage from "./pages/ForumPage";
 
 // Components
 import { Navbar, Footer } from "./components/Layout";
@@ -68,6 +76,22 @@ function App() {
 
             {/* Protected Routes */}
             <Route
+              path="/dashboard"
+              element={
+                <ProtectedRoute>
+                  <DashboardPage />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Public Routes for News & Articles */}
+            <Route path="/news" element={<NewsPage />} />
+            <Route path="/articles" element={<ArticlesPage />} />
+            <Route path="/search" element={<SearchPage />} />
+            <Route path="/faq" element={<FAQPage />} />
+            <Route path="/detail/:type/:id" element={<DetailPage />} />
+
+            <Route
               path="/user/profile"
               element={
                 <ProtectedRoute requiredRole="user">
@@ -81,6 +105,24 @@ function App() {
               element={
                 <ProtectedRoute requiredRole="admin">
                   <ProfilePage />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/admin/cms"
+              element={
+                <ProtectedRoute requiredRole="admin">
+                  <AdminPage />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/forum"
+              element={
+                <ProtectedRoute>
+                  <ForumPage />
                 </ProtectedRoute>
               }
             />

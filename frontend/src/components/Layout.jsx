@@ -81,6 +81,32 @@ export const Navbar = ({ user, onLogout }) => {
               <>
                 <span className="text-gray-700">Xin chào, {user.username}</span>
                 <a
+                  href="/news"
+                  className="text-primary hover:text-primary-dark"
+                >
+                  Tin Tức
+                </a>
+                <a
+                  href="/articles"
+                  className="text-primary hover:text-primary-dark"
+                >
+                  Bài Viết
+                </a>
+                <a
+                  href="/dashboard"
+                  className="text-primary hover:text-primary-dark"
+                >
+                  Dashboard
+                </a>
+                {user.role === "admin" && (
+                  <a
+                    href="/admin/cms"
+                    className="text-primary hover:text-primary-dark"
+                  >
+                    Admin CMS
+                  </a>
+                )}
+                <a
                   href="/profile"
                   className="text-primary hover:text-primary-dark"
                 >
@@ -95,6 +121,18 @@ export const Navbar = ({ user, onLogout }) => {
               </>
             ) : (
               <>
+                <a
+                  href="/news"
+                  className="text-primary hover:text-primary-dark"
+                >
+                  Tin Tức
+                </a>
+                <a
+                  href="/articles"
+                  className="text-primary hover:text-primary-dark"
+                >
+                  Bài Viết
+                </a>
                 <a
                   href="/login"
                   className="text-primary hover:text-primary-dark"
@@ -124,6 +162,32 @@ export const Navbar = ({ user, onLogout }) => {
             {user ? (
               <>
                 <a
+                  href="/news"
+                  className="block text-primary hover:text-primary-dark py-2"
+                >
+                  Tin Tức
+                </a>
+                <a
+                  href="/articles"
+                  className="block text-primary hover:text-primary-dark py-2"
+                >
+                  Bài Viết
+                </a>
+                <a
+                  href="/dashboard"
+                  className="block text-primary hover:text-primary-dark py-2"
+                >
+                  Dashboard
+                </a>
+                {user.role === "admin" && (
+                  <a
+                    href="/admin/cms"
+                    className="block text-primary hover:text-primary-dark py-2"
+                  >
+                    Admin CMS
+                  </a>
+                )}
+                <a
                   href="/profile"
                   className="block text-primary hover:text-primary-dark py-2"
                 >
@@ -138,6 +202,18 @@ export const Navbar = ({ user, onLogout }) => {
               </>
             ) : (
               <>
+                <a
+                  href="/news"
+                  className="block text-primary hover:text-primary-dark py-2"
+                >
+                  Tin Tức
+                </a>
+                <a
+                  href="/articles"
+                  className="block text-primary hover:text-primary-dark py-2"
+                >
+                  Bài Viết
+                </a>
                 <a
                   href="/login"
                   className="block text-primary hover:text-primary-dark py-2"
