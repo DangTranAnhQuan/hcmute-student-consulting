@@ -10,7 +10,6 @@ export default function BookCounselorPage() {
   const { counselorId } = useParams();
   const dispatch = useDispatch();
   const [selectedDate, setSelectedDate] = useState(new Date());
-  const [availableSlots, setAvailableSlots] = useState([]);
 
   const { counselors, loading, error } = useSelector((state) => state.schedule);
   const counselor = counselors.find((c) => c._id === counselorId);
@@ -52,7 +51,6 @@ export default function BookCounselorPage() {
               <AvailabilityDisplay
                 counselorId={counselorId}
                 onDateChange={handleDateChange}
-                availableSlots={availableSlots}
               />
             </div>
 

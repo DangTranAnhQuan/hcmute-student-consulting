@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { createBooking } from "../../redux/scheduleSlice";
 import { useAuth } from "../../redux/hooks";

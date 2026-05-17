@@ -8,6 +8,8 @@ export default function SchedulesPage() {
   const { user } = useAuth();
   const [filter, setFilter] = useState("all");
   const [sortBy, setSortBy] = useState("date");
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [cancelingBookingId, setCancelingBookingId] = useState(null);
 
   const { bookings, loading, error } = useSelector((state) => state.schedule);
 
@@ -17,10 +19,27 @@ export default function SchedulesPage() {
     }
   }, [user, dispatch]);
 
-  const handleCancel = async (bookingId, reason) => {
-    if (confirm("Are you sure you want to cancel this booking?")) {
-      dispatch(cancelBooking({ bookingId, reason }));
+  const handleCancelClick = (bookingId) => {
+    setCancelingBookingId(bookingId);
+    setShowConfirmModal(true);
+  };
+
+  const handleConfirmCancel = () => {
+    if (cancelingBookingId) {
+      dispatch(
+        cancelBooking({
+          bookingId: cancelingBookingId,
+          reason: "User requested cancellation",
+        }),
+      );
+      setShowConfirmModal(false);
+      setCancelingBookingId(null);
     }
+  };
+
+  const handleCloseModal = () => {
+    setShowConfirmModal(false);
+    setCancelingBookingId(null);
   };
 
   const filteredBookings = bookings.filter((booking) => {
@@ -167,12 +186,7 @@ export default function SchedulesPage() {
                     {booking.status !== "cancelled" &&
                       new Date(booking.startTime) > new Date() && (
                         <button
-                          onClick={() =>
-                            handleCancel(
-                              booking._id,
-                              "User requested cancellation",
-                            )
-                          }
+                          onClick={() => handleCancelClick(booking._id)}
                           className="text-red-600 hover:text-red-800 text-sm font-medium"
                         >
                           Cancel
@@ -182,6 +196,35 @@ export default function SchedulesPage() {
                 </div>
               </div>
             ))}
+          </div>
+        )}
+
+        {/* Confirmation Modal */}
+        {showConfirmModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg shadow-lg p-6 max-w-sm mx-auto">
+              <h2 className="text-lg font-bold text-gray-900 mb-4">
+                Cancel Booking
+              </h2>
+              <p className="text-gray-600 mb-6">
+                Are you sure you want to cancel this booking? This action cannot
+                be undone.
+              </p>
+              <div className="flex gap-4">
+                <button
+                  onClick={handleCloseModal}
+                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 font-medium transition"
+                >
+                  Keep Booking
+                </button>
+                <button
+                  onClick={handleConfirmCancel}
+                  className="flex-1 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition"
+                >
+                  Yes, Cancel
+                </button>
+              </div>
+            </div>
           </div>
         )}
       </div>

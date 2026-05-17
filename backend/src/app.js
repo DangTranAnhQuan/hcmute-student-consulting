@@ -8,6 +8,8 @@ require("dotenv").config({
 });
 
 const authRoutes = require("./routes/authRoutes");
+const counselorRoutes = require("./routes/counselorRoutes");
+const scheduleRoutes = require("./routes/scheduleRoutes");
 
 const app = express();
 
@@ -43,6 +45,8 @@ mongoose
 
 // Routes
 app.use("/api/auth", authRoutes);
+app.use("/api/counselors", counselorRoutes);
+app.use("/api/schedules", scheduleRoutes);
 
 // Health check
 app.get("/api/health", (req, res) => {
