@@ -64,10 +64,10 @@ exports.updateCounselor = async (req, res) => {
   }
 };
 
-// Get available slots for a counselor
 exports.getAvailableSlots = async (req, res) => {
   try {
-    const { counselorId, date } = req.query;
+    const counselorId = req.params.id; // ✅ Lấy counselorId từ URL path
+    const { date } = req.query;        // ✅ Lấy date từ query string
 
     if (!counselorId || !date) {
       return res
@@ -85,7 +85,7 @@ exports.getAvailableSlots = async (req, res) => {
     });
 
     if (!availability) {
-      return res.json({ slots: [] });
+      return res.json({ slots: [] }); 
     }
 
     // Check for blackout dates
