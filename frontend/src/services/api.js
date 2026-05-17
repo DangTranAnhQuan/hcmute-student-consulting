@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_URL = process.env.REACT_APP_API_URL;
+const API_URL = process.env.REACT_APP_API_URL || "http://localhost:3000/api";
 
 const api = axios.create({
   baseURL: API_URL,
@@ -47,6 +47,35 @@ export const authAPI = {
   resetPassword: (data) => api.post("/auth/reset-password", data),
   getProfile: () => api.get("/auth/profile"),
   updateProfile: (data) => api.put("/auth/profile", data),
+};
+
+export const adminAPI = {
+  list: (resource, q = "") => api.get(`/admin/${resource}`, { params: { q } }),
+  create: (resource, data) => api.post(`/admin/${resource}`, data),
+  update: (resource, id, data) => api.put(`/admin/${resource}/${id}`, data),
+  remove: (resource, id) => api.delete(`/admin/${resource}/${id}`),
+};
+
+export const faqAPI = {
+  list: (params = {}) => api.get("/faqs", { params }),
+};
+
+export const searchAPI = {
+  search: (params = {}) => api.get("/search", { params }),
+};
+
+export const forumAPI = {
+  listThreads: (q = "") => api.get("/forum/threads", { params: { q } }),
+  getThread: (id) => api.get(`/forum/threads/${id}`),
+  createThread: (data) => api.post("/forum/threads", data),
+  createReply: (threadId, data) =>
+    api.post(`/forum/threads/${threadId}/replies`, data),
+  upvoteThread: (threadId) => api.patch(`/forum/threads/${threadId}/upvote`),
+  toggleSolved: (threadId) => api.patch(`/forum/threads/${threadId}/solved`),
+  togglePin: (threadId) => api.patch(`/forum/threads/${threadId}/pin`),
+  deleteThread: (threadId) => api.delete(`/forum/threads/${threadId}`),
+  deleteReply: (threadId, replyId) =>
+    api.delete(`/forum/threads/${threadId}/replies/${replyId}`),
 };
 
 export default api;

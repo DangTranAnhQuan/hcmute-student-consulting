@@ -25,26 +25,26 @@ export const Footer = () => {
           <div>
             <h3 className="text-lg font-semibold mb-4">Về chúng tôi</h3>
             <p className="text-gray-400">
-              Website tư vấn sinh viên HCMUTE - Giúp sinh viên được tư vấn hướng
-              nghiệp chuyên nghiệp.
+              Website tư vấn sinh viên HCMUTE hỗ trợ quản lý nội dung, FAQ,
+              tìm kiếm và thảo luận cộng đồng.
             </p>
           </div>
           <div>
             <h3 className="text-lg font-semibold mb-4">Liên kết</h3>
             <ul className="text-gray-400 space-y-2">
               <li>
-                <a href="/" className="hover:text-white">
-                  Trang chủ
+                <a href="/search" className="hover:text-white">
+                  Tìm kiếm
                 </a>
               </li>
               <li>
-                <a href="/login" className="hover:text-white">
-                  Đăng nhập
+                <a href="/faq" className="hover:text-white">
+                  FAQ
                 </a>
               </li>
               <li>
-                <a href="/register" className="hover:text-white">
-                  Đăng ký
+                <a href="/forum" className="hover:text-white">
+                  Forum
                 </a>
               </li>
             </ul>
@@ -66,6 +66,27 @@ export const Footer = () => {
 
 export const Navbar = ({ user, onLogout }) => {
   const [menuOpen, setMenuOpen] = React.useState(false);
+  const links = [
+    { href: "/search", label: "Tìm kiếm" },
+    { href: "/faq", label: "FAQ" },
+    ...(user ? [{ href: "/forum", label: "Forum" }] : []),
+  ];
+
+  const navLinks = links.map((link) => (
+    <a key={link.href} href={link.href} className="text-primary hover:text-primary-dark">
+      {link.label}
+    </a>
+  ));
+
+  const mobileLinks = links.map((link) => (
+    <a
+      key={link.href}
+      href={link.href}
+      className="block text-primary hover:text-primary-dark py-2"
+    >
+      {link.label}
+    </a>
+  ));
 
   return (
     <nav className="bg-white shadow-md">
@@ -76,14 +97,17 @@ export const Navbar = ({ user, onLogout }) => {
               HCMUTE
             </a>
           </div>
+
           <div className="hidden md:flex items-center space-x-4">
+            {navLinks}
             {user ? (
               <>
-                <span className="text-gray-700">Xin chào, {user.username}</span>
-                <a
-                  href="/profile"
-                  className="text-primary hover:text-primary-dark"
-                >
+                {user.role === "admin" && (
+                  <a href="/admin/cms" className="text-primary hover:text-primary-dark">
+                    Admin CMS
+                  </a>
+                )}
+                <a href="/profile" className="text-primary hover:text-primary-dark">
                   Hồ sơ
                 </a>
                 <button
@@ -95,10 +119,7 @@ export const Navbar = ({ user, onLogout }) => {
               </>
             ) : (
               <>
-                <a
-                  href="/login"
-                  className="text-primary hover:text-primary-dark"
-                >
+                <a href="/login" className="text-primary hover:text-primary-dark">
                   Đăng nhập
                 </a>
                 <a
@@ -110,19 +131,32 @@ export const Navbar = ({ user, onLogout }) => {
               </>
             )}
           </div>
+
           <div className="md:hidden">
             <button
+              type="button"
               onClick={() => setMenuOpen(!menuOpen)}
               className="text-gray-700 hover:text-primary"
+              aria-label="Mở menu"
             >
               ☰
             </button>
           </div>
         </div>
+
         {menuOpen && (
           <div className="md:hidden pb-4 space-y-2">
+            {mobileLinks}
             {user ? (
               <>
+                {user.role === "admin" && (
+                  <a
+                    href="/admin/cms"
+                    className="block text-primary hover:text-primary-dark py-2"
+                  >
+                    Admin CMS
+                  </a>
+                )}
                 <a
                   href="/profile"
                   className="block text-primary hover:text-primary-dark py-2"
@@ -130,6 +164,7 @@ export const Navbar = ({ user, onLogout }) => {
                   Hồ sơ
                 </a>
                 <button
+                  type="button"
                   onClick={onLogout}
                   className="w-full text-left text-danger hover:text-red-600 py-2"
                 >
@@ -138,10 +173,7 @@ export const Navbar = ({ user, onLogout }) => {
               </>
             ) : (
               <>
-                <a
-                  href="/login"
-                  className="block text-primary hover:text-primary-dark py-2"
-                >
+                <a href="/login" className="block text-primary hover:text-primary-dark py-2">
                   Đăng nhập
                 </a>
                 <a
