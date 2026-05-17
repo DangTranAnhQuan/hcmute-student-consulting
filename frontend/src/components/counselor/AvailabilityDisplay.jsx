@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import api from "../../services/api";
 
 export default function AvailabilityDisplay({
@@ -10,16 +10,12 @@ export default function AvailabilityDisplay({
   const [slots, setSlots] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    fetchAvailableSlots();
-  }, [selectedDate, counselorId]);
-
-  const fetchAvailableSlots = async () => {
+  const fetchAvailableSlots = useCallback(async () => {
     try {
       setLoading(true);
       const formattedDate = selectedDate.toISOString().split("T")[0];
       const response = await api.get(
-        `/api/counselors/${counselorId}/available-slots`,
+        `/counselors/${counselorId}/available-slots`,
         {
           params: { date: formattedDate },
         },
@@ -31,7 +27,11 @@ export default function AvailabilityDisplay({
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedDate, counselorId]);
+
+  useEffect(() => {
+    fetchAvailableSlots();
+  }, [fetchAvailableSlots]);
 
   const handleDateChange = (e) => {
     const newDate = new Date(e.target.value);
