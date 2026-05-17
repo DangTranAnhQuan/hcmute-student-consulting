@@ -1,21 +1,21 @@
 const express = require("express");
 const router = express.Router();
 const scheduleController = require("../controllers/scheduleController");
-const auth = require("../middleware/auth");
+const { verifyToken } = require("../middleware/auth");
 
 // Protected routes
-router.post("/", auth, scheduleController.createBooking);
-router.get("/user/:userId", auth, scheduleController.getUserBookings);
+router.post("/", verifyToken, scheduleController.createBooking);
+router.get("/user/:userId", verifyToken, scheduleController.getUserBookings);
 router.get(
   "/counselor/:counselorId",
-  auth,
+  verifyToken,
   scheduleController.getCounselorBookings,
 );
-router.get("/booking/:id", auth, scheduleController.getBookingById);
-router.put("/:id/status", auth, scheduleController.updateBookingStatus);
-router.put("/:id/cancel", auth, scheduleController.cancelBooking);
+router.get("/booking/:id", verifyToken, scheduleController.getBookingById);
+router.put("/:id/status", verifyToken, scheduleController.updateBookingStatus);
+router.put("/:id/cancel", verifyToken, scheduleController.cancelBooking);
 
 // Admin routes
-router.get("/", auth, scheduleController.getAllBookings);
+router.get("/", verifyToken, scheduleController.getAllBookings);
 
 module.exports = router;
