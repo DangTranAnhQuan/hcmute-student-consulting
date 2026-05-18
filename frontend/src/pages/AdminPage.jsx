@@ -21,7 +21,7 @@ const AdminPage = () => {
           Admin CMS
         </h1>
         <p className="text-gray-600">
-          Quản lý bài viết và FAQ bằng API thật, chỉ dành cho tài khoản admin.
+          Quản lý Bài viết, Chủ đề, FAQ, Lịch hẹn tư vấn và Thông báo bằng API, chỉ dành cho tài khoản admin.
         </p>
       </div>
 
@@ -40,4 +40,3 @@ const AdminPage = () => {
 };
 
 export default AdminPage;
-

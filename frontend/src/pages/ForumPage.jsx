@@ -1,5 +1,5 @@
 import React from "react";
-import { useSelector, useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import QuestionCard from "../components/forum/QuestionCard";
 import ForumThread from "../components/forum/ForumThread";
 import CreateThreadModal from "../components/forum/CreateThreadModal";
@@ -29,14 +29,15 @@ const ForumPage = () => {
 
   return (
     <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 grid grid-cols-1 lg:grid-cols-3 gap-6">
+      {/* CỘT TRÁI (Bố cục 1 phần): Tìm kiếm & Danh sách câu hỏi */}
       <div className="lg:col-span-1 space-y-4">
         <div className="space-y-3">
           <div className="flex items-center justify-between gap-3">
-            <h1 className="text-2xl font-bold">Forum</h1>
+            <h1 className="text-2xl font-bold text-gray-900">Diễn đàn</h1>
             <button
               type="button"
               onClick={() => setIsCreateOpen(true)}
-              className="px-3 py-2 bg-primary text-white rounded"
+              className="px-3 py-2 bg-primary text-white rounded-lg text-sm font-medium hover:bg-primary-dark transition"
             >
               Đặt câu hỏi
             </button>
@@ -45,7 +46,7 @@ const ForumPage = () => {
             value={searchQuery}
             onChange={(event) => dispatch(setSearchQuery(event.target.value))}
             placeholder="Tìm chủ đề..."
-            className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
+            className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary text-sm"
           />
         </div>
 
@@ -55,10 +56,11 @@ const ForumPage = () => {
               {error}
             </div>
           )}
+          
           {isLoading ? (
-            <div className="text-sm text-gray-500">Đang tải chủ đề...</div>
+            <div className="text-sm text-gray-500 text-center py-4">Đang tải chủ đề...</div>
           ) : filtered.length === 0 ? (
-            <div className="text-sm text-gray-500">Chưa có chủ đề phù hợp.</div>
+            <div className="text-sm text-gray-500 text-center py-4">Chưa có chủ đề phù hợp.</div>
           ) : (
             filtered.map((thread) => (
               <QuestionCard
@@ -69,12 +71,15 @@ const ForumPage = () => {
             ))
           )}
         </div>
-        <CreateThreadModal open={isCreateOpen} onClose={() => setIsCreateOpen(false)} />
       </div>
 
+      {/* CỘT PHẢI (Bố cục 2 phần): Nội dung chi tiết bài viết đang được chọn */}
       <div className="lg:col-span-2">
         <ForumThread threadId={activeThreadId || threads[0]?.id} />
       </div>
+
+      {/* Modal đặt câu hỏi ẩn/hiện dựa theo state */}
+      <CreateThreadModal open={isCreateOpen} onClose={() => setIsCreateOpen(false)} />
     </div>
   );
 };

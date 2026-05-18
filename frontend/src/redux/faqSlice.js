@@ -46,6 +46,7 @@ const faqSlice = createSlice({
     clearFilters: (state) => {
       state.selectedCategory = "All";
       state.query = "";
+      state.expandedIds = [];
     },
   },
   extraReducers: (builder) => {

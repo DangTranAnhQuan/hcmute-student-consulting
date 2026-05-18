@@ -62,8 +62,8 @@ const FAQAccordion = () => {
               </button>
 
               {isOpen && (
-                <div className="px-4 py-3 text-gray-700 leading-7 bg-white">
-                  <div className="prose max-w-none text-gray-700">{item.answer}</div>
+                <div className="px-4 py-3 bg-white">
+                  <div className="prose max-w-none text-gray-700 leading-7">{item.answer}</div>
                 </div>
               )}
             </div>

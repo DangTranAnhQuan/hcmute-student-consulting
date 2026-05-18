@@ -4,7 +4,10 @@ import { closeModal, createAdminItem, updateAdminItem } from "../../redux/adminS
 
 const fieldsByModule = {
   articles: ["title", "topic", "status", "author", "excerpt", "body"],
+  topics: ["name", "status"],
   faqs: ["question", "answer", "category", "status"],
+  schedules: ["title", "counselor", "format", "status"],
+  notifications: ["title", "type", "status"],
 };
 
 const fieldLabels = {
@@ -17,11 +20,18 @@ const fieldLabels = {
   question: "Câu hỏi",
   answer: "Câu trả lời",
   category: "Danh mục",
+  name: "Tên",
+  counselor: "Người tư vấn",
+  format: "Hình thức",
+  type: "Loại",
 };
 
 const moduleLabels = {
   articles: "bài viết",
   faqs: "FAQ",
+  topics: "chủ đề",
+  schedules: "lịch hẹn",
+  notifications: "thông báo",
 };
 
 const makeInitial = (moduleKey, editingItem) => {
@@ -36,8 +46,9 @@ const makeInitial = (moduleKey, editingItem) => {
 const AdminFormModal = () => {
   const dispatch = useDispatch();
   const { isModalOpen, modalMode, activeModule, editingItem } = useSelector(
-    (state) => state.admin,
+    (state) => state.admin
   );
+
   const [formData, setFormData] = React.useState(makeInitial(activeModule, editingItem));
 
   React.useEffect(() => {
@@ -75,7 +86,7 @@ const AdminFormModal = () => {
       >
         <div className="flex items-center justify-between">
           <h3 className="text-xl font-bold text-gray-900">
-            {modalMode === "edit" ? "Sửa" : "Tạo"} {moduleLabels[activeModule]}
+            {modalMode === "edit" ? "Sửa" : "Tạo"} {moduleLabels[activeModule] || activeModule}
           </h3>
           <button
             type="button"

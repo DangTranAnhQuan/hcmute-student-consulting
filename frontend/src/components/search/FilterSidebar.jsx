@@ -51,36 +51,42 @@ const FilterSidebar = () => {
         options={options.topics}
         onChange={handleChange("topic")}
       />
+
       <SelectField
         label="Nguồn"
         value={filters.faculty}
         options={options.faculties}
         onChange={handleChange("faculty")}
       />
+
       <SelectField
         label="Loại nội dung"
         value={filters.contentType}
         options={options.contentTypes}
         onChange={handleChange("contentType")}
       />
+
       <SelectField
         label="Thời gian đăng"
         value={filters.publishTime}
         options={options.publishTimes}
         onChange={handleChange("publishTime")}
       />
+
       <SelectField
         label="Mức độ phổ biến"
         value={filters.popularity}
         options={options.popularities}
         onChange={handleChange("popularity")}
       />
+
       <SelectField
         label="Hình thức tư vấn"
         value={filters.counselingFormat}
         options={options.counselingFormats}
         onChange={handleChange("counselingFormat")}
       />
+
       <SelectField
         label="Trạng thái"
         value={filters.appointmentStatus}

@@ -21,6 +21,7 @@ const ReplyForm = ({ threadId }) => {
         rows={3}
         placeholder="Nhập nội dung trả lời"
         className="w-full border border-gray-300 rounded p-2.5 focus:outline-none focus:ring-2 focus:ring-primary"
+        required
       />
       <div className="flex justify-end">
         <button type="submit" className="px-4 py-2 bg-primary text-white rounded-lg">

@@ -31,7 +31,11 @@ const SearchResults = () => {
   return (
     <div className="space-y-3">
       {filteredItems.map((item) => (
-        <div key={item.id} className="bg-white rounded-xl shadow-md p-4">
+        <a
+          key={item.id}
+          href={`/detail/${item.type}/${item.refId}`}
+          className="block bg-white rounded-xl shadow-md p-4 hover:shadow-lg transition"
+        >
           <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
             <h3 className="font-semibold text-gray-900">{item.title}</h3>
             <span className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded-full">
@@ -42,13 +46,14 @@ const SearchResults = () => {
           <p className="text-sm text-gray-600 mb-3">{item.excerpt}</p>
 
           <div className="flex flex-wrap gap-3 text-xs text-gray-500">
-            <span>Chủ đề: {item.topic}</span>
-            <span>Nguồn: {item.faculty}</span>
-            <span>Mức độ: {item.popularity}</span>
-            <span>Lượt xem: {item.views}</span>
-            <span>Trạng thái: {item.appointmentStatus}</span>
+            <span>🏷️ Chủ đề: {item.topic}</span>
+            <span>🏫 Nguồn: {item.faculty}</span>
+            <span>📈 Mức độ: {item.popularity}</span>
+            <span>👁️ Lượt xem: {item.views}</span>
+            {item.counselingFormat && <span>📍 Hình thức: {item.counselingFormat}</span>}
+            {item.appointmentStatus && <span>📌 Trạng thái: {item.appointmentStatus}</span>}
           </div>
-        </div>
+        </a>
       ))}
     </div>
   );
