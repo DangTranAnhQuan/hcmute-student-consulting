@@ -111,7 +111,7 @@ const forumSlice = createSlice({
       })
       .addCase(fetchForumThreads.rejected, (state, action) => {
         state.isLoading = false;
-        state.error = action.error?.message || "Không tải được forum";
+        state.error = action.error?.message || "Không tải được diễn đàn";
       })
       .addCase(createForumThread.fulfilled, (state, action) => {
         state.threads.unshift(action.payload);
@@ -163,13 +163,13 @@ const forumSlice = createSlice({
             deleteForumReply.rejected.type,
           ].includes(action.type),
         (state, action) => {
-          state.error = action.error?.message || "Thao tác forum thất bại";
+          state.isLoading = false;
+          state.error = action.error?.message || "Thao tác trên diễn đàn thất bại";
         },
       );
   },
 });
 
-export const { setActiveThread, setSearchQuery, clearForumError } =
-  forumSlice.actions;
+export const { setActiveThread, setSearchQuery, clearForumError } = forumSlice.actions;
 
 export default forumSlice.reducer;

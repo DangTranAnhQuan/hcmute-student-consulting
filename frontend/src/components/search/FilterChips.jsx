@@ -34,12 +34,12 @@ const FilterChips = () => {
           onClick={() =>
             dispatch(updateFilter({ key, value: key === "keyword" ? "" : "All" }))
           }
-          className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200 text-sm"
+          className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200 text-sm font-medium hover:bg-blue-100 transition"
         >
           <span>
             {fieldLabel[key]}: {value}
           </span>
-          <span>×</span>
+          <span className="text-xs font-bold">×</span>
         </button>
       ))}
     </div>

@@ -11,7 +11,7 @@ const SelectField = ({ label, value, options, onChange }) => {
       <select
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        className="w-full border border-gray-300 rounded-lg p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+        className="w-full border border-gray-300 rounded-lg p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-white"
       >
         <option value="">Tất cả</option>
         {options.map((option) => (
@@ -39,7 +39,7 @@ const FilterSidebar = () => {
         <button
           type="button"
           onClick={() => dispatch(clearFilters())}
-          className="text-sm text-primary hover:text-primary-dark"
+          className="text-sm text-primary hover:text-primary-dark font-medium transition"
         >
           Đặt lại
         </button>

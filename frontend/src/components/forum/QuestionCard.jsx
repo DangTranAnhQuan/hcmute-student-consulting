@@ -5,15 +5,17 @@ const QuestionCard = ({ thread, onSelect }) => {
     <button
       type="button"
       onClick={() => onSelect(thread.id)}
-      className="w-full text-left bg-white p-4 rounded-lg shadow-sm hover:shadow-md border border-gray-100"
+      className="w-full text-left bg-white p-4 rounded-lg shadow-sm hover:shadow-md border border-gray-100 transition"
     >
       <div className="flex justify-between items-start gap-3">
         <div>
-          <h3 className="text-base font-semibold text-gray-900">{thread.title}</h3>
+          <h3 className="text-base font-semibold text-gray-900 flex items-center gap-2">
+            {thread.title}
+          </h3>
           
           {thread.pinned && (
-            <span className="inline-block mt-1 text-xs bg-yellow-50 text-yellow-700 px-2 py-0.5 rounded">
-              Đã ghim
+            <span className="inline-block mt-1 mb-2 text-xs bg-yellow-50 text-yellow-700 px-2 py-0.5 rounded font-medium">
+              📌 Đã ghim
             </span>
           )}
 

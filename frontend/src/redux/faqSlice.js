@@ -46,7 +46,8 @@ const faqSlice = createSlice({
     clearFilters: (state) => {
       state.selectedCategory = "All";
       state.query = "";
-      state.expandedIds = [];
+      state.filteredFAQs = state.allFAQs;
+      state.expandedIds = state.allFAQs[0]?.id ? [state.allFAQs[0].id] : [];
     },
   },
   extraReducers: (builder) => {

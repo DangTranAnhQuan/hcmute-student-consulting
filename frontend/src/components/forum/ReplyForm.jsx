@@ -20,11 +20,11 @@ const ReplyForm = ({ threadId }) => {
         onChange={(event) => setValue(event.target.value)}
         rows={3}
         placeholder="Nhập nội dung trả lời"
-        className="w-full border border-gray-300 rounded p-2.5 focus:outline-none focus:ring-2 focus:ring-primary"
+        className="w-full border border-gray-300 rounded p-2.5 focus:outline-none focus:ring-2 focus:ring-primary text-sm"
         required
       />
       <div className="flex justify-end">
-        <button type="submit" className="px-4 py-2 bg-primary text-white rounded-lg">
+        <button type="submit" className="px-4 py-2 bg-primary text-white rounded-lg text-sm font-medium hover:bg-primary-dark transition">
           Gửi trả lời
         </button>
       </div>

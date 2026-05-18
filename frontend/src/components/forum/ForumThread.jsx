@@ -27,7 +27,7 @@ const ForumThread = ({ threadId }) => {
         <div>
           <h2 className="text-xl font-bold text-gray-900">{thread.title}</h2>
           <div className="text-sm text-gray-500">
-            Bởi {thread.author} • {new Date(thread.createdAt).toLocaleString()}
+            Bởi {thread.author} • {new Date(thread.createdAt).toLocaleString("vi-VN")}
           </div>
         </div>
 

@@ -34,7 +34,7 @@ const FAQPage = () => {
         </div>
       )}
 
-      {/* Layout Grid 2 cột giữ lại cấu trúc giao diện đầy đủ */}
+      {/* Layout Grid 2 phần: Bên trái là Tìm kiếm & Hỏi đáp, Bên phải là Thư viện mẫu tài liệu */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
           <FAQSearch />

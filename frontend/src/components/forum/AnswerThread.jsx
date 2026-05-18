@@ -30,7 +30,7 @@ const AnswerThread = ({ threadId, replies = [] }) => {
             </div>
             <div className="mt-1 prose max-w-none text-gray-700">{reply.content}</div>
             <div className="text-xs text-gray-400 mt-2">
-              {new Date(reply.createdAt).toLocaleString()}
+              {new Date(reply.createdAt).toLocaleString("vi-VN")}
             </div>
           </div>
         ))

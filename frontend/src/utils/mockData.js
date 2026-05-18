@@ -1,4 +1,4 @@
-// Mock data for dashboard and content features
+// Mock data cho dashboard và content features
 
 export const mockNotifications = [
   {
@@ -204,12 +204,7 @@ export const mockCategories = [
   { id: "jobs", name: "Jobs", icon: "🚀", color: "red" },
   { id: "softskills", name: "Soft Skills", icon: "🎯", color: "yellow" },
   { id: "psychology", name: "Student Psychology", icon: "🧠", color: "pink" },
-  {
-    id: "regulations",
-    name: "Training Regulations",
-    icon: "📋",
-    color: "indigo",
-  },
+  { id: "regulations", name: "Training Regulations", icon: "📋", color: "indigo" },
 ];
 
 export const mockUserData = {
@@ -226,7 +221,6 @@ export const mockUserData = {
   articlesRead: 127,
 };
 
-// Comprehensive News Data by Category
 export const mockAllNews = [
   // Academic Affairs
   {
@@ -533,13 +527,11 @@ export const mockAllNews = [
   },
 ];
 
-// Function to get news by category
 export const getNewsByCategory = (categoryId) => {
   if (categoryId === "all") return mockAllNews;
   return mockAllNews.filter((news) => news.categoryId === categoryId);
 };
 
-// Function to get featured news
 export const getFeaturedNews = () => {
   return [...mockAllNews].sort((a, b) => b.views - a.views).slice(0, 5);
 };
@@ -547,7 +539,7 @@ export const getFeaturedNews = () => {
 export const mockCounselors = [
   {
     id: 1,
-    name: "ThS. Nguyen Van A",
+    name: "ThS. Nguyễn Văn A",
     expertise: ["Career Orientation", "Internships", "CV Review"],
     department: "Career Counseling Office",
     image:
@@ -559,7 +551,7 @@ export const mockCounselors = [
   },
   {
     id: 2,
-    name: "ThS. Tran Thi B",
+    name: "ThS. Trần Thị B",
     expertise: ["Scholarships", "Soft Skills", "Academic Planning"],
     department: "Student Support Center",
     image:
@@ -667,16 +659,16 @@ export const getMockComments = (id) => {
   return [
     {
       id: `${id}-1`,
-      user: "Le Minh",
+      user: "Lê Minh",
       rating: 5,
-      content: "Noi dung rat huu ich, de ap dung vao hoc tap va cong viec.",
+      content: "Nội dung rất hữu ích, dễ áp dụng vào học tập và công việc.",
       createdAt: new Date(Date.now() - (seed + 2) * 3600000),
     },
     {
       id: `${id}-2`,
-      user: "Tran Anh",
+      user: "Trần Anh",
       rating: 4,
-      content: "Trinh bay ro rang, mong co them vi du thuc te hon.",
+      content: "Trình bày rõ ràng, mong có thêm ví dụ thực tế hơn.",
       createdAt: new Date(Date.now() - (seed + 8) * 3600000),
     },
   ];
@@ -693,10 +685,10 @@ export const advancedSearchOptions = {
     "Training Regulations",
   ],
   faculties: [
-    "Khoa Cong Nghe Thong Tin",
-    "Khoa Kinh Te",
-    "Phong Dao Tao",
-    "Phong Quan Ly Sinh Vien",
+    "Khoa Công Nghệ Thông Tin",
+    "Khoa Kinh Tế",
+    "Phòng Đào Tạo",
+    "Phòng Quản Lý Sinh Viên",
     "Career Counseling Office",
     "Student Support Center",
   ],
@@ -710,10 +702,10 @@ export const advancedSearchOptions = {
 export const mockAdvancedSearchItems = [
   {
     id: "s-101",
-    title: "Huong Dan Dang Ky Hoc Phan Online",
-    excerpt: "Quy trinh dang ky hoc phan va nhung moc quan trong trong hoc ky moi.",
+    title: "Hướng Dẫn Đăng Ký Học Phần Online",
+    excerpt: "Quy trình đăng ký học phần và những mốc quan trọng trong học kỳ mới.",
     topic: "Academic Affairs",
-    faculty: "Phong Dao Tao",
+    faculty: "Phòng Đào Tạo",
     contentType: "Article",
     publishTime: "Last 7 days",
     popularity: "High",
@@ -725,10 +717,10 @@ export const mockAdvancedSearchItems = [
   },
   {
     id: "s-201",
-    title: "Hoc Bong Toan Phan 2026/2027",
-    excerpt: "Tong hop hoc bong quoc te va dieu kien nop ho so.",
+    title: "Học Bổng Toàn Phần 2026/2027",
+    excerpt: "Tổng hợp học bổng quốc tế và điều kiện nộp hồ sơ.",
     topic: "Scholarships",
-    faculty: "Phong Quan Ly Sinh Vien",
+    faculty: "Phòng Quản Lý Sinh Viên",
     contentType: "News",
     publishTime: "Last 7 days",
     popularity: "High",
@@ -740,8 +732,8 @@ export const mockAdvancedSearchItems = [
   },
   {
     id: "s-301",
-    title: "Tuyen Dung Thuc Tap FPT Software",
-    excerpt: "Co hoi thuc tap va lo trinh ung tuyen cho sinh vien nam 3, nam 4.",
+    title: "Tuyển Dụng Thực Tập FPT Software",
+    excerpt: "Cơ hội thực tập và lộ trình ứng tuyển cho sinh viên năm 3, năm 4.",
     topic: "Internships",
     faculty: "Career Counseling Office",
     contentType: "News",
@@ -755,8 +747,8 @@ export const mockAdvancedSearchItems = [
   },
   {
     id: "s-401",
-    title: "Co Hoi Viec Lam Sau Tot Nghiep",
-    excerpt: "Danh sach vi tri junior va trainee cho sinh vien moi ra truong.",
+    title: "Cơ Hội Việc Làm Sau Tốt Nghiệp",
+    excerpt: "Danh sách vị trí junior và trainee cho sinh viên mới ra trường.",
     topic: "Jobs",
     faculty: "Career Counseling Office",
     contentType: "News",
@@ -770,10 +762,10 @@ export const mockAdvancedSearchItems = [
   },
   {
     id: "s-501",
-    title: "Ky Nang Mem Cho Sinh Vien IT",
-    excerpt: "Giao tiep, thuyet trinh, lam viec nhom va ky luat ca nhan.",
+    title: "Kỹ Năng Mềm Cho Sinh Viên IT",
+    excerpt: "Giao tiếp, thuyết trình, làm việc nhóm và kỷ luật cá nhân.",
     topic: "Soft Skills",
-    faculty: "Khoa Cong Nghe Thong Tin",
+    faculty: "Khoa Công Nghệ Thông Tin",
     contentType: "Article",
     publishTime: "Last 7 days",
     popularity: "High",
@@ -785,10 +777,10 @@ export const mockAdvancedSearchItems = [
   },
   {
     id: "s-601",
-    title: "Vuot Qua Cang Thang Ky Thi",
-    excerpt: "Nhung ky thuat tam ly de giam lo au va on tap hieu qua.",
+    title: "Vượt Qua Căng Thẳng Kỳ Thi",
+    excerpt: "Những kỹ thuật tâm lý để giảm lo âu và ôn tập hiệu quả.",
     topic: "Student Psychology",
-    faculty: "Khoa Kinh Te",
+    faculty: "Khoa Kinh Tế",
     contentType: "Article",
     publishTime: "Last 24 hours",
     popularity: "High",
@@ -800,10 +792,10 @@ export const mockAdvancedSearchItems = [
   },
   {
     id: "s-701",
-    title: "Dieu Le Sinh Vien HCMUTE 2026",
-    excerpt: "Tong hop quy dinh dao tao, ky luat, va quyen loi sinh vien.",
+    title: "Điều Lệ Sinh Viên HCMUTE 2026",
+    excerpt: "Tổng hợp quy định đào tạo, kỷ luật, và quyền lợi sinh viên.",
     topic: "Training Regulations",
-    faculty: "Phong Quan Ly Sinh Vien",
+    faculty: "Phòng Quản Lý Sinh Viên",
     contentType: "Article",
     publishTime: "Last 30 days",
     popularity: "Medium",
@@ -815,10 +807,10 @@ export const mockAdvancedSearchItems = [
   },
   {
     id: "s-e1",
-    title: "Hoi Thao Xu Huong Cong Viec 2026",
-    excerpt: "Su kien chia se thong tin thi truong lao dong va ky nang can co.",
+    title: "Hội Thảo Xu Hướng Công Việc 2026",
+    excerpt: "Sự kiện chia sẻ thông tin thị trường lao động và kỹ năng cần có.",
     topic: "Jobs",
-    faculty: "Khoa Cong Nghe Thong Tin",
+    faculty: "Khoa Công Nghệ Thông Tin",
     contentType: "Event",
     publishTime: "Last 7 days",
     popularity: "Medium",
@@ -830,8 +822,8 @@ export const mockAdvancedSearchItems = [
   },
   {
     id: "s-c1",
-    title: "Counselor Nguyen Van A",
-    excerpt: "Tu van huong nghiep, CV review, va lap ke hoach thuc tap.",
+    title: "Counselor Nguyễn Văn A",
+    excerpt: "Tư vấn hướng nghiệp, CV review, và lập kế hoạch thực tập.",
     topic: "Jobs",
     faculty: "Career Counseling Office",
     contentType: "Counselor",
@@ -845,8 +837,8 @@ export const mockAdvancedSearchItems = [
   },
   {
     id: "s-c2",
-    title: "Counselor Tran Thi B",
-    excerpt: "Tu van hoc bong, ky nang mem va lap ke hoach hoc tap.",
+    title: "Counselor Trần Thị B",
+    excerpt: "Tư vấn học bổng, kỹ năng mềm và lập kế hoạch học tập.",
     topic: "Scholarships",
     faculty: "Student Support Center",
     contentType: "Counselor",
@@ -860,8 +852,8 @@ export const mockAdvancedSearchItems = [
   },
   {
     id: "s-sch1",
-    title: "Lich Tu Van Huong Nghiep 20/05",
-    excerpt: "Buoi tu van online voi ThS. Nguyen Van A.",
+    title: "Lịch Tư Vấn Hướng Nghiệp 20/05",
+    excerpt: "Buổi tư vấn online với ThS. Nguyễn Văn A.",
     topic: "Jobs",
     faculty: "Career Counseling Office",
     contentType: "Schedule",
@@ -875,8 +867,8 @@ export const mockAdvancedSearchItems = [
   },
   {
     id: "s-sch2",
-    title: "Lich Tu Van Hoc Bong 22/05",
-    excerpt: "Buoi tu van truc tiep voi ThS. Tran Thi B.",
+    title: "Lịch Tư Vấn Học Bổng 22/05",
+    excerpt: "Buổi tư vấn trực tiếp với ThS. Trần Thị B.",
     topic: "Scholarships",
     faculty: "Student Support Center",
     contentType: "Schedule",
@@ -952,65 +944,65 @@ export const mockFAQs = [
   {
     id: 1,
     category: "Academic Affairs",
-    question: "Khi nao mo dang ky hoc phan hoc ky moi?",
+    question: "Khi nào mở đăng ký học phần học kỳ mới?",
     answer:
-      "Thong thuong he thong mo truoc 2-3 tuan truoc khi hoc ky bat dau. Ban nen theo doi thong bao tu Phong Dao Tao va kiem tra lich ca nhan tren cong thong tin sinh vien.",
+      "Thông thường hệ thống mở trước 2-3 tuần trước khi học kỳ bắt đầu. Bạn nên theo dõi thông báo từ Phòng Đào Tạo và kiểm tra lịch cá nhân trên cổng thông tin sinh viên.",
   },
   {
     id: 2,
     category: "Scholarships",
-    question: "Dieu kien co ban de dang ky hoc bong la gi?",
+    question: "Điều kiện cơ bản để đăng ký học học bổng là gì?",
     answer:
-      "Ban can dap ung nguong diem trung binh theo tung chuong trinh, khong vi pham ky luat, va hoan thanh day du ho so (bang diem, thu gioi thieu, bai luan ca nhan neu co).",
+      "Bạn cần đáp ứng ngưỡng điểm trung bình theo từng chương trình, không vi phạm kỷ luật, và hoàn thành đầy đủ hồ sơ (bảng điểm, thư giới thiệu, bài luận cá nhân nếu có).",
   },
   {
     id: 3,
     category: "Internships",
-    question: "Sinh vien nam 2 co the di thuc tap som duoc khong?",
+    question: "Sinh viên năm 2 có thể đi thực tập sớm được không?",
     answer:
-      "Co. Tuy nhien nen uu tien vi tri part-time hoac intern co mentor de can bang lich hoc. Ban can xac nhan voi co van hoc tap neu mon hoc trung lich lam.",
+      "Có. Tuy nhiên nên ưu tiên vị trí part-time hoặc intern có mentor để cân bằng lịch học. Bạn cần xác nhận với cố vấn học tập nếu môn học trùng lịch làm.",
   },
   {
     id: 4,
     category: "Jobs",
-    question: "Can chuan bi gi truoc buoi phong van dau tien?",
+    question: "Cần chuẩn bị gì trước buổi phỏng vấn đầu tiên?",
     answer:
-      "Hay chuan bi CV gon gang, tim hieu cong ty, luyen cau hoi hanh vi (STAR), va chuan bi 2-3 cau hoi nguoc lai cho nha tuyen dung de the hien su chu dong.",
+      "Hãy chuẩn bị CV gọn gàng, tìm hiểu công ty, luyện câu hỏi hành vi (STAR), và chuẩn bị 2-3 câu hỏi ngược lại cho nhà tuyển dụng để thể hiện sự chủ động.",
   },
   {
     id: 5,
     category: "Soft Skills",
-    question: "Lam sao de cai thien ky nang thuyet trinh?",
+    question: "Làm sao để cải thiện kỹ năng thuyết trình?",
     answer:
-      "Tap trung vao cau truc 3 phan (mo dau, noi dung chinh, ket luan), luyen tap voi thoi gian co dinh, ghi hinh de tu danh gia, va nhan phan hoi tu ban hoc.",
+      "Tập trung vào cấu trúc 3 phần (mở đầu, nội dung chính, kết luận), luyện tập với thời gian cố định, ghi hình để tự đánh giá, và nhận phản hồi từ bạn học.",
   },
   {
     id: 6,
     category: "Student Psychology",
-    question: "Minh bi stress truoc ky thi, nen bat dau tu dau?",
+    question: "Mình bị stress trước kỳ thi, nên bắt đầu từ đâu?",
     answer:
-      "Hay chia nho ke hoach on tap theo tung ngay, uu tien ngu du, van dong nhe, va han che hoc dan trai. Neu lo au keo dai, co the dat lich voi counselor tam ly.",
+      "Hãy chia nhỏ kế hoạch ôn tập theo từng ngày, ưu tiên ngủ đủ, vận động nhẹ, và hạn chế học dàn trải. Nếu lo âu kéo dài, có thể đặt lịch với counselor tâm lý.",
   },
   {
     id: 7,
     category: "Training Regulations",
-    question: "Neu rot mon thi co duoc hoc lai ngay khong?",
+    question: "Nếu rớt môn thi có được học lại ngay không?",
     answer:
-      "Ban can theo lich mo lop hoc lai cua khoa/bo mon. Tien trinh thuong duoc dang tren portal. Luu y han dang ky va hoc phi hoc lai.",
+      "Bạn cần theo lịch mở lớp học lại của khoa/bộ môn. Tiến trình thường được đăng trên portal. Lưu ý hạn đăng ký và học phí học lại.",
   },
   {
     id: 8,
     category: "Academic Affairs",
-    question: "Co theft xin bao luu ket qua hoc tap trong truong hop dac biet khong?",
+    question: "Có thể xin bảo lưu kết quả học tập trong trường hợp đặc biệt không?",
     answer:
-      "Co. Ban can nop don kem minh chung hop le (suc khoe, gia dinh, nghia vu). Quy trinh do Phong Dao Tao va khoa quan ly xem xet.",
+      "Có. Bạn cần nộp đơn kèm minh chứng hợp lệ (sức khỏe, gia đình, nghĩa vụ). Quy trình do Phòng Đào Tạo và khoa quản lý xem xét.",
   },
 ];
 
 export const mockLibraryTemplates = [
   {
     id: "lib-1",
-    title: "Mau CV Internship (IT)",
+    title: "Mẫu CV Internship (IT)",
     type: "DOCX",
     category: "Jobs",
     size: "0.6 MB",
@@ -1019,7 +1011,7 @@ export const mockLibraryTemplates = [
   },
   {
     id: "lib-2",
-    title: "Mau Thu Xin Hoc Bong",
+    title: "Mẫu Thư Xin Học Bổng",
     type: "DOCX",
     category: "Scholarships",
     size: "0.4 MB",
@@ -1028,7 +1020,7 @@ export const mockLibraryTemplates = [
   },
   {
     id: "lib-3",
-    title: "Checklist On Thi Cuoi Ky",
+    title: "Checklist Ôn Thi Cuối Kỳ",
     type: "PDF",
     category: "Academic Affairs",
     size: "1.1 MB",
@@ -1037,7 +1029,7 @@ export const mockLibraryTemplates = [
   },
   {
     id: "lib-4",
-    title: "Mau Ke Hoach Hoc Tap Ca Nhan",
+    title: "Mẫu Kế Hoạch Học Tập Cá Nhân",
     type: "XLSX",
     category: "Soft Skills",
     size: "0.8 MB",
@@ -1046,7 +1038,7 @@ export const mockLibraryTemplates = [
   },
   {
     id: "lib-5",
-    title: "Huong Dan Xu Ly Khung Hoang Tam Ly Co Ban",
+    title: "Hướng Dẫn Xử Lý Khủng Hoảng Tâm Lý Cơ Bản",
     type: "PDF",
     category: "Student Psychology",
     size: "1.9 MB",
@@ -1059,7 +1051,7 @@ export const mockCMSData = {
   articles: [
     {
       id: "a-1",
-      title: "Huong dan viet CV cho intern",
+      title: "Hướng dẫn viết CV cho intern",
       topic: "Jobs",
       status: "Published",
       author: "Career Center",
@@ -1067,7 +1059,7 @@ export const mockCMSData = {
     },
     {
       id: "a-2",
-      title: "Ky nang phong van co ban",
+      title: "Kỹ năng phỏng vấn cơ bản",
       topic: "Soft Skills",
       status: "Draft",
       author: "Student Affairs",
@@ -1082,14 +1074,14 @@ export const mockCMSData = {
   faqs: [
     {
       id: "f-1",
-      question: "Khi nao mo dang ky hoc phan?",
+      question: "Khi nào mở đăng ký học phần?",
       category: "Academic Affairs",
       status: "Published",
       updatedAt: "2026-05-03",
     },
     {
       id: "f-2",
-      question: "Dieu kien xin hoc bong la gi?",
+      question: "Điều kiện xin học bổng là gì?",
       category: "Scholarships",
       status: "Published",
       updatedAt: "2026-05-05",
@@ -1098,16 +1090,16 @@ export const mockCMSData = {
   schedules: [
     {
       id: "s-1",
-      title: "Tu van huong nghiep",
-      counselor: "ThS. Nguyen Van A",
+      title: "Tư vấn hướng nghiệp",
+      counselor: "ThS. Nguyễn Văn A",
       format: "Online",
       status: "Confirmed",
       updatedAt: "2026-05-08",
     },
     {
       id: "s-2",
-      title: "Tu van hoc bong",
-      counselor: "ThS. Tran Thi B",
+      title: "Tư vấn học bổng",
+      counselor: "ThS. Trần Thị B",
       format: "Offline",
       status: "Pending",
       updatedAt: "2026-05-09",
@@ -1116,14 +1108,14 @@ export const mockCMSData = {
   notifications: [
     {
       id: "n-1",
-      title: "Cap nhat lich tu van thang 6",
+      title: "Cập nhật lịch tư vấn tháng 6",
       type: "Info",
       status: "Published",
       updatedAt: "2026-05-11",
     },
     {
       id: "n-2",
-      title: "Nhac nho han nop ho so hoc bong",
+      title: "Nhắc nhở hạn nộp hồ sơ học bổng",
       type: "Warning",
       status: "Published",
       updatedAt: "2026-05-13",
@@ -1131,14 +1123,13 @@ export const mockCMSData = {
   ],
 };
 
-// Forum mock threads
 export const mockForumThreads = [
   {
     id: "thread-1",
     title: "Làm sao để tìm thực tập phù hợp cho sinh viên năm 2?",
     content:
       "Mình là sinh viên năm 2, chưa có nhiều kinh nghiệm. Ai có kinh nghiệm tìm thực tập sớm chia sẻ cách viết CV và nơi tìm việc?",
-    author: "Nguyen Van A",
+    author: "Nguyễn Văn A",
     tags: ["Internships", "CV"],
     createdAt: new Date().toISOString(),
     solved: false,
@@ -1146,7 +1137,7 @@ export const mockForumThreads = [
     replies: [
       {
         id: "r1",
-        user: "Tran Thi B",
+        user: "Trần Thị B",
         content: "Bạn nên chuẩn bị CV ngắn gọn, nêu project cá nhân, và apply qua trang career portal của trường và LinkedIn.",
         createdAt: new Date().toISOString(),
       },
@@ -1157,7 +1148,7 @@ export const mockForumThreads = [
     title: "Kỹ thuật quản lý thời gian khi ôn thi cuối kỳ",
     content:
       "Ai có schedule ôn thi hiệu quả cho 4 môn trong 2 tuần? Mình muốn tham khảo cách phân bổ thời gian và tài liệu.",
-    author: "Le Minh",
+    author: "Lê Minh",
     tags: ["Academic Affairs", "Study"],
     createdAt: new Date().toISOString(),
     solved: false,

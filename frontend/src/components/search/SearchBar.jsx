@@ -18,7 +18,7 @@ const SearchBar = () => {
           dispatch(updateFilter({ key: "keyword", value: event.target.value }))
         }
         placeholder="Nhập từ khóa: học bổng, việc làm, FAQ..."
-        className="w-full border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-primary"
+        className="w-full border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-primary text-sm"
       />
     </div>
   );

@@ -20,7 +20,7 @@ const SearchResults = () => {
     );
   }
 
-  if (filteredItems.length === 0) {
+  if (!filteredItems || filteredItems.length === 0) {
     return (
       <div className="bg-white rounded-xl shadow-md p-8 text-center text-gray-600">
         Không tìm thấy kết quả phù hợp.
@@ -46,10 +46,10 @@ const SearchResults = () => {
           <p className="text-sm text-gray-600 mb-3">{item.excerpt}</p>
 
           <div className="flex flex-wrap gap-3 text-xs text-gray-500">
-            <span>🏷️ Chủ đề: {item.topic}</span>
-            <span>🏫 Nguồn: {item.faculty}</span>
-            <span>📈 Mức độ: {item.popularity}</span>
-            <span>👁️ Lượt xem: {item.views}</span>
+            {item.topic && <span>🏷️ Chủ đề: {item.topic}</span>}
+            {item.faculty && <span>🏫 Nguồn: {item.faculty}</span>}
+            {item.popularity && <span>📈 Mức độ: {item.popularity}</span>}
+            {item.views !== undefined && <span>👁️ Lượt xem: {item.views}</span>}
             {item.counselingFormat && <span>📍 Hình thức: {item.counselingFormat}</span>}
             {item.appointmentStatus && <span>📌 Trạng thái: {item.appointmentStatus}</span>}
           </div>
