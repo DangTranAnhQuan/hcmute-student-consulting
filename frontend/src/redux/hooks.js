@@ -62,12 +62,12 @@ export const useAuth = () => {
     dispatch(loginStart());
     try {
       const response = await authAPI.login({ email, password });
-      const user = {
+      const user = response.data.user || {
         email,
         role: response.data.role,
       };
       dispatch(
-        loginSuccess({ user, token: response.data.accessToken || "jwt-token" }),
+        loginSuccess({ user, token: response.data.accessToken || "" }),
       );
       return response.data;
     } catch (error) {
@@ -96,14 +96,14 @@ export const useAuth = () => {
     dispatch(verifyOTPStart());
     try {
       const response = await authAPI.verifyOTP(email, otp);
-      const user = {
+      const user = response.data.user || {
         email,
         role: response.data.role || "user",
       };
       dispatch(
         verifyOTPSuccess({
           user,
-          token: response.data.accessToken || "jwt-token",
+          token: response.data.accessToken || "",
         }),
       );
       return response.data;

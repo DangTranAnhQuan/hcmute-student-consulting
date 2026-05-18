@@ -8,7 +8,6 @@ import {
   setViewMode,
 } from "../../redux/newsSlice";
 import { mockCategories } from "../../utils/mockData";
-import { Chip } from "../common/CommonUI";
 
 export const CategoryFilter = () => {
   const dispatch = useDispatch();
@@ -156,5 +155,3 @@ export const SearchAndSort = () => {
 };
 
 export default { CategoryFilter, SearchAndSort };
-
-

@@ -46,7 +46,13 @@ function App() {
           <Routes>
             {/* Public Routes */}
             <Route path="/" element={<HomePage />} />
+            <Route path="/news" element={<NewsPage />} />
+            <Route path="/articles" element={<ArticlesPage />} />
+            <Route path="/search" element={<SearchPage />} />
+            <Route path="/faq" element={<FAQPage />} />
+            <Route path="/detail/:type/:id" element={<DetailPage />} />
 
+            {/* Auth Routes */}
             <Route
               path="/login"
               element={
@@ -55,7 +61,6 @@ function App() {
                 </PublicRoute>
               }
             />
-
             <Route
               path="/register"
               element={
@@ -64,7 +69,6 @@ function App() {
                 </PublicRoute>
               }
             />
-
             <Route
               path="/forgot-password"
               element={
@@ -74,7 +78,7 @@ function App() {
               }
             />
 
-            {/* Protected Routes */}
+            {/* Protected Routes (General Users) */}
             <Route
               path="/dashboard"
               element={
@@ -83,14 +87,24 @@ function App() {
                 </ProtectedRoute>
               }
             />
-
-            {/* Public Routes for News & Articles */}
-            <Route path="/news" element={<NewsPage />} />
-            <Route path="/articles" element={<ArticlesPage />} />
-            <Route path="/search" element={<SearchPage />} />
-            <Route path="/faq" element={<FAQPage />} />
-            <Route path="/detail/:type/:id" element={<DetailPage />} />
-
+            <Route
+              path="/forum"
+              element={
+                <ProtectedRoute>
+                  <ForumPage />
+                </ProtectedRoute>
+              }
+            />
+            
+            {/* Profile Routes (Support specific or fallback profiles) */}
+            <Route
+              path="/profile"
+              element={
+                <ProtectedRoute>
+                  <ProfilePage />
+                </ProtectedRoute>
+              }
+            />
             <Route
               path="/user/profile"
               element={
@@ -99,7 +113,6 @@ function App() {
                 </ProtectedRoute>
               }
             />
-
             <Route
               path="/admin/profile"
               element={
@@ -109,29 +122,12 @@ function App() {
               }
             />
 
+            {/* Admin Dedicated Routes */}
             <Route
               path="/admin/cms"
               element={
                 <ProtectedRoute requiredRole="admin">
                   <AdminPage />
-                </ProtectedRoute>
-              }
-            />
-
-            <Route
-              path="/forum"
-              element={
-                <ProtectedRoute>
-                  <ForumPage />
-                </ProtectedRoute>
-              }
-            />
-
-            <Route
-              path="/profile"
-              element={
-                <ProtectedRoute>
-                  <ProfilePage />
                 </ProtectedRoute>
               }
             />

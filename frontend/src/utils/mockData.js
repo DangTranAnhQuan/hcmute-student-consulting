@@ -1001,7 +1001,7 @@ export const mockFAQs = [
   {
     id: 8,
     category: "Academic Affairs",
-    question: "Co the xin bao luu ket qua hoc tap trong truong hop dac biet khong?",
+    question: "Co theft xin bao luu ket qua hoc tap trong truong hop dac biet khong?",
     answer:
       "Co. Ban can nop don kem minh chung hop le (suc khoe, gia dinh, nghia vu). Quy trinh do Phong Dao Tao va khoa quan ly xem xet.",
   },
@@ -1165,4 +1165,3 @@ export const mockForumThreads = [
     replies: [],
   },
 ];
-

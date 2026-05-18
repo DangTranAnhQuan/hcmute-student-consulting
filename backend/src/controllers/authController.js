@@ -40,7 +40,18 @@ exports.login = async (req, res) => {
       maxAge: 15 * 60 * 1000,
     });
 
-    res.json({ message: "Đăng nhập thành công!", role: user.role });
+    res.json({
+      message: "Đăng nhập thành công!",
+      role: user.role,
+      accessToken,
+      user: {
+        id: user._id,
+        username: user.username,
+        email: user.email,
+        role: user.role,
+        fullName: user.fullName,
+      },
+    });
   } catch (err) {
     console.error("[auth:login] server error", {
       message: err.message,
@@ -197,6 +208,13 @@ exports.verifyOTP = async (req, res) => {
       message: "Xác thực OTP thành công!",
       role: user.role,
       accessToken,
+      user: {
+        id: user._id,
+        username: user.username,
+        email: user.email,
+        role: user.role,
+        fullName: user.fullName,
+      },
     });
   } catch (err) {
     console.error("[auth:verifyOTP] server error", {
