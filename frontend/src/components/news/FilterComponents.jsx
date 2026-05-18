@@ -1,8 +1,13 @@
 import React from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { setCategory, clearAllFilters } from "../../redux/newsSlice";
+import {
+  setCategory,
+  clearAllFilters,
+  setSearchQuery,
+  setSortBy,
+  setViewMode,
+} from "../../redux/newsSlice";
 import { mockCategories } from "../../utils/mockData";
-import { Chip } from "../common/CommonUI";
 
 export const CategoryFilter = () => {
   const dispatch = useDispatch();
@@ -150,4 +155,3 @@ export const SearchAndSort = () => {
 };
 
 export default { CategoryFilter, SearchAndSort };
-

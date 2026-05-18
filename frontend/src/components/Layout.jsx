@@ -98,10 +98,22 @@ export const Navbar = ({ user, onLogout }) => {
             </a>
           </div>
 
+          {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-4">
             {navLinks}
+            <a href="/news" className="text-primary hover:text-primary-dark">
+              Tin Tức
+            </a>
+            <a href="/articles" className="text-primary hover:text-primary-dark">
+              Bài Viết
+            </a>
+            
             {user ? (
               <>
+                <span className="text-gray-700 font-medium">Xin chào, {user.username}</span>
+                <a href="/dashboard" className="text-primary hover:text-primary-dark">
+                  Dashboard
+                </a>
                 {user.role === "admin" && (
                   <a href="/admin/cms" className="text-primary hover:text-primary-dark">
                     Admin CMS
@@ -111,8 +123,9 @@ export const Navbar = ({ user, onLogout }) => {
                   Hồ sơ
                 </a>
                 <button
+                  type="button"
                   onClick={onLogout}
-                  className="bg-danger hover:bg-red-600 text-white px-4 py-2 rounded"
+                  className="bg-danger hover:bg-red-600 text-white px-4 py-2 rounded transition-colors"
                 >
                   Đăng xuất
                 </button>
@@ -124,7 +137,7 @@ export const Navbar = ({ user, onLogout }) => {
                 </a>
                 <a
                   href="/register"
-                  className="bg-primary hover:bg-primary-dark text-white px-4 py-2 rounded"
+                  className="bg-primary hover:bg-primary-dark text-white px-4 py-2 rounded transition-colors"
                 >
                   Đăng ký
                 </a>
@@ -132,11 +145,12 @@ export const Navbar = ({ user, onLogout }) => {
             )}
           </div>
 
+          {/* Mobile Hamburger Button */}
           <div className="md:hidden">
             <button
               type="button"
               onClick={() => setMenuOpen(!menuOpen)}
-              className="text-gray-700 hover:text-primary"
+              className="text-gray-700 hover:text-primary p-2"
               aria-label="Mở menu"
             >
               ☰
@@ -144,29 +158,34 @@ export const Navbar = ({ user, onLogout }) => {
           </div>
         </div>
 
+        {/* Mobile Navigation Menu */}
         {menuOpen && (
-          <div className="md:hidden pb-4 space-y-2">
+          <div className="md:hidden pb-4 space-y-2 px-2 border-t border-gray-100 mt-1">
             {mobileLinks}
+            <a href="/news" className="block text-primary hover:text-primary-dark py-2">
+              Tin Tức
+            </a>
+            <a href="/articles" className="block text-primary hover:text-primary-dark py-2">
+              Bài Viết
+            </a>
+            
             {user ? (
               <>
+                <a href="/dashboard" className="block text-primary hover:text-primary-dark py-2">
+                  Dashboard
+                </a>
                 {user.role === "admin" && (
-                  <a
-                    href="/admin/cms"
-                    className="block text-primary hover:text-primary-dark py-2"
-                  >
+                  <a href="/admin/cms" className="block text-primary hover:text-primary-dark py-2">
                     Admin CMS
                   </a>
                 )}
-                <a
-                  href="/profile"
-                  className="block text-primary hover:text-primary-dark py-2"
-                >
+                <a href="/profile" className="block text-primary hover:text-primary-dark py-2">
                   Hồ sơ
                 </a>
                 <button
                   type="button"
                   onClick={onLogout}
-                  className="w-full text-left text-danger hover:text-red-600 py-2"
+                  className="w-full text-left text-danger hover:text-red-600 py-2 font-medium"
                 >
                   Đăng xuất
                 </button>
@@ -176,10 +195,7 @@ export const Navbar = ({ user, onLogout }) => {
                 <a href="/login" className="block text-primary hover:text-primary-dark py-2">
                   Đăng nhập
                 </a>
-                <a
-                  href="/register"
-                  className="block text-primary hover:text-primary-dark py-2"
-                >
+                <a href="/register" className="block text-primary hover:text-primary-dark py-2">
                   Đăng ký
                 </a>
               </>

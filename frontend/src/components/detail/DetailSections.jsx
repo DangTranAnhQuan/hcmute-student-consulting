@@ -47,26 +47,34 @@ export const DetailMeta = ({ item }) => {
       </div>
 
       <div className="flex items-center gap-5 text-sm text-gray-700">
-        <span>👁️ {item.views || 0} views</span>
-        <span>💾 {item.saves || 0} saves</span>
+        <span>👁️ {item.views || 0} lượt xem</span>
+        <span>💾 {item.saves || 0} lượt lưu</span>
       </div>
     </div>
   );
 };
 
 export const DetailContent = ({ item }) => {
-  const paragraphs = (item.content || item.excerpt || "")
-    .split("\n")
-    .filter(Boolean);
+  const contentStr = item.body || item.content || item.excerpt || "";
+  // Kiểm tra chuỗi chứa thẻ HTML hay chỉ là text thuần xuống dòng
+  const isHtml = /<\/?[a-z][\s\S]*>/i.test(contentStr);
 
   return (
     <article className="bg-white rounded-xl shadow-md p-6 md:p-8">
-      <h2 className="text-xl font-bold text-gray-900 mb-4">Noi dung chi tiet</h2>
-      <div className="space-y-4 text-gray-700 leading-7">
-        {paragraphs.length > 0 ? (
-          paragraphs.map((paragraph, index) => <p key={index}>{paragraph}</p>)
+      <h2 className="text-xl font-bold text-gray-900 mb-4">Nội dung chi tiết</h2>
+      <div className="prose max-w-none text-gray-700 leading-7">
+        {contentStr ? (
+          isHtml ? (
+            <div dangerouslySetInnerHTML={{ __html: contentStr }} />
+          ) : (
+            <div className="space-y-4">
+              {contentStr.split("\n").filter(Boolean).map((paragraph, index) => (
+                <p key={index}>{paragraph}</p>
+              ))}
+            </div>
+          )
         ) : (
-          <p>Noi dung dang duoc cap nhat.</p>
+          <p className="text-gray-500 italic">Nội dung đang được cập nhật.</p>
         )}
       </div>
     </article>
@@ -78,7 +86,7 @@ export const RelatedPosts = ({ related = [], type }) => {
 
   return (
     <section className="bg-white rounded-xl shadow-md p-6 md:p-8">
-      <h3 className="text-xl font-bold text-gray-900 mb-4">Bai viet lien quan</h3>
+      <h3 className="text-xl font-bold text-gray-900 mb-4">Bài viết liên quan</h3>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {related.map((post) => (
           <a
@@ -127,7 +135,7 @@ export const RatingCommentSection = ({ initialComments = [] }) => {
 
     const nextComment = {
       id: `local-${Date.now()}`,
-      user: "Ban",
+      user: "Bạn",
       rating,
       content: newComment.trim(),
       createdAt: new Date(),
@@ -141,7 +149,7 @@ export const RatingCommentSection = ({ initialComments = [] }) => {
   return (
     <section className="bg-white rounded-xl shadow-md p-6 md:p-8">
       <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
-        <h3 className="text-xl font-bold text-gray-900">Danh gia & Binh luan</h3>
+        <h3 className="text-xl font-bold text-gray-900">Đánh giá & Bình luận</h3>
         <div className="text-sm text-gray-700 flex items-center gap-2">
           <span className="font-semibold">{averageRating}</span>
           <span>{renderStars(Math.round(Number(averageRating)))}</span>
@@ -151,7 +159,7 @@ export const RatingCommentSection = ({ initialComments = [] }) => {
 
       <form onSubmit={handleSubmit} className="mb-6 space-y-3">
         <div className="flex items-center gap-2 text-sm text-gray-700">
-          <span>Danh gia:</span>
+          <span>Đánh giá:</span>
           {[1, 2, 3, 4, 5].map((value) => (
             <button
               key={value}
@@ -168,7 +176,7 @@ export const RatingCommentSection = ({ initialComments = [] }) => {
           value={newComment}
           onChange={(event) => setNewComment(event.target.value)}
           rows={3}
-          placeholder="Chia se y kien cua ban..."
+          placeholder="Chia sẻ ý kiến của bạn..."
           className="w-full border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-primary"
         />
 
@@ -176,7 +184,7 @@ export const RatingCommentSection = ({ initialComments = [] }) => {
           type="submit"
           className="bg-primary hover:bg-primary-dark text-white px-5 py-2 rounded-lg font-semibold transition"
         >
-          Gui binh luan
+          Gửi bình luận
         </button>
       </form>
 
@@ -197,4 +205,3 @@ export const RatingCommentSection = ({ initialComments = [] }) => {
     </section>
   );
 };
-
