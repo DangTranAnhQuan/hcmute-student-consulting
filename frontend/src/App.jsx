@@ -13,6 +13,10 @@ import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import ProfilePage from "./pages/ProfilePage";
+import SearchPage from "./pages/SearchPage";
+import FAQPage from "./pages/FAQPage";
+import AdminPage from "./pages/AdminPage";
+import ForumPage from "./pages/ForumPage";
 
 // Components
 import { Navbar, Footer } from "./components/Layout";
@@ -66,7 +70,10 @@ function App() {
               }
             />
 
-            {/* Protected Routes */}
+            {/* Feature Routes */}
+            <Route path="/search" element={<SearchPage />} />
+            <Route path="/faq" element={<FAQPage />} />
+
             <Route
               path="/user/profile"
               element={
@@ -81,6 +88,24 @@ function App() {
               element={
                 <ProtectedRoute requiredRole="admin">
                   <ProfilePage />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/admin/cms"
+              element={
+                <ProtectedRoute requiredRole="admin">
+                  <AdminPage />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/forum"
+              element={
+                <ProtectedRoute>
+                  <ForumPage />
                 </ProtectedRoute>
               }
             />

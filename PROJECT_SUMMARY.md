@@ -1,11 +1,5 @@
 # 📊 Project Summary - Tư vấn Sinh viên HCMUTE
 
-## ✅ Hoàn thành
-
-Dự án **Tư vấn Sinh viên HCMUTE** với Full-stack implementation đã được hoàn thành.
-
----
-
 ## 📁 Cấu trúc Tệp tin Được Tạo
 
 ### Backend Files
@@ -170,20 +164,6 @@ hcmute-student-consulting/
 - Tailwind CSS 3.x
 - PostCSS
 
----
-
-## 📦 File Count Summary
-
-```
-Backend Files:       7+ files
-Frontend Files:      18+ files
-Configuration:       5+ files
-Documentation:       4+ files
-───────────────────────────
-Total:              34+ files
-```
-
----
 
 ## 🚀 Quick Start
 
@@ -251,13 +231,6 @@ npm start      # Development server
 - Backend: Get + Update profile endpoints
 - Frontend: ProfilePage with edit capability
 - Files: authController.js (profile), ProfilePage.jsx
-
-**Member 5: UI/UX & Integration**
-
-- Components: All reusable components
-- Styling: Tailwind CSS configuration
-- Redux: State management setup
-- Files: UI.jsx, Layout.jsx, Redux files
 
 ---
 
