@@ -3,14 +3,14 @@ import { useDispatch, useSelector } from "react-redux";
 import { updateFilter } from "../../redux/searchSlice";
 
 const fieldLabel = {
-  keyword: "Keyword",
-  topic: "Topic",
-  faculty: "Faculty",
-  contentType: "Type",
-  publishTime: "Publish",
-  popularity: "Popularity",
-  counselingFormat: "Format",
-  appointmentStatus: "Status",
+  keyword: "Từ khóa",
+  topic: "Chủ đề",
+  faculty: "Nguồn",
+  contentType: "Loại",
+  publishTime: "Thời gian",
+  popularity: "Phổ biến",
+  counselingFormat: "Hình thức",
+  appointmentStatus: "Trạng thái",
 };
 
 const FilterChips = () => {
@@ -31,11 +31,15 @@ const FilterChips = () => {
         <button
           key={key}
           type="button"
-          onClick={() => dispatch(updateFilter({ key, value: key === "keyword" ? "" : "All" }))}
+          onClick={() =>
+            dispatch(updateFilter({ key, value: key === "keyword" ? "" : "All" }))
+          }
           className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200 text-sm"
         >
-          <span>{fieldLabel[key]}: {value}</span>
-          <span>✕</span>
+          <span>
+            {fieldLabel[key]}: {value}
+          </span>
+          <span>×</span>
         </button>
       ))}
     </div>
@@ -43,4 +47,3 @@ const FilterChips = () => {
 };
 
 export default FilterChips;
-

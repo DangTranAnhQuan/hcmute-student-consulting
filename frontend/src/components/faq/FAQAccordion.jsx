@@ -4,12 +4,20 @@ import { toggleExpand, expandAll, collapseAll } from "../../redux/faqSlice";
 
 const FAQAccordion = () => {
   const dispatch = useDispatch();
-  const { filteredFAQs, expandedIds } = useSelector((state) => state.faq);
+  const { filteredFAQs, expandedIds, isLoading } = useSelector((state) => state.faq);
+
+  if (isLoading) {
+    return (
+      <div className="bg-white rounded-xl shadow-md p-6 text-gray-600 text-center">
+        Đang tải FAQ...
+      </div>
+    );
+  }
 
   if (filteredFAQs.length === 0) {
     return (
       <div className="bg-white rounded-xl shadow-md p-6 text-gray-600 text-center">
-        Khong tim thay cau hoi phu hop.
+        Không tìm thấy câu hỏi phù hợp.
       </div>
     );
   }
@@ -24,14 +32,14 @@ const FAQAccordion = () => {
             onClick={() => dispatch(expandAll())}
             className="text-primary hover:text-primary-dark"
           >
-            Mo tat ca
+            Mở tất cả
           </button>
           <button
             type="button"
             onClick={() => dispatch(collapseAll())}
             className="text-primary hover:text-primary-dark"
           >
-            Thu gon
+            Thu gọn
           </button>
         </div>
       </div>
@@ -54,8 +62,8 @@ const FAQAccordion = () => {
               </button>
 
               {isOpen && (
-                <div className="px-4 py-3 text-gray-700 leading-7 bg-white">
-                  {item.answer}
+                <div className="px-4 py-3 bg-white">
+                  <div className="prose max-w-none text-gray-700 leading-7">{item.answer}</div>
                 </div>
               )}
             </div>
@@ -67,4 +75,3 @@ const FAQAccordion = () => {
 };
 
 export default FAQAccordion;
-

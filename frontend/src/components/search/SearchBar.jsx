@@ -9,7 +9,7 @@ const SearchBar = () => {
   return (
     <div className="bg-white rounded-xl shadow-md p-4 md:p-5">
       <label className="block text-sm font-semibold text-gray-700 mb-2">
-        Tim kiem
+        Từ khóa
       </label>
       <input
         type="text"
@@ -17,7 +17,7 @@ const SearchBar = () => {
         onChange={(event) =>
           dispatch(updateFilter({ key: "keyword", value: event.target.value }))
         }
-        placeholder="Nhap tu khoa: hoc bong, viec lam, counselor..."
+        placeholder="Nhập từ khóa: học bổng, việc làm, FAQ..."
         className="w-full border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-primary"
       />
     </div>
@@ -25,4 +25,3 @@ const SearchBar = () => {
 };
 
 export default SearchBar;
-

@@ -13,7 +13,7 @@ const SelectField = ({ label, value, options, onChange }) => {
         onChange={(event) => onChange(event.target.value)}
         className="w-full border border-gray-300 rounded-lg p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
       >
-        <option value="">All</option>
+        <option value="">Tất cả</option>
         {options.map((option) => (
           <option key={option} value={option}>
             {option}
@@ -35,60 +35,60 @@ const FilterSidebar = () => {
   return (
     <aside className="bg-white rounded-xl shadow-md p-4 md:p-5 space-y-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-base font-bold text-gray-900">Bo loc nang cao</h2>
+        <h2 className="text-base font-bold text-gray-900">Bộ lọc</h2>
         <button
           type="button"
           onClick={() => dispatch(clearFilters())}
           className="text-sm text-primary hover:text-primary-dark"
         >
-          Dat lai
+          Đặt lại
         </button>
       </div>
 
       <SelectField
-        label="Topic"
+        label="Chủ đề"
         value={filters.topic}
         options={options.topics}
         onChange={handleChange("topic")}
       />
 
       <SelectField
-        label="Faculty"
+        label="Nguồn"
         value={filters.faculty}
         options={options.faculties}
         onChange={handleChange("faculty")}
       />
 
       <SelectField
-        label="Content Type"
+        label="Loại nội dung"
         value={filters.contentType}
         options={options.contentTypes}
         onChange={handleChange("contentType")}
       />
 
       <SelectField
-        label="Publish Time"
+        label="Thời gian đăng"
         value={filters.publishTime}
         options={options.publishTimes}
         onChange={handleChange("publishTime")}
       />
 
       <SelectField
-        label="Popularity"
+        label="Mức độ phổ biến"
         value={filters.popularity}
         options={options.popularities}
         onChange={handleChange("popularity")}
       />
 
       <SelectField
-        label="Counseling Format"
+        label="Hình thức tư vấn"
         value={filters.counselingFormat}
         options={options.counselingFormats}
         onChange={handleChange("counselingFormat")}
       />
 
       <SelectField
-        label="Appointment Status"
+        label="Trạng thái"
         value={filters.appointmentStatus}
         options={options.appointmentStatuses}
         onChange={handleChange("appointmentStatus")}
@@ -98,4 +98,3 @@ const FilterSidebar = () => {
 };
 
 export default FilterSidebar;
-
