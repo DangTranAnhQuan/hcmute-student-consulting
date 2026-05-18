@@ -1,15 +1,15 @@
 import React from "react";
 import { useDispatch } from "react-redux";
-import { createReply } from "../../redux/forumSlice";
+import { createForumReply } from "../../redux/forumSlice";
 
 const ReplyForm = ({ threadId }) => {
   const dispatch = useDispatch();
   const [value, setValue] = React.useState("");
 
-  const onSubmit = (e) => {
-    e.preventDefault();
+  const onSubmit = (event) => {
+    event.preventDefault();
     if (!value.trim()) return;
-    dispatch(createReply({ threadId, reply: { user: "You", content: value } }));
+    dispatch(createForumReply({ threadId, content: value }));
     setValue("");
   };
 
@@ -17,14 +17,15 @@ const ReplyForm = ({ threadId }) => {
     <form onSubmit={onSubmit} className="space-y-2">
       <textarea
         value={value}
-        onChange={(e) => setValue(e.target.value)}
+        onChange={(event) => setValue(event.target.value)}
         rows={3}
-        placeholder="Write your reply (be polite and concise)"
-        className="w-full border border-gray-300 rounded p-2.5 focus:outline-none focus:ring-2 focus:ring-primary"
+        placeholder="Nhập nội dung trả lời"
+        className="w-full border border-gray-300 rounded p-2.5 focus:outline-none focus:ring-2 focus:ring-primary text-sm"
+        required
       />
       <div className="flex justify-end">
-        <button type="submit" className="px-4 py-2 bg-primary text-white rounded-lg">
-          Post Reply
+        <button type="submit" className="px-4 py-2 bg-primary text-white rounded-lg text-sm font-medium hover:bg-primary-dark transition">
+          Gửi trả lời
         </button>
       </div>
     </form>
@@ -32,4 +33,3 @@ const ReplyForm = ({ threadId }) => {
 };
 
 export default ReplyForm;
-

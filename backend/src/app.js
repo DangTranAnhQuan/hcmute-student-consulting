@@ -10,6 +10,10 @@ require("dotenv").config({
 const authRoutes = require("./routes/authRoutes");
 const counselorRoutes = require("./routes/counselorRoutes");
 const scheduleRoutes = require("./routes/scheduleRoutes");
+const adminRoutes = require("./routes/adminRoutes");
+const faqRoutes = require("./routes/faqRoutes");
+const searchRoutes = require("./routes/searchRoutes");
+const forumRoutes = require("./routes/forumRoutes");
 
 const app = express();
 
@@ -47,6 +51,10 @@ mongoose
 app.use("/api/auth", authRoutes);
 app.use("/api/counselors", counselorRoutes);
 app.use("/api/schedules", scheduleRoutes);
+app.use("/api/admin", adminRoutes);
+app.use("/api/faqs", faqRoutes);
+app.use("/api/search", searchRoutes);
+app.use("/api/forum", forumRoutes);
 
 // Health check
 app.get("/api/health", (req, res) => {

@@ -1,8 +1,13 @@
 import React from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { setCategory, clearAllFilters } from "../../redux/newsSlice";
+import {
+  setCategory,
+  clearAllFilters,
+  setSearchQuery,
+  setSortBy,
+  setViewMode,
+} from "../../redux/newsSlice";
 import { mockCategories } from "../../utils/mockData";
-import { Chip } from "../common/CommonUI";
 
 export const CategoryFilter = () => {
   const dispatch = useDispatch();
@@ -83,9 +88,7 @@ export const SearchAndSort = () => {
               name="sort"
               value="latest"
               checked={sortBy === "latest"}
-              onChange={(e) =>
-                dispatch(setSortBy(e.target.value))
-              }
+              onChange={(e) => dispatch(setSortBy(e.target.value))}
               className="mr-2"
             />
             <span className="text-gray-700">Mới Nhất</span>
@@ -96,9 +99,7 @@ export const SearchAndSort = () => {
               name="sort"
               value="popular"
               checked={sortBy === "popular"}
-              onChange={(e) =>
-                dispatch(setSortBy(e.target.value))
-              }
+              onChange={(e) => dispatch(setSortBy(e.target.value))}
               className="mr-2"
             />
             <span className="text-gray-700">Phổ Biến Nhất</span>
@@ -109,9 +110,7 @@ export const SearchAndSort = () => {
               name="sort"
               value="trending"
               checked={sortBy === "trending"}
-              onChange={(e) =>
-                dispatch(setSortBy(e.target.value))
-              }
+              onChange={(e) => dispatch(setSortBy(e.target.value))}
               className="mr-2"
             />
             <span className="text-gray-700">Xu Hướng</span>
@@ -149,5 +148,5 @@ export const SearchAndSort = () => {
   );
 };
 
-export default { CategoryFilter, SearchAndSort };
-
+const FilterComponents = { CategoryFilter, SearchAndSort };
+export default FilterComponents;

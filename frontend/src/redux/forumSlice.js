@@ -1,10 +1,85 @@
-import { createSlice } from "@reduxjs/toolkit";
-import { mockForumThreads } from "../utils/mockData";
+import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
+import { forumAPI } from "../services/api";
+
+export const fetchForumThreads = createAsyncThunk(
+  "forum/fetchThreads",
+  async (q = "") => {
+    const response = await forumAPI.listThreads(q);
+    return response.data.threads || [];
+  },
+);
+
+export const createForumThread = createAsyncThunk(
+  "forum/createThread",
+  async (data) => {
+    const response = await forumAPI.createThread(data);
+    return response.data;
+  },
+);
+
+export const createForumReply = createAsyncThunk(
+  "forum/createReply",
+  async ({ threadId, content }) => {
+    const response = await forumAPI.createReply(threadId, { content });
+    return response.data;
+  },
+);
+
+export const upvoteForumThread = createAsyncThunk(
+  "forum/upvoteThread",
+  async (threadId) => {
+    const response = await forumAPI.upvoteThread(threadId);
+    return response.data;
+  },
+);
+
+export const toggleForumSolved = createAsyncThunk(
+  "forum/toggleSolved",
+  async (threadId) => {
+    const response = await forumAPI.toggleSolved(threadId);
+    return response.data;
+  },
+);
+
+export const toggleForumPin = createAsyncThunk(
+  "forum/togglePin",
+  async (threadId) => {
+    const response = await forumAPI.togglePin(threadId);
+    return response.data;
+  },
+);
+
+export const deleteForumThread = createAsyncThunk(
+  "forum/deleteThread",
+  async (threadId) => {
+    await forumAPI.deleteThread(threadId);
+    return threadId;
+  },
+);
+
+export const deleteForumReply = createAsyncThunk(
+  "forum/deleteReply",
+  async ({ threadId, replyId }) => {
+    const response = await forumAPI.deleteReply(threadId, replyId);
+    return response.data;
+  },
+);
 
 const initialState = {
-  threads: mockForumThreads || [],
+  threads: [],
   activeThreadId: null,
   searchQuery: "",
+  isLoading: false,
+  error: null,
+};
+
+const replaceThread = (state, thread) => {
+  const index = state.threads.findIndex((item) => item.id === thread.id);
+  if (index >= 0) {
+    state.threads[index] = thread;
+  } else {
+    state.threads.unshift(thread);
+  }
 };
 
 const forumSlice = createSlice({
@@ -17,57 +92,84 @@ const forumSlice = createSlice({
     setSearchQuery: (state, action) => {
       state.searchQuery = action.payload;
     },
-    createThread: (state, action) => {
-      const newThread = {
-        id: `thread-${Date.now()}`,
-        title: action.payload.title,
-        content: action.payload.content,
-        author: action.payload.author || "Anonymous",
-        tags: action.payload.tags || [],
-        createdAt: new Date().toISOString(),
-        solved: false,
-        votes: 0,
-        replies: [],
-      };
-      state.threads.unshift(newThread);
-      state.activeThreadId = newThread.id;
+    clearForumError: (state) => {
+      state.error = null;
     },
-    createReply: (state, action) => {
-      const { threadId, reply } = action.payload;
-      const thread = state.threads.find((t) => t.id === threadId);
-      if (thread) {
-        thread.replies.push({
-          id: `r-${Date.now()}`,
-          user: reply.user || "Anonymous",
-          content: reply.content,
-          createdAt: new Date().toISOString(),
-        });
-      }
-    },
-    upvoteThread: (state, action) => {
-      const thread = state.threads.find((t) => t.id === action.payload);
-      if (thread) thread.votes = (thread.votes || 0) + 1;
-    },
-    toggleSolved: (state, action) => {
-      const thread = state.threads.find((t) => t.id === action.payload);
-      if (thread) thread.solved = !thread.solved;
-    },
-    deleteThread: (state, action) => {
-      state.threads = state.threads.filter((t) => t.id !== action.payload);
-      if (state.activeThreadId === action.payload) state.activeThreadId = null;
-    },
+  },
+  extraReducers: (builder) => {
+    builder
+      .addCase(fetchForumThreads.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(fetchForumThreads.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.threads = action.payload;
+        if (!state.activeThreadId && action.payload[0]?.id) {
+          state.activeThreadId = action.payload[0].id;
+        }
+      })
+      .addCase(fetchForumThreads.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.error?.message || "Không tải được diễn đàn";
+      })
+      .addCase(createForumThread.fulfilled, (state, action) => {
+        state.threads.unshift(action.payload);
+        state.activeThreadId = action.payload.id;
+      })
+      .addCase(deleteForumThread.fulfilled, (state, action) => {
+        state.threads = state.threads.filter((thread) => thread.id !== action.payload);
+        if (state.activeThreadId === action.payload) {
+          state.activeThreadId = state.threads[0]?.id || null;
+        }
+      })
+      .addMatcher(
+        (action) =>
+          [
+            createForumReply.fulfilled.type,
+            upvoteForumThread.fulfilled.type,
+            toggleForumSolved.fulfilled.type,
+            toggleForumPin.fulfilled.type,
+            deleteForumReply.fulfilled.type,
+          ].includes(action.type),
+        (state, action) => {
+          replaceThread(state, action.payload);
+        },
+      )
+      .addMatcher(
+        (action) =>
+          [
+            createForumThread.pending.type,
+            createForumReply.pending.type,
+            upvoteForumThread.pending.type,
+            toggleForumSolved.pending.type,
+            toggleForumPin.pending.type,
+            deleteForumThread.pending.type,
+            deleteForumReply.pending.type,
+          ].includes(action.type),
+        (state) => {
+          state.error = null;
+        },
+      )
+      .addMatcher(
+        (action) =>
+          [
+            createForumThread.rejected.type,
+            createForumReply.rejected.type,
+            upvoteForumThread.rejected.type,
+            toggleForumSolved.rejected.type,
+            toggleForumPin.rejected.type,
+            deleteForumThread.rejected.type,
+            deleteForumReply.rejected.type,
+          ].includes(action.type),
+        (state, action) => {
+          state.isLoading = false;
+          state.error = action.error?.message || "Thao tác trên diễn đàn thất bại";
+        },
+      );
   },
 });
 
-export const {
-  setActiveThread,
-  setSearchQuery,
-  createThread,
-  createReply,
-  upvoteThread,
-  toggleSolved,
-  deleteThread,
-} = forumSlice.actions;
+export const { setActiveThread, setSearchQuery, clearForumError } = forumSlice.actions;
 
 export default forumSlice.reducer;
-

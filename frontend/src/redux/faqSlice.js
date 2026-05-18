@@ -1,42 +1,23 @@
-import { createSlice } from "@reduxjs/toolkit";
-import {
-  mockFAQs,
-  mockFAQCategories,
-  mockLibraryTemplates,
-} from "../utils/mockData";
+import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
+import { faqAPI } from "../services/api";
+
+export const fetchFAQs = createAsyncThunk(
+  "faq/fetchFAQs",
+  async ({ category = "All", q = "" } = {}) => {
+    const response = await faqAPI.list({ category, q });
+    return response.data;
+  },
+);
 
 const initialState = {
-  allFAQs: mockFAQs,
-  filteredFAQs: mockFAQs,
-  categories: mockFAQCategories,
+  allFAQs: [],
+  filteredFAQs: [],
+  categories: ["All"],
   selectedCategory: "All",
   query: "",
-  expandedIds: [mockFAQs[0]?.id].filter(Boolean),
-  libraryItems: mockLibraryTemplates,
-  filteredLibrary: mockLibraryTemplates,
-};
-
-const filterFAQList = (state) => {
-  const keyword = state.query.trim().toLowerCase();
-  state.filteredFAQs = state.allFAQs.filter((item) => {
-    const matchCategory =
-      state.selectedCategory === "All" || item.category === state.selectedCategory;
-    const matchKeyword =
-      !keyword ||
-      item.question.toLowerCase().includes(keyword) ||
-      item.answer.toLowerCase().includes(keyword);
-    return matchCategory && matchKeyword;
-  });
-
-  state.filteredLibrary = state.libraryItems.filter((item) => {
-    const matchCategory =
-      state.selectedCategory === "All" || item.category === state.selectedCategory;
-    const matchKeyword =
-      !keyword ||
-      item.title.toLowerCase().includes(keyword) ||
-      item.type.toLowerCase().includes(keyword);
-    return matchCategory && matchKeyword;
-  });
+  expandedIds: [],
+  isLoading: false,
+  error: null,
 };
 
 const faqSlice = createSlice({
@@ -45,11 +26,9 @@ const faqSlice = createSlice({
   reducers: {
     setCategory: (state, action) => {
       state.selectedCategory = action.payload;
-      filterFAQList(state);
     },
     setQuery: (state, action) => {
       state.query = action.payload;
-      filterFAQList(state);
     },
     toggleExpand: (state, action) => {
       const id = action.payload;
@@ -68,9 +47,29 @@ const faqSlice = createSlice({
       state.selectedCategory = "All";
       state.query = "";
       state.filteredFAQs = state.allFAQs;
-      state.filteredLibrary = state.libraryItems;
-      state.expandedIds = [state.allFAQs[0]?.id].filter(Boolean);
+      state.expandedIds = state.allFAQs[0]?.id ? [state.allFAQs[0].id] : [];
     },
+  },
+  extraReducers: (builder) => {
+    builder
+      .addCase(fetchFAQs.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(fetchFAQs.fulfilled, (state, action) => {
+        const faqs = action.payload.faqs || [];
+        state.isLoading = false;
+        state.allFAQs = faqs;
+        state.filteredFAQs = faqs;
+        state.categories = action.payload.categories?.length
+          ? action.payload.categories
+          : ["All"];
+        state.expandedIds = faqs[0]?.id ? [faqs[0].id] : [];
+      })
+      .addCase(fetchFAQs.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.error?.message || "Không tải được FAQ";
+      });
   },
 });
 
@@ -84,4 +83,3 @@ export const {
 } = faqSlice.actions;
 
 export default faqSlice.reducer;
-
