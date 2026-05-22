@@ -26,6 +26,11 @@ const counselorSchema = new mongoose.Schema({
     type: String,
     default: "",
   },
+  image: {
+    type: String,
+    default: "",
+    trim: true,
+  },
   hourlyRate: {
     type: Number,
     default: 0,

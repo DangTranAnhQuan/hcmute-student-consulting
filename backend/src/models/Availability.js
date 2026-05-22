@@ -15,10 +15,12 @@ const availabilitySchema = new mongoose.Schema({
   startTime: {
     type: String,
     required: true, // Format: "HH:mm"
+    default: "08:00",
   },
   endTime: {
     type: String,
     required: true, // Format: "HH:mm"
+    default: "17:00",
   },
   slotDuration: {
     type: Number,

@@ -1,9 +1,9 @@
 const router = require("express").Router();
 const forumCtrl = require("../controllers/forumController");
-const { verifyToken, verifyAdmin } = require("../middleware/auth");
+const { optionalAuth, verifyToken, verifyAdmin } = require("../middleware/auth");
 
-router.get("/threads", forumCtrl.listThreads);
-router.get("/threads/:id", forumCtrl.getThread);
+router.get("/threads", optionalAuth, forumCtrl.listThreads);
+router.get("/threads/:id", optionalAuth, forumCtrl.getThread);
 router.post("/threads", verifyToken, forumCtrl.createThread);
 router.post("/threads/:id/replies", verifyToken, forumCtrl.createReply);
 router.patch("/threads/:id/upvote", verifyToken, forumCtrl.upvoteThread);

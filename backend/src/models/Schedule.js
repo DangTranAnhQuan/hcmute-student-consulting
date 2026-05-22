@@ -11,6 +11,21 @@ const scheduleSchema = new mongoose.Schema({
     ref: "User",
     required: true,
   },
+  consultationOrderId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "ConsultationOrder",
+    default: null,
+    index: true,
+  },
+  consultationOrderCode: {
+    type: String,
+    default: "",
+    trim: true,
+  },
+  consultationOrderItemIndex: {
+    type: Number,
+    default: null,
+  },
   title: {
     type: String,
     required: true,
@@ -51,7 +66,7 @@ const scheduleSchema = new mongoose.Schema({
   },
   cancelledBy: {
     type: String,
-    enum: ["counselor", "user"],
+    enum: ["counselor", "user", "admin", "system"],
     default: null,
   },
   cancellationReason: {
@@ -67,5 +82,26 @@ const scheduleSchema = new mongoose.Schema({
     default: Date.now,
   },
 });
+
+const activeScheduleFilter = {
+  status: { $in: ["pending", "confirmed", "completed"] },
+};
+
+scheduleSchema.index(
+  { counselorId: 1, startTime: 1 },
+  {
+    unique: true,
+    partialFilterExpression: activeScheduleFilter,
+  },
+);
+scheduleSchema.index(
+  { userId: 1, startTime: 1 },
+  {
+    unique: true,
+    partialFilterExpression: activeScheduleFilter,
+  },
+);
+scheduleSchema.index({ counselorId: 1, startTime: 1, endTime: 1 });
+scheduleSchema.index({ userId: 1, startTime: 1, endTime: 1 });
 
 module.exports = mongoose.model("Schedule", scheduleSchema);

@@ -1,7 +1,7 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import { adminAPI } from "../services/api";
 
-const moduleOrder = ["articles", "topics", "faqs", "schedules", "notifications"];
+const moduleOrder = ["articles", "faqs", "counselors"];
 
 const emptyData = moduleOrder.reduce((acc, key) => {
   acc[key] = [];

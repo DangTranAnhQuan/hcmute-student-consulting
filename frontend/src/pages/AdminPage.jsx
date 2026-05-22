@@ -21,8 +21,14 @@ const AdminPage = () => {
           Admin CMS
         </h1>
         <p className="text-gray-600">
-          Quản lý Bài viết, Chủ đề, FAQ, Lịch hẹn tư vấn và Thông báo bằng API, chỉ dành cho tài khoản admin.
+          Quản lý nội dung xuất bản, FAQ và tư vấn viên. Dữ liệu Published sẽ hiển thị cho người dùng, tư vấn viên tạm ẩn sẽ không còn được đặt yêu cầu mới.
         </p>
+        <a
+          href="/admin/consultation-orders"
+          className="mt-4 inline-flex rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary-dark"
+        >
+          Quản lý yêu cầu tư vấn
+        </a>
       </div>
 
       {error && (

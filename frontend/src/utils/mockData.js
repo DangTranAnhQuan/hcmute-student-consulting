@@ -230,7 +230,7 @@ export const mockAllNews = [
     category: "Academic Affairs",
     categoryId: "academic",
     image:
-      "https://images.unsplash.com/photo-1516321318423-f06f70504466?w=600&h=400&fit=crop",
+      "https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=600&h=400&fit=crop",
     views: 3450,
     saves: 289,
     date: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
@@ -490,7 +490,7 @@ export const mockAllNews = [
     category: "Training Regulations",
     categoryId: "regulations",
     image:
-      "https://images.unsplash.com/photo-1516321318423-f06f70504466?w=600&h=400&fit=crop",
+      "https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=600&h=400&fit=crop",
     views: 2340,
     saves: 178,
     date: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000),

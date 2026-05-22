@@ -1,13 +1,16 @@
 const Schedule = require("../models/Schedule");
 const Counselor = require("../models/Counselor");
-const Availability = require("../models/Availability");
+const {
+  buildValidatedSlot,
+  assertSlotAvailable,
+} = require("../services/scheduleService");
 
 // Create booking
 exports.createBooking = async (req, res) => {
   try {
     const {
       counselorId,
-      userId,
+      userId: requestedUserId,
       title,
       description,
       startTime,
@@ -16,48 +19,40 @@ exports.createBooking = async (req, res) => {
       meetingLink,
       location,
     } = req.body;
+    const userId = req.user?.id || requestedUserId;
+
+    if (!userId) {
+      return res.status(400).json({ message: "Vui lòng đăng nhập trước khi đặt lịch" });
+    }
 
     // Validate counselor exists
     const counselor = await Counselor.findById(counselorId);
     if (!counselor) {
-      return res.status(404).json({ message: "Counselor not found" });
+      return res.status(404).json({ message: "Không tìm thấy tư vấn viên" });
     }
 
-    // Check availability
-    const bookingDate = new Date(startTime);
-    const dayOfWeek = bookingDate.getDay();
-
-    const availability = await Availability.findOne({
+    const slot = await buildValidatedSlot({
       counselorId,
-      dayOfWeek,
-      isActive: true,
+      counselorName: counselor.fullName,
+      preferredDate: startTime,
+      endTime,
     });
 
-    if (!availability) {
-      return res
-        .status(400)
-        .json({ message: "Counselor is not available on this day" });
-    }
-
-    // Check for conflicts
-    const existingBooking = await Schedule.findOne({
+    await assertSlotAvailable({
       counselorId,
-      startTime: { $lt: new Date(endTime) },
-      endTime: { $gt: new Date(startTime) },
-      status: { $ne: "cancelled" },
+      counselorName: counselor.fullName,
+      userId,
+      startTime: slot.startTime,
+      endTime: slot.endTime,
     });
-
-    if (existingBooking) {
-      return res.status(400).json({ message: "Time slot is already booked" });
-    }
 
     const booking = new Schedule({
       counselorId,
       userId,
       title,
       description,
-      startTime: new Date(startTime),
-      endTime: new Date(endTime),
+      startTime: slot.startTime,
+      endTime: slot.endTime,
       meetingType,
       meetingLink: meetingType === "online" ? meetingLink : "",
       location: meetingType === "in-person" ? location : "",
@@ -65,14 +60,14 @@ exports.createBooking = async (req, res) => {
 
     const newBooking = await booking.save();
 
-    // Update counselor total bookings
-    await Counselor.findByIdAndUpdate(counselorId, {
-      $inc: { totalBookings: 1 },
-    });
-
     res.status(201).json(newBooking);
   } catch (error) {
-    res.status(400).json({ message: error.message });
+    if (error.code === 11000) {
+      return res.status(409).json({
+        message: "Khung giờ này đã có người đặt",
+      });
+    }
+    res.status(error.statusCode || 400).json({ message: error.message });
   }
 };
 

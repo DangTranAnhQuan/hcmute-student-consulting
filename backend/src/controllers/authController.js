@@ -12,8 +12,28 @@ const transporter = nodemailer.createTransport({
   },
 });
 
+const ACCESS_TOKEN_EXPIRES_IN = process.env.ACCESS_TOKEN_EXPIRES_IN || "7d";
+const ACCESS_TOKEN_MAX_AGE =
+  Number(process.env.ACCESS_TOKEN_MAX_AGE_MS) || 7 * 24 * 60 * 60 * 1000;
+
 const generateOTP = () =>
   Math.floor(100000 + Math.random() * 900000).toString();
+
+const signAccessToken = (user) =>
+  jwt.sign(
+    { id: user._id, role: user.role },
+    process.env.ACCESS_TOKEN_SECRET,
+    { expiresIn: ACCESS_TOKEN_EXPIRES_IN },
+  );
+
+const setAccessTokenCookie = (res, accessToken) => {
+  res.cookie("accessToken", accessToken, {
+    httpOnly: true,
+    secure: false,
+    sameSite: "strict",
+    maxAge: ACCESS_TOKEN_MAX_AGE,
+  });
+};
 
 exports.login = async (req, res) => {
   try {
@@ -27,18 +47,8 @@ exports.login = async (req, res) => {
     if (!user.isActivated)
       return res.status(403).json({ message: "Tài khoản chưa kích hoạt OTP" });
 
-    const accessToken = jwt.sign(
-      { id: user._id, role: user.role },
-      process.env.ACCESS_TOKEN_SECRET,
-      { expiresIn: "15m" },
-    );
-
-    res.cookie("accessToken", accessToken, {
-      httpOnly: true,
-      secure: false,
-      sameSite: "strict",
-      maxAge: 15 * 60 * 1000,
-    });
+    const accessToken = signAccessToken(user);
+    setAccessTokenCookie(res, accessToken);
 
     res.json({
       message: "Đăng nhập thành công!",
@@ -50,6 +60,7 @@ exports.login = async (req, res) => {
         email: user.email,
         role: user.role,
         fullName: user.fullName,
+        phone: user.phone,
       },
     });
   } catch (err) {
@@ -191,18 +202,8 @@ exports.verifyOTP = async (req, res) => {
     user.otpExpires = undefined;
     await user.save();
 
-    const accessToken = jwt.sign(
-      { id: user._id, role: user.role },
-      process.env.ACCESS_TOKEN_SECRET,
-      { expiresIn: "15m" },
-    );
-
-    res.cookie("accessToken", accessToken, {
-      httpOnly: true,
-      secure: false,
-      sameSite: "strict",
-      maxAge: 15 * 60 * 1000,
-    });
+    const accessToken = signAccessToken(user);
+    setAccessTokenCookie(res, accessToken);
 
     res.json({
       message: "Xác thực OTP thành công!",
@@ -214,6 +215,7 @@ exports.verifyOTP = async (req, res) => {
         email: user.email,
         role: user.role,
         fullName: user.fullName,
+        phone: user.phone,
       },
     });
   } catch (err) {

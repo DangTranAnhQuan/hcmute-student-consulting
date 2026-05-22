@@ -6,11 +6,11 @@ export const getAllCounselors = createAsyncThunk(
   "schedule/getAllCounselors",
   async (_, { rejectWithValue }) => {
     try {
-      const response = await api.get("/api/counselors");
+      const response = await api.get("/counselors");
       return response.data;
     } catch (error) {
       return rejectWithValue(
-        error.response?.data?.message || "Failed to fetch counselors",
+        error.response?.data?.message || "Không tải được danh sách tư vấn viên",
       );
     }
   },
@@ -20,11 +20,11 @@ export const getCounselorById = createAsyncThunk(
   "schedule/getCounselorById",
   async (counselorId, { rejectWithValue }) => {
     try {
-      const response = await api.get(`/api/counselors/${counselorId}`);
+      const response = await api.get(`/counselors/${counselorId}`);
       return response.data;
     } catch (error) {
       return rejectWithValue(
-        error.response?.data?.message || "Failed to fetch counselor",
+        error.response?.data?.message || "Không tải được thông tin tư vấn viên",
       );
     }
   },
@@ -34,11 +34,11 @@ export const createBooking = createAsyncThunk(
   "schedule/createBooking",
   async (bookingData, { rejectWithValue }) => {
     try {
-      const response = await api.post("/api/schedules", bookingData);
+      const response = await api.post("/schedules", bookingData);
       return response.data;
     } catch (error) {
       return rejectWithValue(
-        error.response?.data?.message || "Failed to create booking",
+        error.response?.data?.message || "Không tạo được lịch tư vấn",
       );
     }
   },
@@ -48,11 +48,11 @@ export const getUserBookings = createAsyncThunk(
   "schedule/getUserBookings",
   async (userId, { rejectWithValue }) => {
     try {
-      const response = await api.get(`/api/schedules/user/${userId}`);
+      const response = await api.get(`/schedules/user/${userId}`);
       return response.data;
     } catch (error) {
       return rejectWithValue(
-        error.response?.data?.message || "Failed to fetch bookings",
+        error.response?.data?.message || "Không tải được lịch tư vấn",
       );
     }
   },
@@ -62,11 +62,11 @@ export const getCounselorBookings = createAsyncThunk(
   "schedule/getCounselorBookings",
   async (counselorId, { rejectWithValue }) => {
     try {
-      const response = await api.get(`/api/schedules/counselor/${counselorId}`);
+      const response = await api.get(`/schedules/counselor/${counselorId}`);
       return response.data;
     } catch (error) {
       return rejectWithValue(
-        error.response?.data?.message || "Failed to fetch bookings",
+        error.response?.data?.message || "Không tải được lịch tư vấn",
       );
     }
   },
@@ -76,13 +76,13 @@ export const updateBookingStatus = createAsyncThunk(
   "schedule/updateBookingStatus",
   async ({ bookingId, status }, { rejectWithValue }) => {
     try {
-      const response = await api.put(`/api/schedules/${bookingId}/status`, {
+      const response = await api.put(`/schedules/${bookingId}/status`, {
         status,
       });
       return response.data;
     } catch (error) {
       return rejectWithValue(
-        error.response?.data?.message || "Failed to update booking",
+        error.response?.data?.message || "Không cập nhật được lịch tư vấn",
       );
     }
   },
@@ -92,14 +92,14 @@ export const cancelBooking = createAsyncThunk(
   "schedule/cancelBooking",
   async ({ bookingId, reason }, { rejectWithValue }) => {
     try {
-      const response = await api.put(`/api/schedules/${bookingId}/cancel`, {
+      const response = await api.put(`/schedules/${bookingId}/cancel`, {
         cancelledBy: "user",
         cancellationReason: reason,
       });
       return response.data;
     } catch (error) {
       return rejectWithValue(
-        error.response?.data?.message || "Failed to cancel booking",
+        error.response?.data?.message || "Không hủy được lịch tư vấn",
       );
     }
   },
