@@ -1,65 +1,294 @@
-import React, { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
-import { useDispatch, useSelector } from "react-redux";
-import BookingForm from "../components/booking/BookingForm";
-import CounselorProfile from "../components/counselor/CounselorProfile";
-import AvailabilityDisplay from "../components/counselor/AvailabilityDisplay";
-import { getCounselorById } from "../redux/scheduleSlice";
+import React, { useEffect, useState } from "react";
+import { Link, useNavigate, useParams } from "react-router-dom";
+import { Spinner } from "../components/UI";
+import AvailableSlotPicker from "../components/booking/AvailableSlotPicker";
+import { consultationCartAPI, counselorAPI } from "../services/api";
+import {
+  defaultPreferredDate,
+  formatCurrency,
+  formatDateTime,
+  formatDuration,
+} from "../utils/consultationFormat";
+
+const fallbackImage =
+  "https://images.unsplash.com/photo-1556157382-97eda2d62296?w=900&h=520&fit=crop";
+
+const topicDescriptions = {
+  Academic: "Kế hoạch học tập, đăng ký học phần, cảnh báo học vụ.",
+  Career: "CV, thực tập, portfolio, phỏng vấn và định hướng nghề nghiệp.",
+  "Mental Health": "Stress, lo âu, cân bằng học tập và cuộc sống.",
+  "Personal Development": "Quản lý thời gian, làm việc nhóm, kỹ năng trình bày.",
+  Financial: "Học bổng, miễn giảm học phí và quản lý chi phí sinh viên.",
+};
+
+const defaultTopic = (counselor) =>
+  `Tư vấn ${counselor?.expertise?.[0] || "sinh viên"}`;
+
+const handleImageError = (event) => {
+  event.currentTarget.onerror = null;
+  event.currentTarget.src = fallbackImage;
+};
 
 export default function BookCounselorPage() {
   const { counselorId } = useParams();
-  const dispatch = useDispatch();
-  const [selectedDate, setSelectedDate] = useState(new Date());
-
-  const { counselors, loading, error } = useSelector((state) => state.schedule);
-  const counselor = counselors.find((c) => c._id === counselorId);
+  const navigate = useNavigate();
+  const [counselor, setCounselor] = useState(null);
+  const [form, setForm] = useState({
+    topic: "",
+    preferredDate: defaultPreferredDate(),
+    meetingType: "online",
+    note: "",
+  });
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
 
   useEffect(() => {
-    if (counselorId) {
-      dispatch(getCounselorById(counselorId));
-    }
-  }, [counselorId, dispatch]);
+    const loadCounselor = async () => {
+      try {
+        setLoading(true);
+        const response = await counselorAPI.detail(counselorId);
+        setCounselor(response.data);
+        setForm((current) => ({
+          ...current,
+          topic: current.topic || defaultTopic(response.data),
+        }));
+      } catch (err) {
+        setError(err.response?.data?.message || "Không tải được tư vấn viên");
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  const handleDateChange = (date) => {
-    setSelectedDate(date);
-    // Fetch available slots for the selected date
+    loadCounselor();
+  }, [counselorId]);
+
+  const updateForm = (field, value) => {
+    setForm((current) => ({ ...current, [field]: value }));
   };
 
-  if (loading)
+  const slotDuration = counselor?.availability?.slotDuration || 60;
+  const counselorStatusClass =
+    counselor?.currentStatus === "busy"
+      ? "border-amber-200 bg-amber-50 text-amber-700"
+      : counselor?.currentStatus === "inactive"
+        ? "border-gray-200 bg-gray-50 text-gray-700"
+        : "border-green-200 bg-green-50 text-green-700";
+
+  const addToCart = async (event) => {
+    event.preventDefault();
+    if (!form.topic.trim()) {
+      setError("Vui lòng nhập chủ đề cần tư vấn");
+      return;
+    }
+    if (!form.preferredDate) {
+      setError("Vui lòng chọn một slot tư vấn còn trống");
+      return;
+    }
+
+    try {
+      setSubmitting(true);
+      setError("");
+      await consultationCartAPI.addItem({
+        counselorId: counselor._id,
+        topic: form.topic,
+        preferredDate: new Date(form.preferredDate).toISOString(),
+        meetingType: form.meetingType,
+        note: form.note,
+      });
+      navigate("/consultation-cart");
+    } catch (err) {
+      setError(err.response?.data?.message || "Không thêm được vào giỏ tư vấn");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  if (loading) {
     return (
-      <div className="flex justify-center items-center h-screen">
-        Loading...
+      <div className="flex min-h-screen items-center justify-center">
+        <Spinner />
       </div>
     );
-  if (error) return <div className="text-red-600 p-4">Error: {error}</div>;
-  if (!counselor) return <div className="p-4">Counselor not found</div>;
+  }
+
+  if (!counselor) {
+    return (
+      <div className="min-h-screen bg-gray-50 py-10">
+        <div className="mx-auto max-w-4xl px-4">
+          <div className="rounded-lg bg-white p-8 text-center shadow">
+            <p className="text-gray-700">Không tìm thấy tư vấn viên.</p>
+            <Link
+              to="/book-counselor"
+              className="mt-4 inline-flex rounded-lg bg-primary px-4 py-2 font-semibold text-white"
+            >
+              Quay lại danh sách
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
-      <div className="container mx-auto px-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {/* Counselor Profile Section */}
-          <div className="bg-white rounded-lg shadow-lg p-6">
-            <CounselorProfile counselor={counselor} />
-          </div>
+      <div className="mx-auto max-w-6xl px-4">
+        <Link to="/book-counselor" className="text-primary hover:text-primary-dark">
+          ← Quay lại danh sách tư vấn viên
+        </Link>
 
-          {/* Booking Form Section */}
-          <div className="space-y-6">
-            {/* Availability Display */}
-            <div className="bg-white rounded-lg shadow-lg p-6">
-              <h2 className="text-xl font-bold mb-4">Select Date & Time</h2>
-              <AvailabilityDisplay
-                counselorId={counselorId}
-                onDateChange={handleDateChange}
-              />
+        {error && (
+          <div className="mt-6 rounded-lg border border-red-200 bg-red-50 p-4 text-red-700">
+            {error}
+          </div>
+        )}
+
+        <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
+          <section className="overflow-hidden rounded-lg bg-white shadow lg:col-span-1">
+            <img
+              src={counselor.image || fallbackImage}
+              alt={counselor.fullName}
+              onError={handleImageError}
+              className="h-64 w-full object-cover"
+            />
+            <div className="p-6">
+              <h1 className="text-3xl font-bold text-gray-900">
+                {counselor.fullName}
+              </h1>
+              <p className="mt-2 text-gray-600">Tư vấn viên HCMUTE</p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <span
+                  className={`rounded-full border px-3 py-1 text-xs font-semibold ${counselorStatusClass}`}
+                >
+                  {counselor.currentStatusLabel || "Đang rảnh"}
+                </span>
+                <span className="rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">
+                  {Number(counselor.totalBookings || 0)} lượt đặt
+                </span>
+                <span className="rounded-full border border-purple-200 bg-purple-50 px-3 py-1 text-xs font-semibold text-purple-700">
+                  {Number(counselor.rating || 0).toFixed(1)}/5 ·{" "}
+                  {Number(counselor.reviewCount || 0)} đánh giá
+                </span>
+              </div>
+              {counselor.nextBookingAt && (
+                <p className="mt-3 text-sm text-gray-500">
+                  Lịch gần nhất: {formatDateTime(counselor.nextBookingAt)}
+                </p>
+              )}
+              <div className="mt-4 flex flex-wrap gap-2">
+                {(counselor.expertise || []).map((item) => (
+                  <span
+                    key={item}
+                    className="rounded-full bg-blue-50 px-3 py-1 text-sm font-semibold text-primary"
+                  >
+                    {item}
+                  </span>
+                ))}
+              </div>
+              {counselor.bio && (
+                <p className="mt-4 text-sm leading-6 text-gray-700">{counselor.bio}</p>
+              )}
+              <div className="mt-5 rounded-lg bg-gray-50 p-4">
+                <p className="text-sm text-gray-500">Đơn giá theo giờ</p>
+                <p className="text-2xl font-bold text-green-600">
+                  {formatCurrency(counselor.hourlyRate || 0)}
+                </p>
+                <p className="mt-1 text-sm text-gray-600">
+                  Mỗi buổi {formatDuration(slotDuration)}; online và trực tiếp cùng giá.
+                </p>
+              </div>
+            </div>
+          </section>
+
+          <section className="rounded-lg bg-white p-6 shadow lg:col-span-2">
+            <h2 className="text-2xl font-bold text-gray-900">
+              Thêm vào giỏ tư vấn
+            </h2>
+            <p className="mt-2 text-gray-600">
+              Sau bước này, bạn có thể chọn một hoặc nhiều mục trong giỏ để thanh toán COD hoặc MoMo.
+            </p>
+
+            <div className="mt-5 grid grid-cols-1 gap-3 md:grid-cols-2">
+              {(counselor.expertise || []).map((item) => (
+                <button
+                  key={item}
+                  type="button"
+                  onClick={() => updateForm("topic", `Tư vấn ${item}`)}
+                  className="rounded-lg border border-gray-200 p-4 text-left hover:border-primary hover:bg-blue-50"
+                >
+                  <p className="font-semibold text-gray-900">{item}</p>
+                  <p className="mt-1 text-sm text-gray-600">
+                    {topicDescriptions[item] || "Tư vấn theo nhu cầu sinh viên."}
+                  </p>
+                </button>
+              ))}
             </div>
 
-            {/* Booking Form */}
-            <div className="bg-white rounded-lg shadow-lg p-6">
-              <h2 className="text-xl font-bold mb-4">Complete Your Booking</h2>
-              <BookingForm counselor={counselor} selectedDate={selectedDate} />
-            </div>
-          </div>
+            <form onSubmit={addToCart} className="mt-6 space-y-5">
+              <div>
+                <label className="mb-2 block text-sm font-medium text-gray-700">
+                  Chủ đề cần tư vấn
+                </label>
+                <input
+                  required
+                  value={form.topic}
+                  onChange={(event) => updateForm("topic", event.target.value)}
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <AvailableSlotPicker
+                  counselorId={counselor._id}
+                  value={form.preferredDate}
+                  onChange={(value) => updateForm("preferredDate", value)}
+                />
+                <div>
+                  <label className="mb-2 block text-sm font-medium text-gray-700">
+                    Hình thức
+                  </label>
+                  <select
+                    value={form.meetingType}
+                    onChange={(event) =>
+                      updateForm("meetingType", event.target.value)
+                    }
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                  >
+                    <option value="online">Online</option>
+                    <option value="in-person">Trực tiếp</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-medium text-gray-700">
+                  Ghi chú
+                </label>
+                <textarea
+                  rows="4"
+                  value={form.note}
+                  onChange={(event) => updateForm("note", event.target.value)}
+                  placeholder="Mô tả ngắn vấn đề, tài liệu cần chuẩn bị hoặc thời gian có thể linh hoạt"
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                />
+              </div>
+
+              <div className="rounded-lg border border-blue-100 bg-blue-50 p-4 text-sm text-blue-800">
+                Thời lượng dự kiến là {formatDuration(slotDuration)}. Giá được tính
+                theo đơn giá giờ của tư vấn viên; online và trực tiếp hiện không
+                phụ thu. COD được thu khi yêu cầu hoàn tất, MoMo phải thanh toán
+                thành công trước khi admin xác nhận và xử lý yêu cầu.
+              </div>
+
+              <button
+                type="submit"
+                disabled={submitting}
+                className="w-full rounded-lg bg-primary px-4 py-3 font-semibold text-white hover:bg-primary-dark disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {submitting ? "Đang thêm..." : "Thêm vào giỏ tư vấn"}
+              </button>
+            </form>
+          </section>
         </div>
       </div>
     </div>
