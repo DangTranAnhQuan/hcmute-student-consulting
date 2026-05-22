@@ -80,19 +80,6 @@ const FilterSidebar = () => {
         onChange={handleChange("popularity")}
       />
 
-      <SelectField
-        label="Hình thức tư vấn"
-        value={filters.counselingFormat}
-        options={options.counselingFormats}
-        onChange={handleChange("counselingFormat")}
-      />
-
-      <SelectField
-        label="Trạng thái"
-        value={filters.appointmentStatus}
-        options={options.appointmentStatuses}
-        onChange={handleChange("appointmentStatus")}
-      />
     </aside>
   );
 };

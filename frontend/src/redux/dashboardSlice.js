@@ -1,20 +1,12 @@
 import { createSlice } from "@reduxjs/toolkit";
-import {
-  mockNotifications,
-  mockFeaturedNews,
-  mockSchedules,
-  mockPopularArticles,
-  mockDocuments,
-  mockEvents,
-} from "../utils/mockData";
 
 const initialState = {
-  notifications: mockNotifications,
-  featuredNews: mockFeaturedNews,
-  schedules: mockSchedules,
-  populerArticles: mockPopularArticles,
-  documents: mockDocuments,
-  events: mockEvents,
+  notifications: [],
+  featuredNews: [],
+  schedules: [],
+  populerArticles: [],
+  documents: [],
+  events: [],
   isLoading: false,
   error: null,
   filters: {
@@ -74,4 +66,3 @@ export const {
 } = dashboardSlice.actions;
 
 export default dashboardSlice.reducer;
-

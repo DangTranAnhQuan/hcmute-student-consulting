@@ -1,5 +1,68 @@
 # Hướng dẫn tổng quát - Dự án Tư vấn Sinh viên HCMUTE
 
+## Bản hoàn chỉnh BT06 nhóm
+
+Bản `hcmute-student-consulting_HoanThanh` đã áp dụng 03 yêu cầu của bài bán hàng vào đề tài tư vấn sinh viên:
+
+- Giỏ hàng tương ứng với **giỏ tư vấn**: người dùng chọn từng tư vấn viên/dịch vụ, có thể chọn riêng lẻ hoặc chọn một nhóm mục trong giỏ trước khi thanh toán. Dữ liệu giỏ lưu bằng MongoDB qua model `ConsultationCart`.
+- Thanh toán tương ứng với **xác nhận yêu cầu tư vấn**: hỗ trợ `COD` bắt buộc và `MoMo Sandbox`. MoMo không giả lập; nếu thiếu biến môi trường sandbox thì API trả lỗi thay vì tạo link ảo.
+- Theo dõi đơn hàng tương ứng với **theo dõi yêu cầu tư vấn**: người dùng xem lịch sử, chi tiết từng yêu cầu, timeline trạng thái, thanh toán lại MoMo khi thoát giữa chừng, và gửi/hủy yêu cầu theo đúng luật nghiệp vụ.
+- Admin có màn riêng `/admin/consultation-orders` để theo dõi đơn/yêu cầu, tiền COD chờ thu, tiền đã thu, yêu cầu hoàn tiền, yêu cầu hủy và cập nhật trạng thái.
+
+### Luồng nghiệp vụ chính
+
+1. Người dùng vào `/book-counselor`, chọn tư vấn viên, chủ đề, thời gian và thêm vào giỏ.
+2. Vào `/consultation-cart`, tick các mục muốn đặt. Không bắt buộc thanh toán toàn bộ giỏ.
+3. Vào `/consultation-checkout`, nhập thông tin liên hệ và chọn `COD` hoặc `MoMo Sandbox`.
+4. Với COD: đơn được tạo ở trạng thái `Yêu cầu mới`, tiền `Chưa thanh toán`; khi admin chuyển đến `Đã hoàn tất`, hệ thống ghi nhận tiền `Đã thanh toán`.
+5. Với MoMo: đơn được tạo ở trạng thái `Yêu cầu mới`, tiền `Chờ thanh toán`; nếu người dùng thoát khỏi trang MoMo mà chưa thanh toán thì đơn không được xác nhận/xử lý, sau 15 phút chuyển `Hết hạn thanh toán` và có nút thanh toán lại.
+6. Trạng thái xử lý gồm: `Yêu cầu mới`, `Đã xác nhận`, `Đang chuẩn bị hồ sơ`, `Đang tư vấn/đang xử lý`, `Đã hoàn tất`, `Đã hủy`, `Gửi yêu cầu hủy`.
+7. Hủy đơn: trước 30 phút hoặc đơn MoMo chưa thanh toán thì hủy trực tiếp; khi đã ở bước chuẩn bị hồ sơ thì chuyển thành yêu cầu hủy chờ admin duyệt; nếu đơn MoMo đã thanh toán và bị hủy thì đánh dấu `Cần xử lý hoàn tiền`.
+
+### Chạy bản hoàn chỉnh
+
+Backend:
+
+```bash
+cd backend
+npm install
+copy .env.example .env
+npm run seed
+npm run dev
+```
+
+Frontend:
+
+```bash
+cd frontend
+npm install
+copy .env.example .env
+npm start
+```
+
+Mặc định backend chạy `http://localhost:3000`, frontend chạy `http://localhost:3001`.
+
+Tài khoản demo sau khi chạy seed:
+
+- Admin: `admin@hcmute.edu.vn` / `123456`
+- User: `duy@student.hcmute.edu.vn` / `123456`
+
+### Cấu hình MoMo Sandbox
+
+Trong `backend/.env`, điền các biến:
+
+```env
+MOMO_PARTNER_CODE=...
+MOMO_ACCESS_KEY=...
+MOMO_SECRET_KEY=...
+MOMO_ENDPOINT=https://test-payment.momo.vn/v2/gateway/api/create
+MOMO_REQUEST_TYPE=captureWallet
+API_PUBLIC_URL=https://your-public-backend-url
+CLIENT_URL=http://localhost:3001
+```
+
+Khi test MoMo từ máy local, nên dùng tunnel như ngrok cho backend rồi đặt `API_PUBLIC_URL` bằng URL public đó để MoMo gọi được IPN. Nếu chỉ để `http://localhost:3000`, trình duyệt vẫn có thể quay về trang kết quả, nhưng server MoMo không gọi được IPN từ ngoài Internet.
+
 ## 📋 Mục đích dự án
 
 Xây dựng website tư vấn sinh viên HCMUTE với đầy đủ tính năng:

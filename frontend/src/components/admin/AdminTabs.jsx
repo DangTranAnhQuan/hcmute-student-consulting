@@ -5,6 +5,7 @@ import { setActiveModule } from "../../redux/adminSlice";
 const labels = {
   articles: "Bài viết",
   faqs: "FAQ",
+  counselors: "Tư vấn viên",
 };
 
 const AdminTabs = () => {
@@ -34,4 +35,3 @@ const AdminTabs = () => {
 };
 
 export default AdminTabs;
-

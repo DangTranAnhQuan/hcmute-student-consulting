@@ -20,6 +20,12 @@ const getPopularity = (views = 0) => {
   return "Low";
 };
 
+const getArticleType = (contentType = "Article") => {
+  if (contentType === "News") return "news";
+  if (contentType === "Event") return "event";
+  return "article";
+};
+
 const matchesFilter = (item, filters) => {
   const exactFilters = [
     ["topic", "topic"],
@@ -94,14 +100,16 @@ exports.search = async (req, res) => {
       excerpt: article.excerpt || article.body?.replace(/<[^>]*>/g, "").slice(0, 160) || "",
       topic: article.topic,
       faculty: article.faculty || article.author || "HCMUTE",
-      contentType: "Article",
+      contentType: article.contentType || "Article",
       publishTime: getPublishTime(article.createdAt),
       popularity: getPopularity(article.views),
       counselingFormat: "All",
       appointmentStatus: "All",
-      type: "article",
+      type: getArticleType(article.contentType),
       refId: article._id.toString(),
       views: article.views || 0,
+      image: article.image,
+      author: article.author,
     }));
 
     const faqResults = faqs.map((faq) => ({

@@ -14,9 +14,26 @@ exports.verifyToken = (req, res, next) => {
     next();
   } catch (err) {
     return res
-      .status(403)
-      .json({ message: "Token không hợp lệ hoặc đã hết hạn" });
+      .status(401)
+      .json({ message: "Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại" });
   }
+};
+
+exports.optionalAuth = (req, res, next) => {
+  const token =
+    req.cookies.accessToken || req.headers.authorization?.split(" ")[1];
+
+  if (!token) {
+    return next();
+  }
+
+  try {
+    req.user = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
+  } catch (err) {
+    req.user = null;
+  }
+
+  return next();
 };
 
 exports.verifyAdmin = (req, res, next) => {

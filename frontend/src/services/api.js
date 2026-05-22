@@ -30,10 +30,20 @@ api.interceptors.response.use(
       responseData: error?.response?.data,
       message: error?.message,
     });
-    if (error.response?.status === 401) {
+    const message = error.response?.data?.message || "";
+    if (message) {
+      error.message = message;
+    }
+    const isTokenError =
+      error.response?.status === 401 ||
+      (error.response?.status === 403 && message.toLowerCase().includes("token"));
+
+    if (isTokenError) {
       localStorage.removeItem("accessToken");
       localStorage.removeItem("user");
-      window.location.href = "/login";
+      if (!window.location.pathname.includes("/login")) {
+        window.location.href = "/login";
+      }
     }
     return Promise.reject(error);
   },
@@ -56,12 +66,50 @@ export const adminAPI = {
   remove: (resource, id) => api.delete(`/admin/${resource}/${id}`),
 };
 
+export const counselorAPI = {
+  list: () => api.get("/counselors"),
+  detail: (id) => api.get(`/counselors/${id}`),
+  availableSlots: (id, date) =>
+    api.get(`/counselors/${id}/available-slots`, { params: { date } }),
+};
+
+export const consultationCartAPI = {
+  get: () => api.get("/consultation-cart"),
+  addItem: (data) => api.post("/consultation-cart/items", data),
+  updateItem: (id, data) => api.put(`/consultation-cart/items/${id}`, data),
+  removeItem: (id) => api.delete(`/consultation-cart/items/${id}`),
+  clear: () => api.delete("/consultation-cart"),
+};
+
+export const consultationOrderAPI = {
+  paymentMethods: () => api.get("/consultation-orders/payment-methods"),
+  checkout: (data) => api.post("/consultation-orders/checkout", data),
+  list: () => api.get("/consultation-orders"),
+  detail: (id) => api.get(`/consultation-orders/${id}`),
+  cancel: (id, reason) => api.post(`/consultation-orders/${id}/cancel`, { reason }),
+  payMomo: (id) => api.post(`/consultation-orders/${id}/pay/momo`),
+  reviewItem: (id, itemIndex, data) =>
+    api.post(`/consultation-orders/${id}/items/${itemIndex}/review`, data),
+  adminDashboard: () => api.get("/consultation-orders/admin/dashboard"),
+  adminList: (params = {}) =>
+    api.get("/consultation-orders/admin/all", { params }),
+  updateStatus: (id, status, note = "") =>
+    api.put(`/consultation-orders/admin/${id}/status`, { status, note }),
+  updatePaymentStatus: (id, paymentStatus, note = "") =>
+    api.put(`/consultation-orders/admin/${id}/payment`, { paymentStatus, note }),
+};
+
 export const faqAPI = {
   list: (params = {}) => api.get("/faqs", { params }),
 };
 
 export const searchAPI = {
   search: (params = {}) => api.get("/search", { params }),
+};
+
+export const contentAPI = {
+  list: (params = {}) => api.get("/content/articles", { params }),
+  detail: (id) => api.get(`/content/articles/${id}`),
 };
 
 export const forumAPI = {
