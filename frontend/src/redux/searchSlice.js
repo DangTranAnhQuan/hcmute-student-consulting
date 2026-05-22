@@ -4,6 +4,11 @@ import { searchAPI } from "../services/api";
 const searchOptions = {
   topics: [
     "Academic Affairs",
+    "Career",
+    "Financial",
+    "Giỏ tư vấn",
+    "Thanh toán",
+    "Theo dõi yêu cầu",
     "Scholarships",
     "Internships",
     "Jobs",
@@ -11,13 +16,19 @@ const searchOptions = {
     "Student Psychology",
     "Training Regulations",
     "Forum",
+    "FAQ",
   ],
-  faculties: ["HCMUTE", "Student Support Center", "Community"],
-  contentTypes: ["Article", "FAQ", "Forum"],
+  faculties: [
+    "HCMUTE",
+    "Student Support Center",
+    "Community",
+    "Phòng Công tác Sinh viên",
+    "Phòng Đào tạo",
+    "Trung tâm Quan hệ Doanh nghiệp",
+  ],
+  contentTypes: ["News", "Event", "Article", "FAQ", "Forum"],
   publishTimes: ["Last 24 hours", "Last 7 days", "Last 30 days", "All"],
   popularities: ["High", "Medium", "Low", "All"],
-  counselingFormats: ["Online", "Offline", "Hybrid", "All"],
-  appointmentStatuses: ["Confirmed", "Pending", "Completed", "All"],
 };
 
 const initialFilters = {
@@ -27,8 +38,6 @@ const initialFilters = {
   contentType: "",
   publishTime: "All",
   popularity: "All",
-  counselingFormat: "All",
-  appointmentStatus: "All",
 };
 
 export const fetchSearchResults = createAsyncThunk(

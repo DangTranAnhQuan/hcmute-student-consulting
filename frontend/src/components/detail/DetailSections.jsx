@@ -2,11 +2,18 @@ import React from "react";
 import { Badge } from "../common/CommonUI";
 
 export const DetailBanner = ({ item, type }) => {
+  const fallbackImage =
+    "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=1200&h=640&fit=crop";
+
   return (
     <div className="relative rounded-xl overflow-hidden shadow-md">
       <img
         src={item.image}
         alt={item.title}
+        onError={(event) => {
+          event.currentTarget.onerror = null;
+          event.currentTarget.src = fallbackImage;
+        }}
         className="w-full h-64 md:h-80 object-cover"
       />
       <div className="absolute inset-0 bg-black/45" />
@@ -97,6 +104,11 @@ export const RelatedPosts = ({ related = [], type }) => {
             <img
               src={post.image}
               alt={post.title}
+              onError={(event) => {
+                event.currentTarget.onerror = null;
+                event.currentTarget.src =
+                  "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=600&h=320&fit=crop";
+              }}
               className="w-full h-32 object-cover group-hover:opacity-90"
             />
             <div className="p-3">

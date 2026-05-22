@@ -14,6 +14,9 @@ const adminRoutes = require("./routes/adminRoutes");
 const faqRoutes = require("./routes/faqRoutes");
 const searchRoutes = require("./routes/searchRoutes");
 const forumRoutes = require("./routes/forumRoutes");
+const consultationCartRoutes = require("./routes/consultationCartRoutes");
+const consultationOrderRoutes = require("./routes/consultationOrderRoutes");
+const contentRoutes = require("./routes/contentRoutes");
 
 const app = express();
 
@@ -55,6 +58,9 @@ app.use("/api/admin", adminRoutes);
 app.use("/api/faqs", faqRoutes);
 app.use("/api/search", searchRoutes);
 app.use("/api/forum", forumRoutes);
+app.use("/api/content", contentRoutes);
+app.use("/api/consultation-cart", consultationCartRoutes);
+app.use("/api/consultation-orders", consultationOrderRoutes);
 
 // Health check
 app.get("/api/health", (req, res) => {

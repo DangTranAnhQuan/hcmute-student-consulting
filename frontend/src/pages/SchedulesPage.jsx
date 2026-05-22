@@ -1,13 +1,82 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { getUserBookings, cancelBooking } from "../redux/scheduleSlice";
 import { useAuth } from "../redux/hooks";
+
+const statusLabels = {
+  pending: "Chờ xác nhận",
+  confirmed: "Đã xác nhận",
+  completed: "Hoàn thành",
+  cancelled: "Đã hủy",
+};
+
+const meetingTypeLabels = {
+  online: "Online",
+  "in-person": "Trực tiếp",
+};
+
+const filterOptions = [
+  { value: "all", label: "Tất cả" },
+  { value: "upcoming", label: "Sắp tới" },
+  { value: "past", label: "Đã qua" },
+  { value: "pending", label: "Chờ xác nhận" },
+  { value: "confirmed", label: "Đã xác nhận" },
+  { value: "completed", label: "Hoàn thành" },
+  { value: "cancelled", label: "Đã hủy" },
+];
+
+const sortOptions = [
+  { value: "dateAsc", label: "Gần nhất trước" },
+  { value: "dateDesc", label: "Mới tạo sau" },
+  { value: "status", label: "Trạng thái" },
+];
+
+const formatDate = (value) =>
+  new Intl.DateTimeFormat("vi-VN", {
+    weekday: "long",
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  }).format(new Date(value));
+
+const formatDay = (value) =>
+  new Intl.DateTimeFormat("vi-VN", { day: "2-digit" }).format(new Date(value));
+
+const formatMonth = (value) =>
+  new Intl.DateTimeFormat("vi-VN", { month: "short" }).format(new Date(value));
+
+const formatTime = (value) =>
+  new Intl.DateTimeFormat("vi-VN", {
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(new Date(value));
+
+const getStatusBadgeClass = (status) => {
+  const statusStyles = {
+    confirmed: "border-green-200 bg-green-50 text-green-700",
+    pending: "border-amber-200 bg-amber-50 text-amber-700",
+    completed: "border-blue-200 bg-blue-50 text-blue-700",
+    cancelled: "border-red-200 bg-red-50 text-red-700",
+  };
+  return statusStyles[status] || "border-gray-200 bg-gray-50 text-gray-700";
+};
+
+const getScheduleAccentClass = (status) => {
+  const accents = {
+    confirmed: "border-l-green-500",
+    pending: "border-l-amber-500",
+    completed: "border-l-blue-500",
+    cancelled: "border-l-red-500",
+  };
+  return accents[status] || "border-l-gray-300";
+};
 
 export default function SchedulesPage() {
   const dispatch = useDispatch();
   const { user } = useAuth();
   const [filter, setFilter] = useState("all");
-  const [sortBy, setSortBy] = useState("date");
+  const [sortBy, setSortBy] = useState("dateAsc");
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [cancelingBookingId, setCancelingBookingId] = useState(null);
 
@@ -19,22 +88,68 @@ export default function SchedulesPage() {
     }
   }, [user, dispatch]);
 
+  const nowTime = Date.now();
+  const stats = {
+    total: bookings.length,
+    upcoming: bookings.filter(
+      (booking) =>
+        new Date(booking.startTime).getTime() > nowTime &&
+        !["cancelled", "completed"].includes(booking.status),
+    ).length,
+    pending: bookings.filter((booking) => booking.status === "pending").length,
+    completed: bookings.filter((booking) => booking.status === "completed").length,
+  };
+
+  const filteredBookings = bookings.filter((booking) => {
+    const startTime = new Date(booking.startTime).getTime();
+    if (filter === "upcoming") {
+      return (
+        startTime > nowTime &&
+        !["cancelled", "completed"].includes(booking.status)
+      );
+    }
+    if (filter === "past") {
+      return startTime < nowTime || booking.status === "completed";
+    }
+    if (filter === "all") {
+      return true;
+    }
+    return booking.status === filter;
+  });
+
+  const sortedBookings = [...filteredBookings].sort((a, b) => {
+    if (sortBy === "dateAsc") {
+      return new Date(a.startTime) - new Date(b.startTime);
+    }
+    if (sortBy === "dateDesc") {
+      return new Date(b.startTime) - new Date(a.startTime);
+    }
+    return (statusLabels[a.status] || a.status || "").localeCompare(
+      statusLabels[b.status] || b.status || "",
+      "vi",
+    );
+  });
+
+  const cancelingBooking = bookings.find(
+    (booking) => booking._id === cancelingBookingId,
+  );
+
   const handleCancelClick = (bookingId) => {
     setCancelingBookingId(bookingId);
     setShowConfirmModal(true);
   };
 
-  const handleConfirmCancel = () => {
-    if (cancelingBookingId) {
-      dispatch(
-        cancelBooking({
-          bookingId: cancelingBookingId,
-          reason: "User requested cancellation",
-        }),
-      );
-      setShowConfirmModal(false);
-      setCancelingBookingId(null);
-    }
+  const handleConfirmCancel = async () => {
+    if (!cancelingBookingId) return;
+
+    await dispatch(
+      cancelBooking({
+        bookingId: cancelingBookingId,
+        reason: "Người dùng yêu cầu hủy lịch",
+      }),
+    );
+    setShowConfirmModal(false);
+    setCancelingBookingId(null);
   };
 
   const handleCloseModal = () => {
@@ -42,186 +157,263 @@ export default function SchedulesPage() {
     setCancelingBookingId(null);
   };
 
-  const filteredBookings = bookings.filter((booking) => {
-    if (filter === "upcoming") {
-      return (
-        new Date(booking.startTime) > new Date() &&
-        booking.status !== "cancelled"
-      );
-    }
-    if (filter === "past") {
-      return new Date(booking.startTime) < new Date();
-    }
-    return true;
-  });
-
-  const sortedBookings = [...filteredBookings].sort((a, b) => {
-    if (sortBy === "date") {
-      return new Date(a.startTime) - new Date(b.startTime);
-    }
-    return 0;
-  });
-
-  const getStatusBadge = (status) => {
-    const statusStyles = {
-      confirmed: "bg-green-100 text-green-800",
-      pending: "bg-yellow-100 text-yellow-800",
-      completed: "bg-blue-100 text-blue-800",
-      cancelled: "bg-red-100 text-red-800",
-    };
-    return statusStyles[status] || "bg-gray-100 text-gray-800";
-  };
-
   return (
     <div className="min-h-screen bg-gray-50 py-8">
-      <div className="container mx-auto px-4">
-        <h1 className="text-3xl font-bold mb-8">My Schedules</h1>
-
-        {/* Filters */}
-        <div className="bg-white rounded-lg shadow p-4 mb-6 flex gap-4">
+      <div className="mx-auto max-w-7xl px-4">
+        <div className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Filter
-            </label>
-            <select
-              value={filter}
-              onChange={(e) => setFilter(e.target.value)}
-              className="border border-gray-300 rounded px-3 py-2"
-            >
-              <option value="all">All Bookings</option>
-              <option value="upcoming">Upcoming</option>
-              <option value="past">Past</option>
-            </select>
+            <h1 className="text-3xl font-bold text-gray-900">
+              Lịch tư vấn của tôi
+            </h1>
+            <p className="mt-2 text-gray-600">
+              Theo dõi lịch đã đặt, trạng thái xử lý và thông tin buổi tư vấn.
+            </p>
           </div>
+          <Link
+            to="/book-counselor"
+            className="inline-flex justify-center rounded-lg bg-primary px-5 py-2.5 font-semibold text-white hover:bg-primary-dark"
+          >
+            Đặt lịch mới
+          </Link>
+        </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Sort By
-            </label>
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value)}
-              className="border border-gray-300 rounded px-3 py-2"
-            >
-              <option value="date">Date</option>
-              <option value="status">Status</option>
-            </select>
+        <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <div className="rounded-lg border border-gray-100 bg-white p-4 shadow-sm">
+            <p className="text-sm text-gray-500">Tổng lịch</p>
+            <p className="mt-2 text-3xl font-bold text-gray-900">{stats.total}</p>
+          </div>
+          <div className="rounded-lg border border-green-100 bg-white p-4 shadow-sm">
+            <p className="text-sm text-gray-500">Sắp tới</p>
+            <p className="mt-2 text-3xl font-bold text-green-600">
+              {stats.upcoming}
+            </p>
+          </div>
+          <div className="rounded-lg border border-amber-100 bg-white p-4 shadow-sm">
+            <p className="text-sm text-gray-500">Chờ xác nhận</p>
+            <p className="mt-2 text-3xl font-bold text-amber-600">
+              {stats.pending}
+            </p>
+          </div>
+          <div className="rounded-lg border border-blue-100 bg-white p-4 shadow-sm">
+            <p className="text-sm text-gray-500">Hoàn thành</p>
+            <p className="mt-2 text-3xl font-bold text-blue-600">
+              {stats.completed}
+            </p>
+          </div>
+        </div>
+
+        <div className="mb-6 rounded-lg bg-white p-4 shadow-sm">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-3 md:items-end">
+            <div className="md:col-span-2">
+              <label className="mb-2 block text-sm font-medium text-gray-700">
+                Bộ lọc
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {filterOptions.map((option) => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() => setFilter(option.value)}
+                    className={`rounded-full border px-3 py-2 text-sm font-semibold ${
+                      filter === option.value
+                        ? "border-primary bg-primary text-white"
+                        : "border-gray-200 bg-white text-gray-700 hover:border-primary hover:text-primary"
+                    }`}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <label className="mb-2 block text-sm font-medium text-gray-700">
+                Sắp xếp
+              </label>
+              <select
+                value={sortBy}
+                onChange={(event) => setSortBy(event.target.value)}
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+              >
+                {sortOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
         </div>
 
         {loading ? (
-          <div className="text-center py-8">Loading your bookings...</div>
+          <div className="space-y-4">
+            {[1, 2, 3].map((item) => (
+              <div
+                key={item}
+                className="h-32 animate-pulse rounded-lg bg-white shadow-sm"
+              />
+            ))}
+          </div>
         ) : error ? (
-          <div className="bg-red-50 border border-red-200 rounded p-4 text-red-700">
+          <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-red-700">
             {error}
           </div>
         ) : sortedBookings.length === 0 ? (
-          <div className="bg-white rounded-lg shadow p-8 text-center">
-            <p className="text-gray-600 text-lg">
-              No bookings found. Start by booking a counselor!
+          <div className="rounded-lg bg-white p-10 text-center shadow-sm">
+            <h2 className="text-xl font-bold text-gray-900">
+              Chưa có lịch tư vấn phù hợp
+            </h2>
+            <p className="mt-2 text-gray-600">
+              Thử đổi bộ lọc hoặc đặt một lịch tư vấn mới.
             </p>
+            <Link
+              to="/book-counselor"
+              className="mt-5 inline-flex rounded-lg bg-primary px-5 py-2.5 font-semibold text-white hover:bg-primary-dark"
+            >
+              Chọn tư vấn viên
+            </Link>
           </div>
         ) : (
-          <div className="grid gap-4">
-            {sortedBookings.map((booking) => (
-              <div key={booking._id} className="bg-white rounded-lg shadow p-6">
-                <div className="flex justify-between items-start">
-                  <div className="flex-1">
-                    <h3 className="text-lg font-semibold mb-2">
-                      {booking.title}
-                    </h3>
-                    <p className="text-gray-600 mb-3">{booking.description}</p>
+          <div className="space-y-4">
+            {sortedBookings.map((booking) => {
+              const canCancel =
+                !["cancelled", "completed"].includes(booking.status) &&
+                new Date(booking.startTime) > new Date();
+              const counselorName =
+                booking.counselorId?.fullName || "Tư vấn viên";
 
-                    <div className="grid grid-cols-2 gap-4 text-sm">
-                      <div>
-                        <span className="font-medium">Counselor:</span>
-                        <p className="text-gray-600">
-                          {booking.counselorId?.fullName}
-                        </p>
+              return (
+                <article
+                  key={booking._id}
+                  className={`rounded-lg border border-gray-100 border-l-4 bg-white p-5 shadow-sm ${getScheduleAccentClass(
+                    booking.status,
+                  )}`}
+                >
+                  <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                    <div className="flex gap-4">
+                      <div className="flex h-20 w-20 shrink-0 flex-col items-center justify-center rounded-lg border border-gray-200 bg-gray-50 text-center">
+                        <span className="text-2xl font-bold text-gray-900">
+                          {formatDay(booking.startTime)}
+                        </span>
+                        <span className="text-xs font-semibold uppercase text-gray-500">
+                          {formatMonth(booking.startTime)}
+                        </span>
                       </div>
+
                       <div>
-                        <span className="font-medium">Date:</span>
-                        <p className="text-gray-600">
-                          {new Date(booking.startTime).toLocaleDateString()}
-                        </p>
-                      </div>
-                      <div>
-                        <span className="font-medium">Time:</span>
-                        <p className="text-gray-600">
-                          {new Date(booking.startTime).toLocaleTimeString()} -{" "}
-                          {new Date(booking.endTime).toLocaleTimeString()}
-                        </p>
-                      </div>
-                      <div>
-                        <span className="font-medium">Type:</span>
-                        <p className="text-gray-600 capitalize">
-                          {booking.meetingType}
-                        </p>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <h2 className="text-lg font-bold text-gray-900">
+                            {booking.title || "Lịch tư vấn"}
+                          </h2>
+                          <span
+                            className={`rounded-full border px-3 py-1 text-xs font-semibold ${getStatusBadgeClass(
+                              booking.status,
+                            )}`}
+                          >
+                            {statusLabels[booking.status] || booking.status}
+                          </span>
+                        </div>
+                        {booking.description && (
+                          <p className="mt-2 text-sm leading-6 text-gray-600">
+                            {booking.description}
+                          </p>
+                        )}
+
+                        <div className="mt-4 grid grid-cols-1 gap-3 text-sm text-gray-700 sm:grid-cols-2 xl:grid-cols-4">
+                          <div>
+                            <p className="text-xs font-semibold uppercase text-gray-400">
+                              Tư vấn viên
+                            </p>
+                            <p className="font-semibold text-gray-900">
+                              {counselorName}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-xs font-semibold uppercase text-gray-400">
+                              Ngày
+                            </p>
+                            <p className="font-semibold text-gray-900">
+                              {formatDate(booking.startTime)}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-xs font-semibold uppercase text-gray-400">
+                              Giờ
+                            </p>
+                            <p className="font-semibold text-gray-900">
+                              {formatTime(booking.startTime)} -{" "}
+                              {formatTime(booking.endTime)}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-xs font-semibold uppercase text-gray-400">
+                              Hình thức
+                            </p>
+                            <p className="font-semibold text-gray-900">
+                              {meetingTypeLabels[booking.meetingType] ||
+                                booking.meetingType ||
+                                "Chưa cập nhật"}
+                            </p>
+                          </div>
+                        </div>
                       </div>
                     </div>
 
-                    {booking.meetingType === "online" &&
-                      booking.meetingLink && (
-                        <div className="mt-4">
-                          <a
-                            href={booking.meetingLink}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-blue-600 hover:underline"
-                          >
-                            Join Meeting
-                          </a>
-                        </div>
-                      )}
-                  </div>
-
-                  <div className="flex flex-col items-end gap-2">
-                    <span
-                      className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusBadge(booking.status)}`}
-                    >
-                      {booking.status.charAt(0).toUpperCase() +
-                        booking.status.slice(1)}
-                    </span>
-
-                    {booking.status !== "cancelled" &&
-                      new Date(booking.startTime) > new Date() && (
-                        <button
-                          onClick={() => handleCancelClick(booking._id)}
-                          className="text-red-600 hover:text-red-800 text-sm font-medium"
+                    <div className="flex flex-wrap gap-2 lg:justify-end">
+                      {booking.meetingType === "online" && booking.meetingLink && (
+                        <a
+                          href={booking.meetingLink}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex min-h-10 items-center justify-center rounded-lg border border-primary px-4 py-2 text-sm font-semibold text-primary hover:bg-blue-50"
                         >
-                          Cancel
+                          Vào phòng tư vấn
+                        </a>
+                      )}
+                      {canCancel && (
+                        <button
+                          type="button"
+                          onClick={() => handleCancelClick(booking._id)}
+                          className="inline-flex min-h-10 items-center justify-center rounded-lg border border-red-200 px-4 py-2 text-sm font-semibold text-red-600 hover:bg-red-50"
+                        >
+                          Hủy lịch
                         </button>
                       )}
+                    </div>
                   </div>
-                </div>
-              </div>
-            ))}
+                </article>
+              );
+            })}
           </div>
         )}
 
-        {/* Confirmation Modal */}
         {showConfirmModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg shadow-lg p-6 max-w-sm mx-auto">
-              <h2 className="text-lg font-bold text-gray-900 mb-4">
-                Cancel Booking
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
+            <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
+              <h2 className="text-xl font-bold text-gray-900">
+                Hủy lịch tư vấn
               </h2>
-              <p className="text-gray-600 mb-6">
-                Are you sure you want to cancel this booking? This action cannot
-                be undone.
+              <p className="mt-3 text-gray-600">
+                Bạn có chắc muốn hủy lịch{" "}
+                <span className="font-semibold text-gray-900">
+                  {cancelingBooking?.title || "tư vấn"}
+                </span>{" "}
+                không? Trạng thái lịch sẽ được cập nhật thành đã hủy.
               </p>
-              <div className="flex gap-4">
+              <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <button
+                  type="button"
                   onClick={handleCloseModal}
-                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 font-medium transition"
+                  className="rounded-lg border border-gray-300 px-4 py-2.5 font-semibold text-gray-700 hover:bg-gray-50"
                 >
-                  Keep Booking
+                  Giữ lịch
                 </button>
                 <button
+                  type="button"
                   onClick={handleConfirmCancel}
-                  className="flex-1 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition"
+                  className="rounded-lg bg-red-600 px-4 py-2.5 font-semibold text-white hover:bg-red-700"
                 >
-                  Yes, Cancel
+                  Xác nhận hủy
                 </button>
               </div>
             </div>

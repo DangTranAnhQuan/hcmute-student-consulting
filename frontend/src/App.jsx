@@ -21,6 +21,14 @@ import SearchPage from "./pages/SearchPage";
 import FAQPage from "./pages/FAQPage";
 import AdminPage from "./pages/AdminPage";
 import ForumPage from "./pages/ForumPage";
+import BookCounselorPage from "./pages/BookCounselorPage";
+import CounselorsListPage from "./pages/CounselorsListPage";
+import ConsultationAdminOrdersPage from "./pages/ConsultationAdminOrdersPage";
+import ConsultationCartPage from "./pages/ConsultationCartPage";
+import ConsultationCheckoutPage from "./pages/ConsultationCheckoutPage";
+import ConsultationOrderDetailPage from "./pages/ConsultationOrderDetailPage";
+import ConsultationOrdersPage from "./pages/ConsultationOrdersPage";
+import SchedulesPage from "./pages/SchedulesPage";
 
 // Components
 import { Navbar, Footer } from "./components/Layout";
@@ -95,6 +103,62 @@ function App() {
                 </ProtectedRoute>
               }
             />
+            <Route
+              path="/book-counselor"
+              element={
+                <ProtectedRoute>
+                  <CounselorsListPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/book-counselor/:counselorId"
+              element={
+                <ProtectedRoute>
+                  <BookCounselorPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/schedules"
+              element={
+                <ProtectedRoute>
+                  <SchedulesPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/consultation-cart"
+              element={
+                <ProtectedRoute>
+                  <ConsultationCartPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/consultation-checkout"
+              element={
+                <ProtectedRoute>
+                  <ConsultationCheckoutPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/consultation-orders"
+              element={
+                <ProtectedRoute>
+                  <ConsultationOrdersPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/consultation-orders/:id"
+              element={
+                <ProtectedRoute>
+                  <ConsultationOrderDetailPage />
+                </ProtectedRoute>
+              }
+            />
             
             {/* Profile Routes (Support specific or fallback profiles) */}
             <Route
@@ -128,6 +192,14 @@ function App() {
               element={
                 <ProtectedRoute requiredRole="admin">
                   <AdminPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/consultation-orders"
+              element={
+                <ProtectedRoute requiredRole="admin">
+                  <ConsultationAdminOrdersPage />
                 </ProtectedRoute>
               }
             />

@@ -15,20 +15,31 @@ const formatReply = (reply) => ({
   updatedAt: reply.updatedAt,
 });
 
-const formatThread = (thread) => ({
-  id: thread._id.toString(),
-  title: thread.title,
-  content: thread.content,
-  authorId: thread.authorId?.toString(),
-  author: thread.author,
-  tags: thread.tags || [],
-  solved: thread.solved,
-  pinned: thread.pinned,
-  votes: thread.votes || 0,
-  replies: (thread.replies || []).map(formatReply),
-  createdAt: thread.createdAt,
-  updatedAt: thread.updatedAt,
-});
+const formatThread = (thread, viewerId = "") => {
+  const helpfulBy = (thread.helpfulBy || []).map((id) => id.toString());
+  const authorId = thread.authorId?.toString();
+  const viewer = viewerId?.toString?.() || viewerId;
+
+  return {
+    id: thread._id.toString(),
+    title: thread.title,
+    content: thread.content,
+    authorId,
+    author: thread.author,
+    tags: thread.tags || [],
+    solved: thread.solved,
+    solvedBy: thread.solvedBy?.toString() || null,
+    solvedAt: thread.solvedAt,
+    pinned: thread.pinned,
+    votes: thread.votes || 0,
+    helpfulBy,
+    hasVoted: Boolean(viewer && helpfulBy.includes(viewer)),
+    canMarkSolved: Boolean(viewer && viewer === authorId),
+    replies: (thread.replies || []).map(formatReply),
+    createdAt: thread.createdAt,
+    updatedAt: thread.updatedAt,
+  };
+};
 
 exports.listThreads = async (req, res) => {
   try {
@@ -48,7 +59,7 @@ exports.listThreads = async (req, res) => {
       updatedAt: -1,
     });
 
-    return res.json({ threads: threads.map(formatThread) });
+    return res.json({ threads: threads.map((thread) => formatThread(thread, req.user?.id)) });
   } catch (err) {
     console.error("[forum:listThreads] server error", err);
     return res.status(500).json({ message: "Lỗi server", details: err.message });
@@ -62,7 +73,7 @@ exports.getThread = async (req, res) => {
       return res.status(404).json({ message: "Không tìm thấy chủ đề" });
     }
 
-    return res.json(formatThread(thread));
+    return res.json(formatThread(thread, req.user?.id));
   } catch (err) {
     console.error("[forum:getThread] server error", err);
     return res.status(500).json({ message: "Lỗi server", details: err.message });
@@ -86,7 +97,7 @@ exports.createThread = async (req, res) => {
       author: getDisplayName(user),
     });
 
-    return res.status(201).json(formatThread(thread));
+    return res.status(201).json(formatThread(thread, req.user.id));
   } catch (err) {
     console.error("[forum:createThread] server error", err);
     return res.status(500).json({ message: "Lỗi server", details: err.message });
@@ -113,7 +124,7 @@ exports.createReply = async (req, res) => {
     });
     await thread.save();
 
-    return res.status(201).json(formatThread(thread));
+    return res.status(201).json(formatThread(thread, req.user.id));
   } catch (err) {
     console.error("[forum:createReply] server error", err);
     return res.status(500).json({ message: "Lỗi server", details: err.message });
@@ -122,17 +133,27 @@ exports.createReply = async (req, res) => {
 
 exports.upvoteThread = async (req, res) => {
   try {
-    const thread = await ForumThread.findByIdAndUpdate(
-      req.params.id,
-      { $inc: { votes: 1 } },
-      { new: true },
-    );
-
+    const thread = await ForumThread.findById(req.params.id);
     if (!thread) {
       return res.status(404).json({ message: "Không tìm thấy chủ đề" });
     }
 
-    return res.json(formatThread(thread));
+    const userId = req.user.id;
+    const hasVoted = (thread.helpfulBy || []).some(
+      (id) => id.toString() === userId,
+    );
+
+    if (hasVoted) {
+      thread.helpfulBy = thread.helpfulBy.filter((id) => id.toString() !== userId);
+      thread.votes = Math.max(0, Number(thread.votes || 0) - 1);
+    } else {
+      thread.helpfulBy.push(userId);
+      thread.votes = Number(thread.votes || 0) + 1;
+    }
+
+    await thread.save();
+
+    return res.json(formatThread(thread, userId));
   } catch (err) {
     console.error("[forum:upvoteThread] server error", err);
     return res.status(500).json({ message: "Lỗi server", details: err.message });
@@ -152,9 +173,11 @@ exports.toggleSolved = async (req, res) => {
     }
 
     thread.solved = !thread.solved;
+    thread.solvedBy = thread.solved ? req.user.id : null;
+    thread.solvedAt = thread.solved ? new Date() : null;
     await thread.save();
 
-    return res.json(formatThread(thread));
+    return res.json(formatThread(thread, req.user.id));
   } catch (err) {
     console.error("[forum:toggleSolved] server error", err);
     return res.status(500).json({ message: "Lỗi server", details: err.message });
@@ -171,7 +194,7 @@ exports.togglePin = async (req, res) => {
     thread.pinned = !thread.pinned;
     await thread.save();
 
-    return res.json(formatThread(thread));
+    return res.json(formatThread(thread, req.user.id));
   } catch (err) {
     console.error("[forum:togglePin] server error", err);
     return res.status(500).json({ message: "Lỗi server", details: err.message });
@@ -207,7 +230,7 @@ exports.deleteReply = async (req, res) => {
     reply.deleteOne();
     await thread.save();
 
-    return res.json(formatThread(thread));
+    return res.json(formatThread(thread, req.user.id));
   } catch (err) {
     console.error("[forum:deleteReply] server error", err);
     return res.status(500).json({ message: "Lỗi server", details: err.message });

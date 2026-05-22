@@ -16,6 +16,8 @@ const ForumThread = ({ threadId }) => {
   );
   const user = useSelector((state) => state.auth.user);
   const isAdmin = user?.role === "admin";
+  const userId = user?.id || user?._id;
+  const canMarkSolved = isAdmin || thread?.authorId === userId;
 
   if (!thread) {
     return <div className="text-sm text-gray-500">Chọn một chủ đề để xem chi tiết.</div>;
@@ -32,24 +34,45 @@ const ForumThread = ({ threadId }) => {
         </div>
 
         <div className="flex flex-col items-end gap-2">
-          <div className="text-sm font-semibold">{thread.votes || 0} ↑</div>
+          <div className="text-sm font-semibold">{thread.votes || 0} hữu ích</div>
           <div className="flex flex-wrap justify-end gap-2">
             <button
               type="button"
               onClick={() => dispatch(upvoteForumThread(thread.id))}
-              className="px-3 py-1 rounded bg-blue-50 text-blue-700"
-            >
-              Hữu ích
-            </button>
-            <button
-              type="button"
-              onClick={() => dispatch(toggleForumSolved(thread.id))}
               className={`px-3 py-1 rounded ${
-                thread.solved ? "bg-green-50 text-green-700" : "bg-gray-50 text-gray-700"
+                thread.hasVoted
+                  ? "bg-blue-600 text-white"
+                  : "bg-blue-50 text-blue-700"
               }`}
+              title="Mỗi tài khoản chỉ được đánh dấu hữu ích một lần. Bấm lại để bỏ đánh dấu."
             >
-              {thread.solved ? "Đã giải quyết" : "Đánh dấu xong"}
+              {thread.hasVoted ? "Đã thấy hữu ích" : "Hữu ích"}
             </button>
+            {canMarkSolved ? (
+              <button
+                type="button"
+                onClick={() => dispatch(toggleForumSolved(thread.id))}
+                className={`px-3 py-1 rounded ${
+                  thread.solved
+                    ? "bg-green-600 text-white"
+                    : "bg-green-50 text-green-700"
+                }`}
+                title="Chủ câu hỏi hoặc admin dùng nút này khi câu hỏi đã có câu trả lời đủ dùng. Chủ đề đã giải quyết sẽ được hiển thị để người khác tham khảo."
+              >
+                {thread.solved ? "Mở lại câu hỏi" : "Đánh dấu đã giải quyết"}
+              </button>
+            ) : (
+              <span
+                className={`px-3 py-1 rounded text-sm ${
+                  thread.solved
+                    ? "bg-green-50 text-green-700"
+                    : "bg-gray-50 text-gray-600"
+                }`}
+                title="Chỉ chủ câu hỏi hoặc admin được đánh dấu câu hỏi đã giải quyết."
+              >
+                {thread.solved ? "Đã giải quyết" : "Đang chờ trả lời đủ"}
+              </span>
+            )}
             {isAdmin && (
               <>
                 <button
@@ -77,6 +100,12 @@ const ForumThread = ({ threadId }) => {
       </div>
 
       <div className="prose max-w-none text-gray-800">{thread.content}</div>
+      {thread.solved && (
+        <div className="rounded-lg border border-green-200 bg-green-50 p-3 text-sm text-green-700">
+          Chủ đề này đã được đánh dấu là đã giải quyết. Người đọc vẫn có thể tham khảo
+          hoặc bổ sung trả lời nếu có thông tin mới.
+        </div>
+      )}
 
       <div>
         <h3 className="text-lg font-semibold">Trả lời</h3>

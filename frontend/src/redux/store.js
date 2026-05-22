@@ -6,6 +6,7 @@ import searchReducer from "./searchSlice";
 import faqReducer from "./faqSlice";
 import adminReducer from "./adminSlice";
 import forumReducer from "./forumSlice";
+import scheduleReducer from "./scheduleSlice";
 
 const store = configureStore({
   reducer: {
@@ -16,6 +17,7 @@ const store = configureStore({
     faq: faqReducer,
     admin: adminReducer,
     forum: forumReducer,
+    schedule: scheduleReducer,
   },
 });
 

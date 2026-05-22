@@ -1,13 +1,40 @@
 import { createSlice } from "@reduxjs/toolkit";
 
+const decodeTokenPayload = (token) => {
+  try {
+    const payload = token.split(".")[1];
+    const normalized = payload.replace(/-/g, "+").replace(/_/g, "/");
+    return JSON.parse(window.atob(normalized));
+  } catch (error) {
+    return null;
+  }
+};
+
+const getStoredAuth = () => {
+  const token = localStorage.getItem("accessToken");
+  const user = localStorage.getItem("user");
+  const payload = token ? decodeTokenPayload(token) : null;
+
+  if (!token || !payload?.exp || payload.exp * 1000 <= Date.now()) {
+    localStorage.removeItem("accessToken");
+    localStorage.removeItem("user");
+    return { token: null, user: null };
+  }
+
+  return {
+    token,
+    user: user ? JSON.parse(user) : null,
+  };
+};
+
+const storedAuth = getStoredAuth();
+
 const initialState = {
-  user: localStorage.getItem("user")
-    ? JSON.parse(localStorage.getItem("user"))
-    : null,
-  token: localStorage.getItem("accessToken") || null,
+  user: storedAuth.user,
+  token: storedAuth.token,
   isLoading: false,
   error: null,
-  isAuthenticated: !!localStorage.getItem("accessToken"),
+  isAuthenticated: !!storedAuth.token,
 };
 
 const authSlice = createSlice({
