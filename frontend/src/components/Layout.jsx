@@ -118,7 +118,6 @@ export const Footer = () => {
 
         <div className="mt-8 flex flex-col gap-3 border-t border-slate-800 pt-6 text-sm text-slate-400 md:flex-row md:items-center md:justify-between">
           <p>© 2026 HCMUTE. Tất cả quyền được bảo lưu.</p>
-          <p>CNPMM - BT06_23110193_DinhNguyenDucDuy</p>
         </div>
       </div>
     </footer>
