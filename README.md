@@ -2,7 +2,7 @@
 
 ## Bản hoàn chỉnh BT06 nhóm
 
-Bản `hcmute-student-consulting_HoanThanh` đã áp dụng 03 yêu cầu của bài bán hàng vào đề tài tư vấn sinh viên:
+Bản `hcmute-student-consulting` đã áp dụng 03 yêu cầu của bài bán hàng vào đề tài tư vấn sinh viên:
 
 - Giỏ hàng tương ứng với **giỏ tư vấn**: người dùng chọn từng tư vấn viên/dịch vụ, có thể chọn riêng lẻ hoặc chọn một nhóm mục trong giỏ trước khi thanh toán. Dữ liệu giỏ lưu bằng MongoDB qua model `ConsultationCart`.
 - Thanh toán tương ứng với **xác nhận yêu cầu tư vấn**: hỗ trợ `COD` bắt buộc và `MoMo Sandbox`. MoMo không giả lập; nếu thiếu biến môi trường sandbox thì API trả lỗi thay vì tạo link ảo.
