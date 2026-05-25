@@ -11,12 +11,26 @@ const RegisterPage = () => {
   const [successMessage, setSuccessMessage] = useState("");
   const { register, verifyOTP, isLoading, error } = useAuth();
 
+  const getOtpMessage = (response, fallbackMessage) => {
+    const message = response?.message || fallbackMessage;
+    return response?.devOtp
+      ? `${message}\nMã OTP thử nghiệm: ${response.devOtp}`
+      : message;
+  };
+
   const handleRegister = async (formData) => {
     try {
-      await register(formData.username, formData.email, formData.password);
+      const response = await register(
+        formData.username,
+        formData.email,
+        formData.password,
+      );
       setRegisteredEmail(formData.email);
       setSuccessMessage(
-        "Đăng ký thành công. Vui lòng xác nhận OTP để kích hoạt tài khoản.",
+        getOtpMessage(
+          response,
+          "Đăng ký thành công. Vui lòng xác nhận OTP để kích hoạt tài khoản.",
+        ),
       );
       setStep("otp");
     } catch (err) {

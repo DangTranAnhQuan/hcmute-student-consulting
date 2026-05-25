@@ -13,6 +13,9 @@ import {
   forgotPasswordStart,
   forgotPasswordSuccess,
   forgotPasswordFailure,
+  verifyResetOTPStart,
+  verifyResetOTPSuccess,
+  verifyResetOTPFailure,
   resetPasswordStart,
   resetPasswordSuccess,
   resetPasswordFailure,
@@ -39,19 +42,50 @@ const logApiError = (action, error, payload) => {
 
 const getApiErrorMessage = (error, fallbackMessage) => {
   const responseData = error?.response?.data;
+  const status = error?.response?.status;
 
-  if (Array.isArray(responseData?.errors) && responseData.errors.length > 0) {
-    return responseData.errors
-      .map((item) => item?.msg || item?.message || "Lỗi không xác định")
-      .join(" | ");
+  if (!error?.response) {
+    return `${fallbackMessage}. Không kết nối được server, vui lòng kiểm tra backend hoặc kết nối mạng.`;
   }
 
-  return (
-    responseData?.details ||
-    responseData?.message ||
-    error?.message ||
-    fallbackMessage
-  );
+  const parts = [];
+  const addPart = (value) => {
+    if (typeof value === "string" && value.trim()) {
+      parts.push(value.trim());
+    }
+  };
+
+  addPart(responseData?.message);
+  addPart(responseData?.details);
+
+  if (Array.isArray(responseData?.errors) && responseData.errors.length > 0) {
+    const validationMessages = responseData.errors
+      .map((item) => {
+        const field = item?.field || item?.path || item?.param;
+        const message = item?.msg || item?.message;
+        return field && message ? `${field}: ${message}` : message;
+      })
+      .filter(Boolean)
+      .join("\n");
+
+    addPart(validationMessages);
+  }
+
+  if (status === 429 && responseData?.retryAfter) {
+    const retryAfter = Number(responseData.retryAfter);
+    const retryMessage =
+      retryAfter >= 60
+        ? `Vui lòng thử lại sau khoảng ${Math.ceil(retryAfter / 60)} phút.`
+        : `Vui lòng thử lại sau ${retryAfter} giây.`;
+
+    addPart(retryMessage);
+  }
+
+  if (parts.length === 0) {
+    addPart(error?.message || fallbackMessage);
+  }
+
+  return [...new Set(parts)].join("\n");
 };
 
 export const useAuth = () => {
@@ -129,6 +163,20 @@ export const useAuth = () => {
     }
   };
 
+  const verifyResetOTP = async (email, otp) => {
+    dispatch(verifyResetOTPStart());
+    try {
+      const response = await authAPI.verifyResetOTP(email, otp);
+      dispatch(verifyResetOTPSuccess());
+      return response.data;
+    } catch (error) {
+      logApiError("verify-reset-otp", error, { email, otp });
+      const errorMessage = getApiErrorMessage(error, "Xác thực OTP thất bại");
+      dispatch(verifyResetOTPFailure(errorMessage));
+      throw error;
+    }
+  };
+
   const resetPassword = async (email, otp, newPassword) => {
     dispatch(resetPasswordStart());
     try {
@@ -184,6 +232,7 @@ export const useAuth = () => {
     register,
     verifyOTP,
     forgotPassword,
+    verifyResetOTP,
     resetPassword,
     getProfile,
     updateProfile,
