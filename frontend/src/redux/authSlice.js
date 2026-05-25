@@ -109,6 +109,19 @@ const authSlice = createSlice({
       state.error = action.payload;
     },
 
+    verifyResetOTPStart: (state) => {
+      state.isLoading = true;
+      state.error = null;
+    },
+    verifyResetOTPSuccess: (state) => {
+      state.isLoading = false;
+      state.error = null;
+    },
+    verifyResetOTPFailure: (state, action) => {
+      state.isLoading = false;
+      state.error = action.payload;
+    },
+
     resetPasswordStart: (state) => {
       state.isLoading = true;
       state.error = null;
@@ -170,6 +183,9 @@ export const {
   forgotPasswordStart,
   forgotPasswordSuccess,
   forgotPasswordFailure,
+  verifyResetOTPStart,
+  verifyResetOTPSuccess,
+  verifyResetOTPFailure,
   resetPasswordStart,
   resetPasswordSuccess,
   resetPasswordFailure,

@@ -38,6 +38,7 @@ export const LoginForm = ({ onSubmit, loading, error }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (loading) return;
     if (validateForm()) {
       onSubmit(formData);
     }
@@ -148,6 +149,7 @@ export const RegisterForm = ({ onSubmit, loading, error, onOTPRequired }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (loading) return;
     if (validateForm()) {
       onSubmit(formData);
     }
@@ -230,6 +232,7 @@ export const OTPVerificationForm = ({ email, onSubmit, loading, error }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (loading) return;
     if (!otp) {
       setOtpError("Mã OTP không được để trống");
       return;
@@ -247,7 +250,7 @@ export const OTPVerificationForm = ({ email, onSubmit, loading, error }) => {
 
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-sm text-blue-700">
         <p>
-          Mã OTP đã được gửi đến email: <strong>{email}</strong>
+          Nhập mã OTP cho email: <strong>{email}</strong>
         </p>
         <p>Mã OTP sẽ hết hạn sau 5 phút.</p>
       </div>
@@ -291,6 +294,7 @@ export const ForgotPasswordForm = ({ onSubmit, loading, error }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (loading) return;
     if (!email) {
       setEmailError("Email không được để trống");
       return;
@@ -367,6 +371,7 @@ export const ResetPasswordForm = ({ email, otp, onSubmit, loading, error }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (loading) return;
     if (validateForm()) {
       onSubmit(formData);
     }

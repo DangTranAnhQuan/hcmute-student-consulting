@@ -14,13 +14,22 @@ const ForgotPasswordPage = () => {
   const [email, setEmail] = useState("");
   const [otp, setOtp] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
-  const { forgotPassword, resetPassword, isLoading, error } = useAuth();
+  const { forgotPassword, verifyResetOTP, resetPassword, isLoading, error } = useAuth();
+
+  const getOtpMessage = (response, fallbackMessage) => {
+    const message = response?.message || fallbackMessage;
+    return response?.devOtp
+      ? `${message}\nMã OTP thử nghiệm: ${response.devOtp}`
+      : message;
+  };
 
   const handleForgotPassword = async (userEmail) => {
     try {
-      await forgotPassword(userEmail);
+      const response = await forgotPassword(userEmail);
       setEmail(userEmail);
-      setSuccessMessage("Mã OTP đã được gửi đến email của bạn.");
+      setSuccessMessage(
+        getOtpMessage(response, "Mã OTP đã được gửi đến email của bạn."),
+      );
       setStep("otp");
     } catch (err) {
       console.error("Forgot password failed:", err);
@@ -29,8 +38,9 @@ const ForgotPasswordPage = () => {
 
   const handleOTPVerification = async (otpCode) => {
     try {
+      const response = await verifyResetOTP(email, otpCode);
       setOtp(otpCode);
-      setSuccessMessage("Mã OTP hợp lệ. Vui lòng nhập mật khẩu mới.");
+      setSuccessMessage(response?.message || "Mã OTP hợp lệ. Vui lòng nhập mật khẩu mới.");
       setStep("reset");
     } catch (err) {
       console.error("OTP verification failed:", err);

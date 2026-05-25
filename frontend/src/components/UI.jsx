@@ -83,7 +83,7 @@ export const Alert = ({ type = "info", message }) => {
   };
 
   return (
-    <div className={`rounded-xl border-l-4 p-4 text-sm ${typeStyles[type]}`}>
+    <div className={`whitespace-pre-line rounded-xl border-l-4 p-4 text-sm ${typeStyles[type]}`}>
       {message}
     </div>
   );
