@@ -1,0 +1,370 @@
+import React from "react";
+import { Spinner } from "../components/UI";
+import { contentAPI } from "../services/api";
+
+const categoryMeta = {
+  "Academic Affairs": { icon: "📚", label: "Academic Affairs" },
+  Scholarships: { icon: "🎓", label: "Scholarships" },
+  Internships: { icon: "💼", label: "Internships" },
+  Jobs: { icon: "🚀", label: "Jobs" },
+  "Soft Skills": { icon: "🎯", label: "Soft Skills" },
+  "Student Psychology": { icon: "🧠", label: "Student Psychology" },
+  "Training Regulations": { icon: "📋", label: "Training Regulations" },
+  Career: { icon: "🧭", label: "Career" },
+  Financial: { icon: "💳", label: "Financial" },
+  "Giỏ tư vấn": { icon: "🛒", label: "Giỏ tư vấn" },
+  "Thanh toán": { icon: "💰", label: "Thanh toán" },
+  "Theo dõi yêu cầu": { icon: "📌", label: "Theo dõi yêu cầu" },
+};
+
+const fallbackImage =
+  "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=900&h=520&fit=crop";
+
+const GRID_PAGE_SIZE = 9;
+const LIST_PAGE_SIZE = 6;
+
+const formatDate = (value) =>
+  new Intl.DateTimeFormat("vi-VN", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  }).format(new Date(value));
+
+const ArticlesPage = () => {
+  const [items, setItems] = React.useState([]);
+  const [categories, setCategories] = React.useState([]);
+  const [filters, setFilters] = React.useState({
+    q: "",
+    topic: "",
+    sortBy: "latest",
+  });
+  const [viewMode, setViewMode] = React.useState("grid");
+  const [page, setPage] = React.useState(0);
+  const [loading, setLoading] = React.useState(true);
+  const [error, setError] = React.useState("");
+
+  React.useEffect(() => {
+    const timer = setTimeout(async () => {
+      try {
+        setLoading(true);
+        const response = await contentAPI.list({
+          contentType: "Article",
+          q: filters.q,
+          topic: filters.topic,
+          sortBy: filters.sortBy,
+        });
+        setItems(response.data.data || []);
+        setCategories(response.data.categories || []);
+      } catch (err) {
+        setError(err.response?.data?.message || "Không tải được bài viết");
+      } finally {
+        setLoading(false);
+      }
+    }, 250);
+
+    return () => clearTimeout(timer);
+  }, [filters]);
+
+  React.useEffect(() => {
+    setPage(0);
+  }, [filters, viewMode]);
+
+  const updateFilter = (key, value) => {
+    setFilters((current) => ({ ...current, [key]: value }));
+  };
+
+  const clearFilters = () => {
+    setFilters({ q: "", topic: "", sortBy: "latest" });
+  };
+
+  const pageSize = viewMode === "grid" ? GRID_PAGE_SIZE : LIST_PAGE_SIZE;
+  const totalPages = Math.max(1, Math.ceil(items.length / pageSize));
+  const currentPage = Math.min(page, totalPages - 1);
+  const pageItems = items.slice(
+    currentPage * pageSize,
+    currentPage * pageSize + pageSize,
+  );
+  const rangeStart = items.length === 0 ? 0 : currentPage * pageSize + 1;
+  const rangeEnd = Math.min(items.length, (currentPage + 1) * pageSize);
+  const goPrev = () => setPage((current) => Math.max(0, current - 1));
+  const goNext = () =>
+    setPage((current) => Math.min(totalPages - 1, current + 1));
+
+  return (
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="mb-8">
+        <h1 className="text-4xl font-bold text-gray-900 mb-2">Bài viết hướng dẫn</h1>
+        <p className="text-gray-600">
+          Thư viện bài viết chuyên sâu, lấy cùng nguồn dữ liệu với tìm kiếm và trang chi tiết.
+        </p>
+      </div>
+
+      {error && (
+        <div className="mb-6 rounded-lg border border-red-200 bg-red-50 p-4 text-red-700">
+          {error}
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+        <aside className="lg:col-span-1">
+          <div className="sticky top-24 space-y-6">
+            <section className="rounded-lg bg-white p-5 shadow">
+              <div className="mb-4 flex items-center justify-between">
+                <h2 className="text-lg font-bold text-gray-900">Danh mục</h2>
+                {(filters.topic || filters.q || filters.sortBy !== "latest") && (
+                  <button
+                    type="button"
+                    onClick={clearFilters}
+                    className="text-sm font-medium text-primary hover:text-primary-dark"
+                  >
+                    Xóa bộ lọc
+                  </button>
+                )}
+              </div>
+              <div className="space-y-2">
+                <button
+                  type="button"
+                  onClick={() => updateFilter("topic", "")}
+                  className={`w-full rounded-lg px-4 py-3 text-left font-medium transition ${
+                    !filters.topic
+                      ? "bg-primary text-white"
+                      : "bg-gray-100 text-gray-900 hover:bg-gray-200"
+                  }`}
+                >
+                  📰 Tất cả bài viết
+                </button>
+                {categories.map((category) => {
+                  const meta = categoryMeta[category] || { icon: "•", label: category };
+                  return (
+                    <button
+                      key={category}
+                      type="button"
+                      onClick={() => updateFilter("topic", category)}
+                      className={`flex w-full items-center gap-2 rounded-lg px-4 py-3 text-left font-medium transition ${
+                        filters.topic === category
+                          ? "bg-primary text-white"
+                          : "bg-gray-100 text-gray-900 hover:bg-gray-200"
+                      }`}
+                    >
+                      <span>{meta.icon}</span>
+                      <span>{meta.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </section>
+
+            <section className="rounded-lg bg-white p-5 shadow">
+              <h2 className="mb-4 text-lg font-bold text-gray-900">Tìm kiếm</h2>
+              <input
+                value={filters.q}
+                onChange={(event) => updateFilter("q", event.target.value)}
+                placeholder="Tìm kiếm bài viết..."
+                className="w-full rounded-lg border border-gray-300 px-4 py-3 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+              />
+            </section>
+
+            <section className="rounded-lg bg-white p-5 shadow">
+              <h2 className="mb-4 text-lg font-bold text-gray-900">Sắp xếp</h2>
+              <div className="space-y-2">
+                {[
+                  ["latest", "Mới nhất"],
+                  ["popular", "Phổ biến nhất"],
+                  ["saved", "Được lưu nhiều"],
+                ].map(([value, label]) => (
+                  <label
+                    key={value}
+                    className="flex cursor-pointer items-center rounded p-2 hover:bg-gray-100"
+                  >
+                    <input
+                      type="radio"
+                      name="article-sort"
+                      value={value}
+                      checked={filters.sortBy === value}
+                      onChange={(event) => updateFilter("sortBy", event.target.value)}
+                      className="mr-2"
+                    />
+                    <span className="text-gray-700">{label}</span>
+                  </label>
+                ))}
+              </div>
+            </section>
+
+            <section className="rounded-lg bg-white p-5 shadow">
+              <h2 className="mb-4 text-lg font-bold text-gray-900">Hiển thị</h2>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setViewMode("grid")}
+                  className={`flex-1 rounded-lg px-3 py-2 font-medium transition ${
+                    viewMode === "grid"
+                      ? "bg-primary text-white"
+                      : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                  }`}
+                >
+                  ⊞ Lưới
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setViewMode("list")}
+                  className={`flex-1 rounded-lg px-3 py-2 font-medium transition ${
+                    viewMode === "list"
+                      ? "bg-primary text-white"
+                      : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                  }`}
+                >
+                  ⋮ Danh sách
+                </button>
+              </div>
+            </section>
+          </div>
+        </aside>
+
+        <main className="lg:col-span-3">
+          <div className="mb-6 flex items-center justify-between gap-4">
+            <p className="text-sm text-gray-600">
+              Hiển thị{" "}
+              <span className="font-semibold">
+                {rangeStart}-{rangeEnd}
+              </span>{" "}
+              trong <span className="font-semibold">{items.length}</span> bài viết
+            </p>
+          </div>
+
+          {loading ? (
+            <div className="flex justify-center py-16">
+              <Spinner />
+            </div>
+          ) : items.length === 0 ? (
+            <div className="rounded-lg bg-white p-10 text-center shadow text-gray-600">
+              Không tìm thấy bài viết phù hợp.
+            </div>
+          ) : viewMode === "grid" ? (
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                {pageItems.map((item) => (
+                  <a
+                    key={item.id}
+                    href={`/detail/article/${item.id}`}
+                    className="overflow-hidden rounded-lg bg-white shadow-md hover:shadow-lg"
+                  >
+                    <img
+                      src={item.image}
+                      alt={item.title}
+                      onError={(event) => {
+                        event.currentTarget.onerror = null;
+                        event.currentTarget.src = fallbackImage;
+                      }}
+                      className="h-44 w-full object-cover"
+                    />
+                    <div className="p-5">
+                      <p className="mb-2 text-xs font-semibold text-primary">
+                        {item.topic}
+                      </p>
+                      <h3 className="line-clamp-2 text-lg font-bold text-gray-900">
+                        {item.title}
+                      </h3>
+                      <p className="mt-2 line-clamp-3 text-sm text-gray-600">
+                        {item.excerpt}
+                      </p>
+                      <div className="mt-4 flex items-center justify-between text-xs text-gray-500">
+                        <span>{formatDate(item.date)}</span>
+                        <span>{item.views} lượt xem</span>
+                      </div>
+                    </div>
+                  </a>
+                ))}
+              </div>
+              {totalPages > 1 && (
+                <div className="mt-8 flex items-center justify-center gap-3">
+                  <button
+                    type="button"
+                    onClick={goPrev}
+                    disabled={currentPage === 0}
+                    className="rounded-lg border border-gray-300 bg-white px-4 py-2 font-medium text-gray-700 hover:border-primary hover:text-primary disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    Trước
+                  </button>
+                  <span className="text-sm font-medium text-gray-600">
+                    Trang {currentPage + 1}/{totalPages}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={goNext}
+                    disabled={currentPage >= totalPages - 1}
+                    className="rounded-lg border border-gray-300 bg-white px-4 py-2 font-medium text-gray-700 hover:border-primary hover:text-primary disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    Sau
+                  </button>
+                </div>
+              )}
+            </>
+          ) : (
+            <>
+              <div className="space-y-4">
+                {pageItems.map((item) => (
+                  <a
+                    key={item.id}
+                    href={`/detail/article/${item.id}`}
+                    className="flex flex-col gap-4 rounded-lg bg-white p-4 shadow-md hover:shadow-lg md:flex-row"
+                  >
+                    <img
+                      src={item.image}
+                      alt={item.title}
+                      onError={(event) => {
+                        event.currentTarget.onerror = null;
+                        event.currentTarget.src = fallbackImage;
+                      }}
+                      className="h-36 w-full rounded object-cover md:w-48"
+                    />
+                    <div className="flex-1">
+                      <p className="mb-2 text-xs font-semibold text-primary">
+                        {item.topic}
+                      </p>
+                      <h3 className="text-lg font-bold text-gray-900">
+                        {item.title}
+                      </h3>
+                      <p className="mt-2 line-clamp-2 text-sm text-gray-600">
+                        {item.excerpt}
+                      </p>
+                      <div className="mt-4 flex flex-wrap gap-4 text-xs text-gray-500">
+                        <span>{item.author}</span>
+                        <span>{formatDate(item.date)}</span>
+                        <span>{item.views} lượt xem</span>
+                      </div>
+                    </div>
+                  </a>
+                ))}
+              </div>
+              {totalPages > 1 && (
+                <div className="mt-8 flex items-center justify-center gap-3">
+                  <button
+                    type="button"
+                    onClick={goPrev}
+                    disabled={currentPage === 0}
+                    className="rounded-lg border border-gray-300 bg-white px-4 py-2 font-medium text-gray-700 hover:border-primary hover:text-primary disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    Trước
+                  </button>
+                  <span className="text-sm font-medium text-gray-600">
+                    Trang {currentPage + 1}/{totalPages}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={goNext}
+                    disabled={currentPage >= totalPages - 1}
+                    className="rounded-lg border border-gray-300 bg-white px-4 py-2 font-medium text-gray-700 hover:border-primary hover:text-primary disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    Sau
+                  </button>
+                </div>
+              )}
+            </>
+          )}
+        </main>
+      </div>
+    </div>
+  );
+};
+
+export default ArticlesPage;
