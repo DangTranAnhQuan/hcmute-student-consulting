@@ -184,7 +184,12 @@ export default function ConsultationOrderDetailPage() {
         comment: draft.comment,
       });
       setOrder(response.data.order);
-      setSuccess("Đã lưu đánh giá tư vấn viên");
+      const reward = response.data.rewardInfo;
+      setSuccess(
+        reward?.code
+          ? `Đánh giá thành công! Bạn nhận mã giảm giá: ${reward.code}`
+          : "Đã lưu đánh giá tư vấn viên",
+      );
     } catch (err) {
       setError(err.response?.data?.message || "Không lưu được đánh giá");
     } finally {

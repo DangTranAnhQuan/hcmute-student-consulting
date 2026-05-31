@@ -47,6 +47,10 @@ export default function BookCounselorPage() {
   const [similarCounselors, setSimilarCounselors] = useState([]);
   const [favoriteLoading, setFavoriteLoading] = useState(false);
   const [localFavorite, setLocalFavorite] = useState(null);
+  const [reviews, setReviews] = useState([]);
+  const [reviewsTotal, setReviewsTotal] = useState(0);
+  const [reviewsPage, setReviewsPage] = useState(1);
+  const [reviewsLoading, setReviewsLoading] = useState(false);
 
   const { user } = useAppSelector((state) => state.auth);
   const isFavorite = useMemo(() => {
@@ -79,6 +83,11 @@ export default function BookCounselorPage() {
 
         const similarResponse = await counselorAPI.similar(counselorId);
         setSimilarCounselors(similarResponse.data);
+
+        const reviewsResponse = await counselorAPI.reviews(counselorId, 1);
+        setReviews(reviewsResponse.data.reviews || []);
+        setReviewsTotal(reviewsResponse.data.total || 0);
+        setReviewsPage(1);
       } catch (err) {
         setError(err.response?.data?.message || "Không tải được tư vấn viên");
       } finally {
@@ -88,6 +97,19 @@ export default function BookCounselorPage() {
 
     loadCounselor();
   }, [counselorId, user]);
+
+  const loadMoreReviews = async () => {
+    try {
+      setReviewsLoading(true);
+      const nextPage = reviewsPage + 1;
+      const res = await counselorAPI.reviews(counselorId, nextPage);
+      setReviews((prev) => [...prev, ...(res.data.reviews || [])]);
+      setReviewsPage(nextPage);
+    } catch {
+    } finally {
+      setReviewsLoading(false);
+    }
+  };
 
   const updateForm = (field, value) => {
     setForm((current) => ({ ...current, [field]: value }));
@@ -363,6 +385,73 @@ export default function BookCounselorPage() {
               </button>
             </form>
           </section>
+        </div>
+
+        <div className="mx-auto mt-8 max-w-6xl px-4">
+          <div className="rounded-lg bg-white p-6 shadow">
+            <div className="flex items-center justify-between mb-5">
+              <h2 className="text-2xl font-bold text-gray-900">
+                Đánh giá từ sinh viên
+              </h2>
+              <span className="text-sm text-gray-500">
+                {reviewsTotal} bình luận có nội dung
+              </span>
+            </div>
+
+            {reviews.length === 0 ? (
+              <p className="text-sm text-gray-500 py-4 text-center">
+                Chưa có bình luận nào. Hãy là người đầu tiên đánh giá sau khi hoàn tất tư vấn!
+              </p>
+            ) : (
+              <ul className="divide-y divide-gray-100">
+                {reviews.map((review) => (
+                  <li key={review._id} className="py-4">
+                    <div className="flex items-start gap-3">
+                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-bold text-primary">
+                        {(review.reviewer || "S")[0].toUpperCase()}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-semibold text-gray-900">
+                            {review.reviewer}
+                          </span>
+                          <span className="flex gap-0.5">
+                            {[1, 2, 3, 4, 5].map((star) => (
+                              <span
+                                key={star}
+                                className={star <= review.rating ? "text-yellow-400" : "text-gray-200"}
+                              >
+                                ★
+                              </span>
+                            ))}
+                          </span>
+                          <span className="text-xs text-gray-400">
+                            {new Date(review.createdAt).toLocaleDateString("vi-VN")}
+                          </span>
+                        </div>
+                        <p className="mt-1 text-sm text-gray-700 whitespace-pre-wrap">
+                          {review.comment}
+                        </p>
+                      </div>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+
+            {reviews.length < reviewsTotal && (
+              <div className="mt-4 text-center">
+                <button
+                  type="button"
+                  onClick={loadMoreReviews}
+                  disabled={reviewsLoading}
+                  className="rounded-lg border border-gray-300 px-5 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                >
+                  {reviewsLoading ? "Đang tải..." : `Xem thêm (${reviewsTotal - reviews.length} bình luận)`}
+                </button>
+              </div>
+            )}
+          </div>
         </div>
 
         {similarCounselors.length > 0 && (

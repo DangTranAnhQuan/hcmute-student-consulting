@@ -1,6 +1,7 @@
 const Counselor = require("../models/Counselor");
 const Availability = require("../models/Availability");
 const Schedule = require("../models/Schedule");
+const CounselorReview = require("../models/CounselorReview");
 const { ACTIVE_SCHEDULE_STATUSES } = require("../services/scheduleService");
 const { attachCounselorStats } = require("../services/counselorStatsService");
 
@@ -81,6 +82,37 @@ exports.getCounselorStats = async (req, res) => {
     }
     const [withStats] = await attachCounselorStats([counselor]);
     res.json({ stats: withStats });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+exports.getCounselorReviews = async (req, res) => {
+  try {
+    const { page = 1, limit = 10 } = req.query;
+    const skip = (Number(page) - 1) * Number(limit);
+
+    const [reviews, total] = await Promise.all([
+      CounselorReview.find({ counselorId: req.params.id, comment: { $ne: "" } })
+        .populate("userId", "username fullName")
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(Number(limit)),
+      CounselorReview.countDocuments({
+        counselorId: req.params.id,
+        comment: { $ne: "" },
+      }),
+    ]);
+
+    const safeReviews = reviews.map((r) => ({
+      _id: r._id,
+      rating: r.rating,
+      comment: r.comment,
+      createdAt: r.createdAt,
+      reviewer: r.userId?.fullName || r.userId?.username || "Sinh viên ẩn danh",
+    }));
+
+    res.json({ reviews: safeReviews, total, page: Number(page), limit: Number(limit) });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

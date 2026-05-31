@@ -401,6 +401,9 @@ const handleMomoResult = async (payload, source = "return") => {
             : `Thanh toán MoMo thành công qua ${source}`,
         ),
       );
+      if (order.status !== ORDER_STATUS.CANCELLED) {
+        await grantPaymentLoyaltyPoints(order);
+      }
     }
   } else if (order.paymentStatus !== PAYMENT_STATUS.PAID) {
     order.paymentStatus = PAYMENT_STATUS.FAILED;
@@ -449,6 +452,14 @@ const buildOrderItems = (items) =>
 const generateCouponCode = () =>
   `TV${Date.now()}${Math.random().toString(36).slice(2, 5).toUpperCase()}`;
 
+const grantPaymentLoyaltyPoints = async (order) => {
+  const points = Math.max(1, Math.floor((order.total || 0) / 1000));
+  await User.findByIdAndUpdate(order.userId, {
+    $inc: { loyaltyPoints: points },
+  });
+  return points;
+};
+
 const applyCoupon = (couponCode, subtotal, user) => {
   if (!couponCode) return { discountAmount: 0, coupon: null };
   const code = String(couponCode || "")
@@ -488,45 +499,31 @@ const applyCoupon = (couponCode, subtotal, user) => {
 };
 
 const createReviewReward = async (userId, order, review) => {
-  const rating = Number(review.rating || 0);
-  const shouldGiveCoupon = rating >= 4;
   const existingReward = (order.reviewRewards || []).find(
     (item) => item.itemIndex === review.itemIndex,
   );
   if (existingReward) {
     return existingReward;
   }
-  const rewardInfo = {
-    type: "points",
-    value: 20,
-    code: "",
-    message: "Bạn nhận được 20 điểm tích lũy cho đánh giá.",
-  };
 
-  if (shouldGiveCoupon) {
-    const code = generateCouponCode();
-    const coupon = {
-      code,
-      type: "percent",
-      value: 15,
-      description: "Giảm 15% cho lần đặt dịch vụ tiếp theo",
-      minOrderValue: 0,
-      expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-      isUsed: false,
-    };
-    await User.findByIdAndUpdate(userId, {
-      $inc: { loyaltyPoints: 0 },
-      $push: { coupons: coupon },
-    });
-    rewardInfo.type = "coupon";
-    rewardInfo.value = 15;
-    rewardInfo.code = code;
-    rewardInfo.message = `Tặng mã giảm 15%: ${code}`;
-  } else {
-    await User.findByIdAndUpdate(userId, {
-      $inc: { loyaltyPoints: 20 },
-    });
-  }
+  const code = generateCouponCode();
+  const coupon = {
+    code,
+    type: "percent",
+    value: 15,
+    description: "Giảm 15% cho lần đặt dịch vụ tiếp theo",
+    minOrderValue: 0,
+    expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+    isUsed: false,
+  };
+  await User.findByIdAndUpdate(userId, { $push: { coupons: coupon } });
+
+  const rewardInfo = {
+    type: "coupon",
+    value: 15,
+    code,
+    message: `Cảm ơn bạn đã đánh giá! Tặng mã giảm 15%: ${code}`,
+  };
 
   order.rewardInfo = rewardInfo;
   order.reviewRewards = order.reviewRewards || [];
@@ -1220,8 +1217,12 @@ exports.updateOrderStatus = async (req, res) => {
       if (status === ORDER_STATUS.COMPLETED) {
         order.completedAt = new Date();
         if (order.paymentMethod === PAYMENT_METHOD.COD) {
+          const wasAlreadyPaid = order.paymentStatus === PAYMENT_STATUS.PAID;
           order.paymentStatus = PAYMENT_STATUS.PAID;
           order.paidAt = order.paidAt || new Date();
+          if (!wasAlreadyPaid) {
+            await grantPaymentLoyaltyPoints(order);
+          }
         }
       }
       if (status === ORDER_STATUS.CANCELLED) {

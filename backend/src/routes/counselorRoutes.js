@@ -9,6 +9,7 @@ router.get("/:id", counselorController.getCounselorById);
 router.get("/:id/available-slots", counselorController.getAvailableSlots);
 router.get("/:id/similar", counselorController.getSimilarCounselors);
 router.get("/:id/stats", counselorController.getCounselorStats);
+router.get("/:id/reviews", counselorController.getCounselorReviews);
 
 // Protected routes
 router.post("/", verifyToken, counselorController.createCounselor);

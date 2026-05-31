@@ -368,7 +368,9 @@ const ProfilePage = () => {
                       </p>
                     </div>
                     <span className={`ml-4 shrink-0 rounded-full px-2 py-0.5 text-xs font-semibold ${r.type === "coupon" ? "bg-green-100 text-green-800" : "bg-blue-100 text-blue-800"}`}>
-                      {r.type === "coupon" ? `Mã -${r.value}%` : `+${r.value} điểm`}
+                      {r.type === "coupon"
+                        ? (r.value >= 100 ? `Mã -${r.value.toLocaleString("vi-VN")}đ` : `Mã -${r.value}%`)
+                        : `+${r.value} điểm`}
                     </span>
                   </li>
                 ))}

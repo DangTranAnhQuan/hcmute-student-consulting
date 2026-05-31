@@ -76,6 +76,8 @@ export const counselorAPI = {
     api.get(`/counselors/${id}/available-slots`, { params: { date } }),
   similar: (id) => api.get(`/counselors/${id}/similar`),
   stats: (id) => api.get(`/counselors/${id}/stats`),
+  reviews: (id, page = 1) =>
+    api.get(`/counselors/${id}/reviews`, { params: { page, limit: 10 } }),
 };
 
 export const userAPI = {
