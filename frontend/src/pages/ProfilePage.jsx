@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Input, Button, Card, Header, Alert, Spinner } from "../components/UI";
 import { useAuth } from "../redux/hooks";
+import { consultationOrderAPI, userAPI } from "../services/api";
 
 const ProfilePage = () => {
   const navigate = useNavigate();
-  const { user, isLoading, error, getProfile, updateProfile, logout } = useAuth();
+  const { user, isLoading, error, getProfile, updateProfile, logout } =
+    useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
     username: "",
@@ -16,6 +18,29 @@ const ProfilePage = () => {
   });
   const [formErrors, setFormErrors] = useState({});
   const [successMessage, setSuccessMessage] = useState("");
+  const [rewardHistory, setRewardHistory] = useState([]);
+  const [redeemPoints, setRedeemPoints] = useState("");
+  const [redeemLoading, setRedeemLoading] = useState(false);
+  const [redeemMessage, setRedeemMessage] = useState({ type: "", text: "" });
+
+  const loyaltyPoints = Number(user?.loyaltyPoints || 0);
+  const coupons = Array.isArray(user?.coupons) ? user.coupons : [];
+  const activeCoupons = coupons.filter(
+    (coupon) =>
+      !coupon.isUsed &&
+      (!coupon.expiresAt || new Date(coupon.expiresAt) > new Date()),
+  );
+  const usedCoupons = coupons.filter((c) => c.isUsed);
+  const favoriteCounselors = Array.isArray(user?.favoriteCounselors)
+    ? user.favoriteCounselors
+    : [];
+  const viewedCounselors = Array.isArray(user?.recentlyViewedCounselors)
+    ? user.recentlyViewedCounselors
+    : [];
+  const counselorLabel = (counselor) =>
+    typeof counselor === "string"
+      ? counselor
+      : counselor.fullName || counselor._id || "Tư vấn viên";
 
   useEffect(() => {
     if (!user) {
@@ -23,6 +48,10 @@ const ProfilePage = () => {
       return;
     }
     getProfile().catch(() => {});
+    consultationOrderAPI
+      .rewardHistory()
+      .then((res) => setRewardHistory(res.data || []))
+      .catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -81,6 +110,33 @@ const ProfilePage = () => {
   const handleLogout = () => {
     logout();
     navigate("/login");
+  };
+
+  const handleRedeemPoints = async () => {
+    const pts = Number(redeemPoints);
+    if (!pts || pts < 100) {
+      setRedeemMessage({ type: "error", text: "Nhập ít nhất 100 điểm để đổi" });
+      return;
+    }
+    if (pts > loyaltyPoints) {
+      setRedeemMessage({ type: "error", text: "Không đủ điểm tích lũy" });
+      return;
+    }
+    try {
+      setRedeemLoading(true);
+      setRedeemMessage({ type: "", text: "" });
+      const res = await userAPI.redeemPoints(pts);
+      setRedeemMessage({ type: "success", text: res.data.message });
+      setRedeemPoints("");
+      await getProfile();
+    } catch (err) {
+      setRedeemMessage({
+        type: "error",
+        text: err.response?.data?.message || "Đổi điểm thất bại",
+      });
+    } finally {
+      setRedeemLoading(false);
+    }
   };
 
   if (!user) {
@@ -219,6 +275,155 @@ const ProfilePage = () => {
                     Hủy
                   </Button>
                 </>
+              )}
+            </div>
+          </div>
+        </Card>
+
+        <Card className="mt-8">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">
+            Điểm thưởng và mã giảm giá
+          </h3>
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
+              <p className="text-sm font-semibold text-gray-900">Điểm tích lũy</p>
+              <p className="mt-2 text-3xl font-bold text-primary">{loyaltyPoints}</p>
+              <p className="mt-1 text-xs text-gray-500">1 điểm = 1đ khi thanh toán hoặc đổi mã.</p>
+              <div className="mt-3 flex gap-2">
+                <input
+                  type="number"
+                  min={100}
+                  max={loyaltyPoints}
+                  value={redeemPoints}
+                  onChange={(e) => setRedeemPoints(e.target.value)}
+                  placeholder="Nhập số điểm (tối thiểu 100)"
+                  className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary focus:outline-none"
+                />
+                <button
+                  onClick={handleRedeemPoints}
+                  disabled={redeemLoading || loyaltyPoints < 100}
+                  className="rounded-lg bg-primary px-3 py-2 text-sm font-semibold text-white hover:bg-primary-dark disabled:opacity-50"
+                >
+                  {redeemLoading ? "..." : "Đổi mã"}
+                </button>
+              </div>
+              {redeemMessage.text && (
+                <p className={`mt-2 text-xs ${redeemMessage.type === "success" ? "text-green-600" : "text-red-600"}`}>
+                  {redeemMessage.text}
+                </p>
+              )}
+            </div>
+            <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
+              <p className="text-sm font-semibold text-gray-900">Mã giảm giá khả dụng</p>
+              {activeCoupons.length > 0 ? (
+                <ul className="mt-3 space-y-3 text-sm">
+                  {activeCoupons.map((coupon) => (
+                    <li key={coupon.code} className="rounded-lg border border-green-200 bg-white p-3">
+                      <p className="font-semibold text-green-900">{coupon.code}</p>
+                      <p>
+                        {coupon.description ||
+                          (coupon.type === "percent"
+                            ? `Giảm ${coupon.value}%`
+                            : `Giảm ${coupon.value.toLocaleString("vi-VN")}đ`)}
+                      </p>
+                      {coupon.expiresAt && (
+                        <p className="text-xs text-gray-500">
+                          Hết hạn: {new Date(coupon.expiresAt).toLocaleDateString("vi-VN")}
+                        </p>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="mt-3 text-sm text-gray-600">
+                  Bạn chưa có mã giảm giá. Đánh giá sau dịch vụ để nhận ưu đãi.
+                </p>
+              )}
+              {usedCoupons.length > 0 && (
+                <div className="mt-3">
+                  <p className="text-xs font-semibold text-gray-500">Đã dùng ({usedCoupons.length})</p>
+                  <ul className="mt-1 space-y-1">
+                    {usedCoupons.map((c) => (
+                      <li key={c.code} className="text-xs text-gray-400 line-through">{c.code}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {rewardHistory.length > 0 && (
+            <div className="mt-6">
+              <p className="text-sm font-semibold text-gray-900 mb-3">Lịch sử nhận thưởng</p>
+              <ul className="space-y-2">
+                {rewardHistory.slice(0, 10).map((r, i) => (
+                  <li key={i} className="flex items-start justify-between rounded-lg border border-gray-100 bg-gray-50 px-4 py-3 text-sm">
+                    <div>
+                      <p className="font-semibold text-gray-800">{r.message}</p>
+                      {r.code && (
+                        <p className="text-xs text-green-700">Mã: <span className="font-mono">{r.code}</span></p>
+                      )}
+                      <p className="text-xs text-gray-500">
+                        Đơn #{r.orderCode} · {new Date(r.createdAt).toLocaleDateString("vi-VN")}
+                      </p>
+                    </div>
+                    <span className={`ml-4 shrink-0 rounded-full px-2 py-0.5 text-xs font-semibold ${r.type === "coupon" ? "bg-green-100 text-green-800" : "bg-blue-100 text-blue-800"}`}>
+                      {r.type === "coupon" ? `Mã -${r.value}%` : `+${r.value} điểm`}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </Card>
+
+        <Card className="mt-8">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">
+            Tư vấn viên yêu thích và đã xem
+          </h3>
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
+              <p className="text-sm font-semibold text-gray-900">Yêu thích</p>
+              {favoriteCounselors.length > 0 ? (
+                <ul className="mt-3 space-y-2 text-sm text-gray-700">
+                  {favoriteCounselors.slice(0, 5).map((counselor) => (
+                    <li key={counselor._id || counselor}>
+                      <Link
+                        to={`/book-counselor/${counselor._id || counselor}`}
+                        className="font-semibold text-primary hover:underline"
+                      >
+                        {counselorLabel(counselor)}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="mt-3 text-sm text-gray-600">
+                  Bạn chưa yêu thích tư vấn viên nào.
+                </p>
+              )}
+            </div>
+            <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
+              <p className="text-sm font-semibold text-gray-900">
+                Đã xem gần đây
+              </p>
+              {viewedCounselors.length > 0 ? (
+                <ul className="mt-3 space-y-2 text-sm text-gray-700">
+                  {viewedCounselors.slice(0, 5).map((counselor) => (
+                    <li key={counselor._id || counselor}>
+                      <Link
+                        to={`/book-counselor/${counselor._id || counselor}`}
+                        className="font-semibold text-primary hover:underline"
+                      >
+                        {counselorLabel(counselor)}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="mt-3 text-sm text-gray-600">
+                  Chưa có tư vấn viên xem gần đây.
+                </p>
               )}
             </div>
           </div>

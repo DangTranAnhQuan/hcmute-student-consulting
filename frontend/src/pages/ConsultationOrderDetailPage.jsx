@@ -11,7 +11,13 @@ import {
   statusClass,
 } from "../utils/consultationFormat";
 
-const ORDER_STEPS = ["NEW", "CONFIRMED", "PREPARING", "PROCESSING", "COMPLETED"];
+const ORDER_STEPS = [
+  "NEW",
+  "CONFIRMED",
+  "PREPARING",
+  "PROCESSING",
+  "COMPLETED",
+];
 const STATUS_INDEX = ORDER_STEPS.reduce((result, status, index) => {
   result[status] = index;
   return result;
@@ -49,7 +55,9 @@ export default function ConsultationOrderDetailPage() {
       const response = await consultationOrderAPI.detail(id);
       setOrder(response.data);
     } catch (err) {
-      setError(err.response?.data?.message || "Không tải được chi tiết yêu cầu");
+      setError(
+        err.response?.data?.message || "Không tải được chi tiết yêu cầu",
+      );
     } finally {
       setLoading(false);
     }
@@ -80,7 +88,9 @@ export default function ConsultationOrderDetailPage() {
     if (momoResult === "0") {
       setSuccess("Thanh toán MoMo thành công. Yêu cầu đang chờ xác nhận.");
     } else if (momoResult && momoResult !== "0") {
-      setError("Thanh toán MoMo chưa thành công. Bạn có thể thanh toán lại trước khi yêu cầu được xử lý.");
+      setError(
+        "Thanh toán MoMo chưa thành công. Bạn có thể thanh toán lại trước khi yêu cầu được xử lý.",
+      );
     }
   }, [searchParams]);
 
@@ -100,6 +110,14 @@ export default function ConsultationOrderDetailPage() {
     return result;
   }, [order]);
 
+  const rewardsByIndex = useMemo(() => {
+    const result = {};
+    (order?.reviewRewards || []).forEach((reward) => {
+      result[Number(reward.itemIndex)] = reward;
+    });
+    return result;
+  }, [order]);
+
   const submitCancel = async (event) => {
     event.preventDefault();
     if (!order?.cancelPolicy?.canCancel) return;
@@ -113,7 +131,10 @@ export default function ConsultationOrderDetailPage() {
       setSubmitting(true);
       setError("");
       setSuccess("");
-      const response = await consultationOrderAPI.cancel(order._id, finalReason);
+      const response = await consultationOrderAPI.cancel(
+        order._id,
+        finalReason,
+      );
       setOrder(response.data);
       setSuccess(
         response.data.status === "CANCEL_REQUESTED"
@@ -197,7 +218,10 @@ export default function ConsultationOrderDetailPage() {
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-7xl mx-auto px-4">
         <div className="mb-8">
-          <Link to="/consultation-orders" className="text-primary hover:text-primary-dark">
+          <Link
+            to="/consultation-orders"
+            className="text-primary hover:text-primary-dark"
+          >
             ← Quay lại lịch sử
           </Link>
           <div className="mt-3 flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
@@ -245,7 +269,8 @@ export default function ConsultationOrderDetailPage() {
                 {ORDER_STEPS.map((status, index) => {
                   const entry = timelineByStatus[status];
                   const active =
-                    order.status === "CANCELLED" || order.status === "CANCEL_REQUESTED"
+                    order.status === "CANCELLED" ||
+                    order.status === "CANCEL_REQUESTED"
                       ? Boolean(entry)
                       : index <= currentIndex;
                   return (
@@ -309,13 +334,16 @@ export default function ConsultationOrderDetailPage() {
                           {item.counselorName}
                         </p>
                         <p className="text-sm text-gray-600">
-                          {(item.expertise || []).join(", ") || "Tư vấn sinh viên"}
+                          {(item.expertise || []).join(", ") ||
+                            "Tư vấn sinh viên"}
                         </p>
                         <p className="mt-2 text-gray-700">{item.topic}</p>
                         <p className="mt-1 text-sm text-gray-500">
                           {formatDateTime(item.preferredDate)} -{" "}
                           {formatDuration(item.durationMinutes)} -{" "}
-                          {item.meetingType === "online" ? "Online" : "Trực tiếp"}
+                          {item.meetingType === "online"
+                            ? "Online"
+                            : "Trực tiếp"}
                         </p>
                         {item.note && (
                           <p className="mt-1 text-sm text-gray-500">
@@ -329,15 +357,19 @@ export default function ConsultationOrderDetailPage() {
                             </p>
                             {reviewsByIndex[index] && (
                               <p className="mb-2 text-xs text-blue-700">
-                                Bạn đã đánh giá {reviewsByIndex[index].rating}/5.
-                                Có thể cập nhật lại nếu cần.
+                                Bạn đã đánh giá {reviewsByIndex[index].rating}
+                                /5. Có thể cập nhật lại nếu cần.
                               </p>
                             )}
                             <div className="grid grid-cols-1 gap-3 md:grid-cols-[120px_1fr_auto]">
                               <select
                                 value={reviewDrafts[index]?.rating || 5}
                                 onChange={(e) =>
-                                  updateReviewDraft(index, "rating", e.target.value)
+                                  updateReviewDraft(
+                                    index,
+                                    "rating",
+                                    e.target.value,
+                                  )
                                 }
                                 className="rounded-lg border border-blue-200 px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
                               >
@@ -350,7 +382,11 @@ export default function ConsultationOrderDetailPage() {
                               <input
                                 value={reviewDrafts[index]?.comment || ""}
                                 onChange={(e) =>
-                                  updateReviewDraft(index, "comment", e.target.value)
+                                  updateReviewDraft(
+                                    index,
+                                    "comment",
+                                    e.target.value,
+                                  )
                                 }
                                 placeholder="Nhận xét ngắn sau buổi tư vấn"
                                 className="rounded-lg border border-blue-200 px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
@@ -361,9 +397,22 @@ export default function ConsultationOrderDetailPage() {
                                 disabled={reviewingIndex === index}
                                 className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary-dark disabled:opacity-60"
                               >
-                                {reviewingIndex === index ? "Đang lưu..." : "Lưu"}
+                                {reviewingIndex === index
+                                  ? "Đang lưu..."
+                                  : "Lưu"}
                               </button>
                             </div>
+                            {rewardsByIndex[index] && (
+                              <div className="mt-3 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-800">
+                                <span className="font-semibold">Phần thưởng đã nhận: </span>
+                                {rewardsByIndex[index].message}
+                                {rewardsByIndex[index].code && (
+                                  <span className="ml-1 font-mono font-bold">
+                                    ({rewardsByIndex[index].code})
+                                  </span>
+                                )}
+                              </div>
+                            )}
                           </div>
                         )}
                       </div>
@@ -395,11 +444,36 @@ export default function ConsultationOrderDetailPage() {
                     {order.paymentStatusLabel}
                   </span>
                 </div>
-                {order.paymentExpiresAt && ["PENDING", "EXPIRED"].includes(order.paymentStatus) && (
+                {order.paymentExpiresAt &&
+                  ["PENDING", "EXPIRED"].includes(order.paymentStatus) && (
+                    <div className="flex justify-between gap-4">
+                      <span className="text-gray-600">Hạn thanh toán</span>
+                      <span className="text-right font-semibold">
+                        {formatDateTime(order.paymentExpiresAt)}
+                      </span>
+                    </div>
+                  )}
+                {order.subtotal > 0 && order.subtotal !== order.total && (
                   <div className="flex justify-between gap-4">
-                    <span className="text-gray-600">Hạn thanh toán</span>
-                    <span className="text-right font-semibold">
-                      {formatDateTime(order.paymentExpiresAt)}
+                    <span className="text-gray-600">Tạm tính</span>
+                    <span className="text-right">{formatCurrency(order.subtotal)}</span>
+                  </div>
+                )}
+                {order.discountAmount > 0 && (
+                  <div className="flex justify-between gap-4">
+                    <span className="text-gray-600">
+                      Mã giảm giá{order.couponCode ? ` (${order.couponCode})` : ""}
+                    </span>
+                    <span className="text-right text-red-600">
+                      -{formatCurrency(order.discountAmount)}
+                    </span>
+                  </div>
+                )}
+                {(order.loyaltyPointsApplied || order.pointsUsed) > 0 && (
+                  <div className="flex justify-between gap-4">
+                    <span className="text-gray-600">Điểm tích lũy dùng</span>
+                    <span className="text-right text-red-600">
+                      -{formatCurrency(order.loyaltyPointsApplied || order.pointsUsed)}
                     </span>
                   </div>
                 )}
@@ -411,6 +485,17 @@ export default function ConsultationOrderDetailPage() {
                     </span>
                   </div>
                 </div>
+                {order.rewardInfo?.type && order.rewardInfo.type !== "none" && (
+                  <div className="mt-4 rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-900">
+                    <p className="font-semibold">Ưu đãi sau đánh giá</p>
+                    <p className="mt-2">{order.rewardInfo.message}</p>
+                    {order.rewardInfo.code && (
+                      <p className="mt-2 font-semibold">
+                        Mã giảm giá: {order.rewardInfo.code}
+                      </p>
+                    )}
+                  </div>
+                )}
               </div>
               {canRepay(order) && (
                 <button

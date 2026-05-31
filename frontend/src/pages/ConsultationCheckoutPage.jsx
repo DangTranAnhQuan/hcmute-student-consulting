@@ -25,6 +25,8 @@ export default function ConsultationCheckoutPage() {
   const [selectedIds, setSelectedIds] = useState([]);
   const [paymentMethod, setPaymentMethod] = useState("COD");
   const [paymentMethods, setPaymentMethods] = useState([]);
+  const [couponCode, setCouponCode] = useState("");
+  const [pointsToUse, setPointsToUse] = useState(0);
   const [contactInfo, setContactInfo] = useState({
     fullName: user?.fullName || user?.username || "",
     phone: user?.phone || "",
@@ -41,7 +43,9 @@ export default function ConsultationCheckoutPage() {
       try {
         setLoading(true);
         const response = await consultationCartAPI.get();
-        const storedIds = JSON.parse(localStorage.getItem(CHECKOUT_KEY) || "[]");
+        const storedIds = JSON.parse(
+          localStorage.getItem(CHECKOUT_KEY) || "[]",
+        );
         const itemIds = (response.data.items || []).map((item) => item._id);
         const validStoredIds = storedIds.filter((id) => itemIds.includes(id));
         setCart(response.data);
@@ -49,7 +53,9 @@ export default function ConsultationCheckoutPage() {
         const methodsResponse = await consultationOrderAPI.paymentMethods();
         setPaymentMethods(methodsResponse.data.methods || []);
       } catch (err) {
-        setError(err.response?.data?.message || "Không tải được thông tin thanh toán");
+        setError(
+          err.response?.data?.message || "Không tải được thông tin thanh toán",
+        );
       } finally {
         setLoading(false);
       }
@@ -63,18 +69,42 @@ export default function ConsultationCheckoutPage() {
     return items.filter((item) => selectedIds.includes(item._id));
   }, [cart, selectedIds]);
 
-  const total = selectedItems.reduce((sum, item) => sum + Number(item.price || 0), 0);
-  const momoMethod = paymentMethods.find((method) => method.code === "MOMO_SANDBOX");
+  const subtotal = selectedItems.reduce(
+    (sum, item) => sum + Number(item.price || 0),
+    0,
+  );
+  const total = subtotal;
+  const momoMethod = paymentMethods.find(
+    (method) => method.code === "MOMO_SANDBOX",
+  );
   const codMethod = paymentMethods.find((method) => method.code === "COD");
 
   const updateContact = (field, value) => {
     setContactInfo((current) => ({ ...current, [field]: value }));
   };
 
+  const availablePoints = Number(user?.loyaltyPoints || 0);
+  const maxPointsToUse = Math.min(availablePoints, subtotal);
+  const estimatedPointsDiscount = Math.min(
+    Math.max(0, Number(pointsToUse || 0)),
+    subtotal,
+  );
+  const estimatedTotal = Math.max(0, subtotal - estimatedPointsDiscount);
+
+  const now = new Date();
+  const activeCoupons = (user?.coupons || []).filter(
+    (c) => !c.isUsed && (!c.expiresAt || new Date(c.expiresAt) > now),
+  );
+
   const submitCheckout = async (event) => {
     event.preventDefault();
     if (selectedItems.length === 0) {
       setError("Không có mục nào được chọn để thanh toán");
+      return;
+    }
+
+    if (pointsToUse < 0 || pointsToUse > availablePoints) {
+      setError("Số điểm sử dụng không hợp lệ");
       return;
     }
 
@@ -84,6 +114,8 @@ export default function ConsultationCheckoutPage() {
       const response = await consultationOrderAPI.checkout({
         selectedItemIds: selectedIds,
         paymentMethod,
+        couponCode: couponCode.trim(),
+        pointsToUse: Number(pointsToUse || 0),
         contactInfo,
       });
       localStorage.removeItem(CHECKOUT_KEY);
@@ -111,7 +143,10 @@ export default function ConsultationCheckoutPage() {
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-6xl mx-auto px-4">
         <div className="mb-8">
-          <Link to="/consultation-cart" className="text-primary hover:text-primary-dark">
+          <Link
+            to="/consultation-cart"
+            className="text-primary hover:text-primary-dark"
+          >
             ← Quay lại giỏ tư vấn
           </Link>
           <h1 className="mt-3 text-4xl font-bold text-gray-900">Thanh toán</h1>
@@ -126,7 +161,10 @@ export default function ConsultationCheckoutPage() {
           </div>
         )}
 
-        <form onSubmit={submitCheckout} className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        <form
+          onSubmit={submitCheckout}
+          className="grid grid-cols-1 gap-6 lg:grid-cols-3"
+        >
           <div className="space-y-6 lg:col-span-2">
             <section className="rounded-lg bg-white p-6 shadow">
               <h2 className="mb-4 text-xl font-bold text-gray-900">
@@ -172,7 +210,9 @@ export default function ConsultationCheckoutPage() {
                   </label>
                   <input
                     value={contactInfo.studentCode}
-                    onChange={(e) => updateContact("studentCode", e.target.value)}
+                    onChange={(e) =>
+                      updateContact("studentCode", e.target.value)
+                    }
                     className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
                   />
                 </div>
@@ -208,7 +248,8 @@ export default function ConsultationCheckoutPage() {
                     <span>
                       <span className="block font-bold text-gray-900">COD</span>
                       <span className="text-sm text-gray-600">
-                        {codMethod?.description || "Thanh toán sau khi yêu cầu tư vấn hoàn tất."}
+                        {codMethod?.description ||
+                          "Thanh toán sau khi yêu cầu tư vấn hoàn tất."}
                       </span>
                     </span>
                   </div>
@@ -244,9 +285,90 @@ export default function ConsultationCheckoutPage() {
               </div>
               {paymentMethod === "MOMO_SANDBOX" && total <= 0 && (
                 <p className="mt-3 text-sm text-red-600">
-                  MoMo Sandbox cần số tiền lớn hơn 0. Dịch vụ miễn phí hãy chọn COD.
+                  MoMo Sandbox cần số tiền lớn hơn 0. Dịch vụ miễn phí hãy chọn
+                  COD.
                 </p>
               )}
+            </section>
+
+            <section className="rounded-lg bg-white p-6 shadow">
+              <h2 className="mb-4 text-xl font-bold text-gray-900">
+                Mã ưu đãi và điểm thưởng
+              </h2>
+              <div className="space-y-4 text-sm text-gray-700">
+                <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
+                  <p className="font-semibold text-gray-900">Điểm tích lũy</p>
+                  <p>{availablePoints} điểm</p>
+                  <p className="mt-2 text-xs text-gray-500">
+                    1 điểm = 1đ khi thanh toán. Điểm chỉ được sử dụng tối đa
+                    bằng tổng đơn.
+                  </p>
+                </div>
+
+                {activeCoupons.length > 0 && (
+                  <div className="rounded-lg border border-green-200 bg-green-50 p-4">
+                    <p className="font-semibold text-green-900">
+                      Mã giảm giá khả dụng
+                    </p>
+                    <ul className="mt-3 space-y-2 text-sm">
+                      {activeCoupons.slice(0, 3).map((coupon) => (
+                        <li
+                          key={coupon.code}
+                          className="cursor-pointer rounded-lg bg-white p-3 shadow-sm hover:border-green-400 border border-transparent"
+                          onClick={() => setCouponCode(coupon.code)}
+                        >
+                          <p className="font-semibold">{coupon.code}</p>
+                          <p>
+                            {coupon.description ||
+                              (coupon.type === "percent"
+                                ? `Giảm ${coupon.value}%`
+                                : `Giảm ${coupon.value.toLocaleString("vi-VN")}đ`)}
+                          </p>
+                          {coupon.expiresAt && (
+                            <p className="text-xs text-gray-500">
+                              Hết hạn:{" "}
+                              {new Date(coupon.expiresAt).toLocaleDateString("vi-VN")}
+                            </p>
+                          )}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                  <div>
+                    <label className="mb-2 block text-sm font-medium text-gray-700">
+                      Mã giảm giá
+                    </label>
+                    <input
+                      value={couponCode}
+                      onChange={(e) => setCouponCode(e.target.value)}
+                      placeholder="Nhập mã giảm giá"
+                      className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-2 block text-sm font-medium text-gray-700">
+                      Sử dụng điểm
+                    </label>
+                    <input
+                      type="number"
+                      min={0}
+                      max={maxPointsToUse}
+                      value={pointsToUse}
+                      onChange={(e) =>
+                        setPointsToUse(Number(e.target.value || 0))
+                      }
+                      placeholder="0"
+                      className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                    />
+                    <p className="mt-2 text-xs text-gray-500">
+                      Tối đa {maxPointsToUse} điểm có thể dùng cho đơn này.
+                    </p>
+                  </div>
+                </div>
+              </div>
             </section>
           </div>
 
@@ -276,7 +398,9 @@ export default function ConsultationCheckoutPage() {
                         </p>
                         <p className="text-sm text-gray-500">
                           {formatDuration(item.durationMinutes)} ·{" "}
-                          {item.meetingType === "online" ? "Online" : "Trực tiếp"}
+                          {item.meetingType === "online"
+                            ? "Online"
+                            : "Trực tiếp"}
                         </p>
                         <p className="mt-1 font-semibold text-green-600">
                           {formatCurrency(item.price || 0)}
@@ -287,10 +411,26 @@ export default function ConsultationCheckoutPage() {
                 );
               })}
             </div>
-            <div className="mt-4 border-t border-gray-100 pt-4">
-              <div className="flex justify-between text-lg font-bold">
-                <span>Tổng cộng</span>
-                <span className="text-green-600">{formatCurrency(total)}</span>
+            <div className="mt-4 border-t border-gray-100 pt-4 space-y-2 text-sm">
+              <div className="flex justify-between">
+                <span className="text-gray-600">Tạm tính</span>
+                <span>{formatCurrency(subtotal)}</span>
+              </div>
+              {estimatedPointsDiscount > 0 && (
+                <div className="flex justify-between text-red-600">
+                  <span>Điểm tích lũy ({pointsToUse} điểm)</span>
+                  <span>-{formatCurrency(estimatedPointsDiscount)}</span>
+                </div>
+              )}
+              {couponCode.trim() && (
+                <div className="flex justify-between text-xs text-gray-500">
+                  <span>Mã: {couponCode.trim().toUpperCase()}</span>
+                  <span>Tính khi đặt</span>
+                </div>
+              )}
+              <div className="flex justify-between text-lg font-bold border-t border-gray-100 pt-2">
+                <span>Ước tính</span>
+                <span className="text-green-600">{formatCurrency(estimatedTotal)}</span>
               </div>
             </div>
             <button
