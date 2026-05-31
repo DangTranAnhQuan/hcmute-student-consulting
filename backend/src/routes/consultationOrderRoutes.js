@@ -28,6 +28,7 @@ router.put(
 
 router.post("/checkout", verifyToken, orderController.checkout);
 router.get("/payment-methods", verifyToken, orderController.getPaymentMethods);
+router.get("/rewards/history", verifyToken, orderController.getRewardHistory);
 router.get("/", verifyToken, orderController.getOrders);
 router.get("/:id", verifyToken, orderController.getOrderDetail);
 router.post("/:id/pay/momo", verifyToken, orderController.createMomoPayment);
