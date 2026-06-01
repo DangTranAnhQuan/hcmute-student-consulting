@@ -1,9 +1,14 @@
+const mongoose = require("mongoose");
 const Counselor = require("../models/Counselor");
 const Availability = require("../models/Availability");
 const Schedule = require("../models/Schedule");
 const CounselorReview = require("../models/CounselorReview");
 const { ACTIVE_SCHEDULE_STATUSES } = require("../services/scheduleService");
 const { attachCounselorStats } = require("../services/counselorStatsService");
+
+const DEFAULT_REVIEW_PAGE = 1;
+const DEFAULT_REVIEW_LIMIT = 10;
+const MAX_REVIEW_LIMIT = 50;
 
 const COUNSELOR_PROFILE_FIELDS = [
   "fullName",
@@ -20,6 +25,19 @@ const pickCounselorFields = (body = {}) =>
     return payload;
   }, {});
 
+const isValidCounselorId = (id) => mongoose.isObjectIdOrHexString(id);
+
+const sendCounselorNotFound = (res) =>
+  res.status(404).json({ message: "Không tìm thấy tư vấn viên" });
+
+const toPositiveInteger = (value, fallback, max = Number.MAX_SAFE_INTEGER) => {
+  const parsedValue = Number.parseInt(value, 10);
+  if (!Number.isInteger(parsedValue) || parsedValue < 1) {
+    return fallback;
+  }
+  return Math.min(parsedValue, max);
+};
+
 // Get all counselors
 exports.getAllCounselors = async (req, res) => {
   try {
@@ -35,11 +53,14 @@ exports.getAllCounselors = async (req, res) => {
 // Get counselor by ID
 exports.getCounselorById = async (req, res) => {
   try {
+    if (!isValidCounselorId(req.params.id)) {
+      return sendCounselorNotFound(res);
+    }
     const counselor = await Counselor.findById(req.params.id).populate(
       "availability",
     );
     if (!counselor) {
-      return res.status(404).json({ message: "Không tìm thấy tư vấn viên" });
+      return sendCounselorNotFound(res);
     }
     const [withStats] = await attachCounselorStats([counselor]);
     res.json(withStats);
@@ -59,9 +80,12 @@ const buildSimilarCounselorQuery = (counselor) => {
 
 exports.getSimilarCounselors = async (req, res) => {
   try {
+    if (!isValidCounselorId(req.params.id)) {
+      return sendCounselorNotFound(res);
+    }
     const counselor = await Counselor.findById(req.params.id);
     if (!counselor) {
-      return res.status(404).json({ message: "Không tìm thấy tư vấn viên" });
+      return sendCounselorNotFound(res);
     }
     const query = buildSimilarCounselorQuery(counselor);
     const candidates = await Counselor.find(query)
@@ -76,9 +100,12 @@ exports.getSimilarCounselors = async (req, res) => {
 
 exports.getCounselorStats = async (req, res) => {
   try {
+    if (!isValidCounselorId(req.params.id)) {
+      return sendCounselorNotFound(res);
+    }
     const counselor = await Counselor.findById(req.params.id);
     if (!counselor) {
-      return res.status(404).json({ message: "Không tìm thấy tư vấn viên" });
+      return sendCounselorNotFound(res);
     }
     const [withStats] = await attachCounselorStats([counselor]);
     res.json({ stats: withStats });
@@ -89,15 +116,29 @@ exports.getCounselorStats = async (req, res) => {
 
 exports.getCounselorReviews = async (req, res) => {
   try {
-    const { page = 1, limit = 10 } = req.query;
-    const skip = (Number(page) - 1) * Number(limit);
+    if (!isValidCounselorId(req.params.id)) {
+      return sendCounselorNotFound(res);
+    }
+
+    const counselorExists = await Counselor.exists({ _id: req.params.id });
+    if (!counselorExists) {
+      return sendCounselorNotFound(res);
+    }
+
+    const page = toPositiveInteger(req.query.page, DEFAULT_REVIEW_PAGE);
+    const limit = toPositiveInteger(
+      req.query.limit,
+      DEFAULT_REVIEW_LIMIT,
+      MAX_REVIEW_LIMIT,
+    );
+    const skip = (page - 1) * limit;
 
     const [reviews, total] = await Promise.all([
       CounselorReview.find({ counselorId: req.params.id, comment: { $ne: "" } })
         .populate("userId", "username fullName")
         .sort({ createdAt: -1 })
         .skip(skip)
-        .limit(Number(limit)),
+        .limit(limit),
       CounselorReview.countDocuments({
         counselorId: req.params.id,
         comment: { $ne: "" },
@@ -112,7 +153,7 @@ exports.getCounselorReviews = async (req, res) => {
       reviewer: r.userId?.fullName || r.userId?.username || "Sinh viên ẩn danh",
     }));
 
-    res.json({ reviews: safeReviews, total, page: Number(page), limit: Number(limit) });
+    res.json({ reviews: safeReviews, total, page, limit });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -142,9 +183,12 @@ exports.createCounselor = async (req, res) => {
 // Update counselor
 exports.updateCounselor = async (req, res) => {
   try {
+    if (!isValidCounselorId(req.params.id)) {
+      return sendCounselorNotFound(res);
+    }
     const counselor = await Counselor.findById(req.params.id);
     if (!counselor) {
-      return res.status(404).json({ message: "Không tìm thấy tư vấn viên" });
+      return sendCounselorNotFound(res);
     }
 
     Object.assign(counselor, pickCounselorFields(req.body));

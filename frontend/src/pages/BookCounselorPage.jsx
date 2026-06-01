@@ -68,6 +68,11 @@ export default function BookCounselorPage() {
     const loadCounselor = async () => {
       try {
         setLoading(true);
+        setError("");
+        setSimilarCounselors([]);
+        setReviews([]);
+        setReviewsTotal(0);
+        setReviewsPage(1);
         const response = await counselorAPI.detail(counselorId);
         const counselorData = response.data;
         setCounselor(counselorData);
@@ -78,16 +83,20 @@ export default function BookCounselorPage() {
         }));
 
         if (user) {
-          await userAPI.markViewedCounselor(counselorId);
+          userAPI.markViewedCounselor(counselorId).catch(() => {});
         }
 
-        const similarResponse = await counselorAPI.similar(counselorId);
-        setSimilarCounselors(similarResponse.data);
-
-        const reviewsResponse = await counselorAPI.reviews(counselorId, 1);
-        setReviews(reviewsResponse.data.reviews || []);
-        setReviewsTotal(reviewsResponse.data.total || 0);
-        setReviewsPage(1);
+        const [similarResult, reviewsResult] = await Promise.allSettled([
+          counselorAPI.similar(counselorId),
+          counselorAPI.reviews(counselorId, 1),
+        ]);
+        if (similarResult.status === "fulfilled") {
+          setSimilarCounselors(similarResult.value.data);
+        }
+        if (reviewsResult.status === "fulfilled") {
+          setReviews(reviewsResult.value.data.reviews || []);
+          setReviewsTotal(reviewsResult.value.data.total || 0);
+        }
       } catch (err) {
         setError(err.response?.data?.message || "Không tải được tư vấn viên");
       } finally {
@@ -105,7 +114,8 @@ export default function BookCounselorPage() {
       const res = await counselorAPI.reviews(counselorId, nextPage);
       setReviews((prev) => [...prev, ...(res.data.reviews || [])]);
       setReviewsPage(nextPage);
-    } catch {
+    } catch (err) {
+      setError(err.response?.data?.message || "Không tải thêm được bình luận");
     } finally {
       setReviewsLoading(false);
     }
