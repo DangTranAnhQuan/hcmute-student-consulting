@@ -20,14 +20,15 @@ const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const generateOTP = () =>
   Math.floor(100000 + Math.random() * 900000).toString();
 
-const normalizeEmail = (email) => String(email || "").trim().toLowerCase();
+const normalizeEmail = (email) =>
+  String(email || "")
+    .trim()
+    .toLowerCase();
 
 const signAccessToken = (user) =>
-  jwt.sign(
-    { id: user._id, role: user.role },
-    process.env.ACCESS_TOKEN_SECRET,
-    { expiresIn: ACCESS_TOKEN_EXPIRES_IN },
-  );
+  jwt.sign({ id: user._id, role: user.role }, process.env.ACCESS_TOKEN_SECRET, {
+    expiresIn: ACCESS_TOKEN_EXPIRES_IN,
+  });
 
 const setAccessTokenCookie = (res, accessToken) => {
   res.cookie("accessToken", accessToken, {
@@ -134,7 +135,8 @@ exports.login = async (req, res) => {
     if (!EMAIL_REGEX.test(email)) {
       return res.status(400).json({
         message: "Email không hợp lệ",
-        details: "Email đăng nhập phải đúng định dạng, ví dụ: student@hcmute.edu.vn.",
+        details:
+          "Email đăng nhập phải đúng định dạng, ví dụ: student@hcmute.edu.vn.",
         errorCode: "LOGIN_INVALID_EMAIL",
       });
     }
@@ -243,7 +245,8 @@ exports.register = async (req, res) => {
     if (err.code === 11000) {
       return res.status(409).json({
         message: "Email đã được sử dụng",
-        details: "Email này đã tồn tại trong hệ thống. Vui lòng dùng email khác.",
+        details:
+          "Email này đã tồn tại trong hệ thống. Vui lòng dùng email khác.",
         errorCode: "REGISTER_DUPLICATE_EMAIL",
       });
     }
@@ -270,7 +273,8 @@ exports.forgotPassword = async (req, res) => {
     if (!EMAIL_REGEX.test(email)) {
       return res.status(400).json({
         message: "Email không hợp lệ",
-        details: "Email quên mật khẩu phải đúng định dạng, ví dụ: student@hcmute.edu.vn.",
+        details:
+          "Email quên mật khẩu phải đúng định dạng, ví dụ: student@hcmute.edu.vn.",
         errorCode: "FORGOT_PASSWORD_INVALID_EMAIL",
       });
     }
@@ -344,7 +348,8 @@ exports.verifyResetOTP = async (req, res) => {
     if (!user.otpExpires || user.otpExpires < Date.now()) {
       return res.status(400).json({
         message: "Mã OTP đã hết hạn",
-        details: "Mã OTP chỉ có hiệu lực trong 5 phút. Vui lòng gửi lại yêu cầu quên mật khẩu.",
+        details:
+          "Mã OTP chỉ có hiệu lực trong 5 phút. Vui lòng gửi lại yêu cầu quên mật khẩu.",
         errorCode: "VERIFY_RESET_OTP_EXPIRED",
       });
     }
@@ -392,7 +397,8 @@ exports.resetPassword = async (req, res) => {
     if (!user.otpExpires || user.otpExpires < Date.now()) {
       return res.status(400).json({
         message: "Mã OTP đã hết hạn",
-        details: "Mã OTP chỉ có hiệu lực trong 5 phút. Vui lòng gửi lại yêu cầu quên mật khẩu.",
+        details:
+          "Mã OTP chỉ có hiệu lực trong 5 phút. Vui lòng gửi lại yêu cầu quên mật khẩu.",
         errorCode: "RESET_PASSWORD_OTP_EXPIRED",
       });
     }
@@ -435,7 +441,8 @@ exports.verifyOTP = async (req, res) => {
     if (!user.otpExpires || user.otpExpires < Date.now()) {
       return res.status(400).json({
         message: "Mã OTP đã hết hạn",
-        details: "Mã OTP chỉ có hiệu lực trong 5 phút. Vui lòng đăng ký lại hoặc yêu cầu cấp lại mã.",
+        details:
+          "Mã OTP chỉ có hiệu lực trong 5 phút. Vui lòng đăng ký lại hoặc yêu cầu cấp lại mã.",
         errorCode: "VERIFY_OTP_EXPIRED",
       });
     }
@@ -468,9 +475,18 @@ exports.getProfile = async (req, res) => {
       return res.status(401).json({ message: "Không được xác thực" });
     }
 
-    const user = await User.findById(userId).select(
-      "-password -otp -otpExpires",
-    );
+    const user = await User.findById(userId)
+      .select("-password -otp -otpExpires")
+      .populate({
+        path: "favoriteCounselors",
+        select:
+          "fullName expertise hourlyRate rating image currentStatus currentStatusLabel",
+      })
+      .populate({
+        path: "recentlyViewedCounselors",
+        select:
+          "fullName expertise hourlyRate rating image currentStatus currentStatusLabel",
+      });
     if (!user) {
       return res.status(404).json({ message: "Không tìm thấy người dùng" });
     }
@@ -513,5 +529,195 @@ exports.updateProfile = async (req, res) => {
     return sendServerError(res, "updateProfile", err, {
       userId: req.user?.id,
     });
+  }
+};
+
+const counselExists = async (counselorId) => {
+  if (!counselorId) return false;
+  const counselor = await require("../models/Counselor")
+    .findById(counselorId)
+    .select("_id");
+  return Boolean(counselor);
+};
+
+exports.addFavoriteCounselor = async (req, res) => {
+  try {
+    const userId = req.user?.id;
+    const counselorId = req.params.id;
+    if (!userId || !counselorId) {
+      return res.status(400).json({ message: "Dữ liệu yêu cầu không hợp lệ" });
+    }
+    if (!(await counselExists(counselorId))) {
+      return res.status(404).json({ message: "Không tìm thấy tư vấn viên" });
+    }
+    const user = await User.findByIdAndUpdate(
+      userId,
+      {
+        $addToSet: { favoriteCounselors: counselorId },
+        updatedAt: Date.now(),
+      },
+      { new: true },
+    ).select("-password -otp -otpExpires");
+    res.json(user);
+  } catch (err) {
+    return sendServerError(res, "addFavoriteCounselor", err, {
+      userId: req.user?.id,
+      counselorId: req.params.id,
+    });
+  }
+};
+
+exports.removeFavoriteCounselor = async (req, res) => {
+  try {
+    const userId = req.user?.id;
+    const counselorId = req.params.id;
+    if (!userId || !counselorId) {
+      return res.status(400).json({ message: "Dữ liệu yêu cầu không hợp lệ" });
+    }
+    const user = await User.findByIdAndUpdate(
+      userId,
+      {
+        $pull: { favoriteCounselors: counselorId },
+        updatedAt: Date.now(),
+      },
+      { new: true },
+    ).select("-password -otp -otpExpires");
+    res.json(user);
+  } catch (err) {
+    return sendServerError(res, "removeFavoriteCounselor", err, {
+      userId: req.user?.id,
+      counselorId: req.params.id,
+    });
+  }
+};
+
+exports.markViewedCounselor = async (req, res) => {
+  try {
+    const userId = req.user?.id;
+    const counselorId = req.params.id;
+    if (!userId || !counselorId) {
+      return res.status(400).json({ message: "Dữ liệu yêu cầu không hợp lệ" });
+    }
+    if (!(await counselExists(counselorId))) {
+      return res.status(404).json({ message: "Không tìm thấy tư vấn viên" });
+    }
+    const user = await User.findById(userId);
+    if (!user)
+      return res.status(404).json({ message: "Không tìm thấy người dùng" });
+    user.recentlyViewedCounselors = [
+      counselorId,
+      ...new Set(
+        user.recentlyViewedCounselors.filter(
+          (id) => id.toString() !== counselorId,
+        ),
+      ),
+    ].slice(0, 10);
+    user.updatedAt = Date.now();
+    await user.save();
+    res.json(user);
+  } catch (err) {
+    return sendServerError(res, "markViewedCounselor", err, {
+      userId: req.user?.id,
+      counselorId: req.params.id,
+    });
+  }
+};
+
+exports.getFavorites = async (req, res) => {
+  try {
+    const userId = req.user?.id;
+    if (!userId)
+      return res.status(401).json({ message: "Không được xác thực" });
+
+    const user = await User.findById(userId)
+      .select("favoriteCounselors")
+      .populate({
+        path: "favoriteCounselors",
+        select:
+          "fullName expertise hourlyRate rating image currentStatus currentStatusLabel",
+      });
+    if (!user)
+      return res.status(404).json({ message: "Không tìm thấy người dùng" });
+
+    res.json(user.favoriteCounselors || []);
+  } catch (err) {
+    return sendServerError(res, "getFavorites", err, { userId: req.user?.id });
+  }
+};
+
+exports.getCoupons = async (req, res) => {
+  try {
+    const userId = req.user?.id;
+    if (!userId)
+      return res.status(401).json({ message: "Không được xác thực" });
+
+    const user = await User.findById(userId).select("coupons");
+    if (!user)
+      return res.status(404).json({ message: "Không tìm thấy người dùng" });
+
+    const now = new Date();
+    const coupons = user.coupons || [];
+    res.json({
+      active: coupons.filter(
+        (c) => !c.isUsed && (!c.expiresAt || new Date(c.expiresAt) > now),
+      ),
+      used: coupons.filter((c) => c.isUsed),
+      expired: coupons.filter(
+        (c) => !c.isUsed && c.expiresAt && new Date(c.expiresAt) <= now,
+      ),
+    });
+  } catch (err) {
+    return sendServerError(res, "getCoupons", err, { userId: req.user?.id });
+  }
+};
+
+exports.redeemPoints = async (req, res) => {
+  try {
+    const userId = req.user?.id;
+    if (!userId)
+      return res.status(401).json({ message: "Không được xác thực" });
+
+    const pointsToConvert = Math.floor(
+      Math.max(0, Number(req.body?.pointsToConvert || 0)),
+    );
+    const MIN_POINTS = 100;
+
+    if (pointsToConvert < MIN_POINTS) {
+      return res.status(400).json({
+        message: `Cần ít nhất ${MIN_POINTS} điểm để đổi mã giảm giá`,
+      });
+    }
+
+    const user = await User.findById(userId);
+    if (!user)
+      return res.status(404).json({ message: "Không tìm thấy người dùng" });
+
+    if (user.loyaltyPoints < pointsToConvert) {
+      return res.status(400).json({ message: "Không đủ điểm tích lũy" });
+    }
+
+    const code = `DIEM${Date.now()}${Math.random().toString(36).slice(2, 5).toUpperCase()}`;
+    const coupon = {
+      code,
+      type: "fixed",
+      value: pointsToConvert,
+      description: `Đổi ${pointsToConvert} điểm lấy mã giảm ${pointsToConvert.toLocaleString("vi-VN")}đ`,
+      minOrderValue: 0,
+      expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+      isUsed: false,
+    };
+
+    user.loyaltyPoints -= pointsToConvert;
+    user.coupons.push(coupon);
+    user.updatedAt = Date.now();
+    await user.save();
+
+    res.json({
+      message: `Đổi thành công! Mã giảm giá ${code} đã được thêm vào ví.`,
+      coupon,
+      remainingPoints: user.loyaltyPoints,
+    });
+  } catch (err) {
+    return sendServerError(res, "redeemPoints", err, { userId: req.user?.id });
   }
 };

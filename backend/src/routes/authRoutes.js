@@ -20,5 +20,23 @@ router.post("/reset-password", resetPasswordLimiter, authCtrl.resetPassword);
 // Protected routes
 router.get("/profile", verifyToken, authCtrl.getProfile);
 router.put("/profile", verifyToken, authCtrl.updateProfile);
+router.post(
+  "/favorite-counselors/:id",
+  verifyToken,
+  authCtrl.addFavoriteCounselor,
+);
+router.delete(
+  "/favorite-counselors/:id",
+  verifyToken,
+  authCtrl.removeFavoriteCounselor,
+);
+router.post(
+  "/viewed-counselors/:id",
+  verifyToken,
+  authCtrl.markViewedCounselor,
+);
+router.get("/favorites", verifyToken, authCtrl.getFavorites);
+router.get("/coupons", verifyToken, authCtrl.getCoupons);
+router.patch("/points/redeem", verifyToken, authCtrl.redeemPoints);
 
 module.exports = router;
