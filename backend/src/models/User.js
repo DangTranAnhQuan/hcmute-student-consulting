@@ -1,4 +1,18 @@
 const mongoose = require("mongoose");
+const couponSchema = new mongoose.Schema(
+  {
+    code: { type: String, required: true, trim: true },
+    type: { type: String, enum: ["fixed", "percent"], default: "fixed" },
+    value: { type: Number, required: true, min: 0 },
+    description: { type: String, default: "" },
+    minOrderValue: { type: Number, default: 0, min: 0 },
+    expiresAt: { type: Date, default: null },
+    isUsed: { type: Boolean, default: false },
+    createdAt: { type: Date, default: Date.now },
+  },
+  { _id: false },
+);
+
 const userSchema = new mongoose.Schema({
   username: { type: String, required: true },
   email: { type: String, required: true, unique: true },
@@ -7,6 +21,20 @@ const userSchema = new mongoose.Schema({
   fullName: String,
   phone: String,
   address: String,
+  loyaltyPoints: { type: Number, default: 0, min: 0 },
+  favoriteCounselors: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Counselor",
+    },
+  ],
+  recentlyViewedCounselors: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Counselor",
+    },
+  ],
+  coupons: { type: [couponSchema], default: [] },
   otp: String,
   otpExpires: Date,
   isActivated: { type: Boolean, default: false },

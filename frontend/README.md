@@ -204,7 +204,6 @@ Mỗi thành viên có thể xử lý:
 2. **Thành viên 2**: Register + OTP verification
 3. **Thành viên 3**: Forgot Password + Reset Password
 4. **Thành viên 4**: Profile + Edit Profile
-5. **Thành viên 5**: UI/UX refinement và responsive design
 
 ## 🐛 Debugging
 
@@ -224,4 +223,4 @@ Mỗi thành viên có thể xử lý:
 ---
 
 **Tác giả**: Nhóm 6 - HCMUTE  
-**Ngày tạo**: 2024
+**Ngày tạo**: 2026

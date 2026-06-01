@@ -2,7 +2,7 @@
 
 ## Bản hoàn chỉnh BT06 nhóm
 
-Bản `hcmute-student-consulting_HoanThanh` đã áp dụng 03 yêu cầu của bài bán hàng vào đề tài tư vấn sinh viên:
+Bản `hcmute-student-consulting` đã áp dụng 03 yêu cầu của bài bán hàng vào đề tài tư vấn sinh viên:
 
 - Giỏ hàng tương ứng với **giỏ tư vấn**: người dùng chọn từng tư vấn viên/dịch vụ, có thể chọn riêng lẻ hoặc chọn một nhóm mục trong giỏ trước khi thanh toán. Dữ liệu giỏ lưu bằng MongoDB qua model `ConsultationCart`.
 - Thanh toán tương ứng với **xác nhận yêu cầu tư vấn**: hỗ trợ `COD` bắt buộc và `MoMo Sandbox`. MoMo không giả lập; nếu thiếu biến môi trường sandbox thì API trả lỗi thay vì tạo link ảo.
@@ -288,90 +288,6 @@ Request → OTP Sent → Verify OTP → New Password → Success
 - Tailwind CSS
 - React Scripts
 
-## 🧑‍💻 Team Roles & Responsibilities
-
-Each team member handles one feature:
-
-**Member 1**: Registration + OTP Verification
-
-- Register endpoint with validation
-- OTP generation & email sending
-- OTP verification endpoint
-- Frontend register form & OTP modal
-
-**Member 2**: Login + JWT Authentication
-
-- Login endpoint with JWT generation
-- JWT verification middleware
-- Token refresh logic (optional)
-- Frontend login form & redirect
-
-**Member 3**: Forgot Password + Reset
-
-- Forgot password endpoint
-- Reset password endpoint
-- OTP verification for reset
-- Frontend forgot password flow (multi-step)
-
-**Member 4**: Profile Management
-
-- Get profile endpoint
-- Update profile endpoint
-- Profile page UI
-- Edit profile functionality
-
-**Member 5**: UI/UX & Integration
-
-- Reusable components (Forms, Buttons, etc)
-- Responsive design with Tailwind
-- Error handling & validation messages
-- Integration testing & documentation
-
-## 📝 Git Workflow
-
-### Personal Repository
-
-```bash
-# Clone your fork
-git clone https://github.com/YOUR_USERNAME/hcmute-student-consulting
-
-# Create feature branch
-git checkout -b feat/your-feature
-
-# Make changes and commit
-git add .
-git commit -m "feat: implement your feature"
-
-# Push to your fork
-git push origin feat/your-feature
-```
-
-### Group Repository
-
-```bash
-# Add upstream (once)
-git remote add upstream https://github.com/GROUP_REPO/hcmute-student-consulting
-
-# Keep updated with group repo
-git fetch upstream
-git merge upstream/main
-
-# Push to group repo
-git push origin main
-```
-
-## 📋 Commit Message Convention
-
-```
-feat: add user registration endpoint
-fix: resolve OTP verification bug
-docs: update API documentation
-style: format code with prettier
-refactor: restructure auth flow
-test: add login tests
-chore: update dependencies
-```
-
 ## ✅ Checklist antes de Submit
 
 ### Backend
@@ -453,15 +369,6 @@ kill -9 <PID>
 - Verify Gmail app password
 - Check `EMAIL_USER` & `EMAIL_PASS`
 - Review Gmail account settings
-
-## 📞 Support
-
-For questions or issues:
-
-1. Check documentation first
-2. Review code comments
-3. Ask teammates
-4. Create GitHub issue
 
 ---
 
