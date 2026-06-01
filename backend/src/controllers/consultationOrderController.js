@@ -2,6 +2,7 @@ const crypto = require("crypto");
 const ConsultationCart = require("../models/ConsultationCart");
 const Counselor = require("../models/Counselor");
 const CounselorReview = require("../models/CounselorReview");
+const User = require("../models/User");
 const {
   ConsultationOrder,
   ORDER_STATUS,
@@ -148,7 +149,8 @@ const getCancelPolicy = (order) => {
       canCancel: true,
       mode: "REQUEST",
       cancelDeadlineAt: deadline,
-      message: "Ban tư vấn đã chuẩn bị hồ sơ, cần gửi yêu cầu hủy để admin duyệt",
+      message:
+        "Ban tư vấn đã chuẩn bị hồ sơ, cần gửi yêu cầu hủy để admin duyệt",
     };
   }
 
@@ -178,6 +180,7 @@ const decorateOrder = (order, reviews = []) => {
     cancelPolicy: policy,
     autoConfirmMinutes: AUTO_CONFIRM_MINUTES,
     reviews,
+    loyaltyPointsApplied: value.pointsUsed || 0,
   };
 };
 
@@ -191,10 +194,10 @@ const saveIfChanged = async (order, changed) => {
 const getMomoConfig = () => ({
   partnerCode: process.env.MOMO_PARTNER_CODE || "MOMO",
   accessKey: process.env.MOMO_ACCESS_KEY || "F8BBA842ECF85",
-  secretKey:
-    process.env.MOMO_SECRET_KEY || "K951B6PE1waDMi640xX08PD3vg6EkVlz",
+  secretKey: process.env.MOMO_SECRET_KEY || "K951B6PE1waDMi640xX08PD3vg6EkVlz",
   endpoint: (() => {
-    const endpoint = process.env.MOMO_ENDPOINT || "https://test-payment.momo.vn";
+    const endpoint =
+      process.env.MOMO_ENDPOINT || "https://test-payment.momo.vn";
     return endpoint.includes("/v2/gateway/api/create")
       ? endpoint
       : `${endpoint.replace(/\/$/, "")}/v2/gateway/api/create`;
@@ -206,9 +209,12 @@ const getMomoConfig = () => ({
 
 const assertMomoConfig = () => {
   const config = getMomoConfig();
-  const missing = ["partnerCode", "accessKey", "secretKey", "apiPublicUrl"].filter(
-    (key) => !config[key],
-  );
+  const missing = [
+    "partnerCode",
+    "accessKey",
+    "secretKey",
+    "apiPublicUrl",
+  ].filter((key) => !config[key]);
 
   if (missing.length > 0) {
     const error = new Error(
@@ -219,7 +225,9 @@ const assertMomoConfig = () => {
   }
 
   if (typeof fetch !== "function") {
-    const error = new Error("Môi trường Node.js cần hỗ trợ fetch để gọi MoMo Sandbox");
+    const error = new Error(
+      "Môi trường Node.js cần hỗ trợ fetch để gọi MoMo Sandbox",
+    );
     error.statusCode = 500;
     throw error;
   }
@@ -229,9 +237,12 @@ const assertMomoConfig = () => {
 
 const getMomoConfigStatus = () => {
   const config = getMomoConfig();
-  const missing = ["partnerCode", "accessKey", "secretKey", "apiPublicUrl"].filter(
-    (key) => !config[key],
-  );
+  const missing = [
+    "partnerCode",
+    "accessKey",
+    "secretKey",
+    "apiPublicUrl",
+  ].filter((key) => !config[key]);
 
   return {
     configured: missing.length === 0,
@@ -275,7 +286,8 @@ const buildMomoResultSignature = (payload, accessKey) =>
 
 const verifyMomoResultSignature = (payload) => {
   const config = getMomoConfig();
-  if (!payload.signature || !config.accessKey || !config.secretKey) return false;
+  if (!payload.signature || !config.accessKey || !config.secretKey)
+    return false;
   const rawSignature = buildMomoResultSignature(payload, config.accessKey);
   const expected = signMomoRaw(rawSignature, config.secretKey);
   return expected === payload.signature;
@@ -288,7 +300,10 @@ const requestMomoPayment = async (order) => {
   const amount = Math.round(order.total);
   const orderInfo = `Thanh toán yêu cầu tư vấn ${order.orderCode}`;
   const extraData = Buffer.from(
-    JSON.stringify({ orderId: order._id?.toString(), orderCode: order.orderCode }),
+    JSON.stringify({
+      orderId: order._id?.toString(),
+      orderCode: order.orderCode,
+    }),
   ).toString("base64");
   const apiPublicUrl = config.apiPublicUrl.replace(/\/$/, "");
   const clientUrl = config.clientUrl.replace(/\/$/, "");
@@ -335,7 +350,9 @@ const requestMomoPayment = async (order) => {
   order.momoPayUrl = data.payUrl;
   order.momoResultCode = data.resultCode;
   order.momoMessage = data.message || "Đã tạo phiên thanh toán MoMo";
-  order.paymentExpiresAt = new Date(Date.now() + MOMO_PAYMENT_MINUTES * 60 * 1000);
+  order.paymentExpiresAt = new Date(
+    Date.now() + MOMO_PAYMENT_MINUTES * 60 * 1000,
+  );
   order.paymentStatus = PAYMENT_STATUS.PENDING;
 
   return {
@@ -354,7 +371,9 @@ const handleMomoResult = async (payload, source = "return") => {
     throw error;
   }
 
-  const order = await ConsultationOrder.findOne({ momoOrderId: payload.orderId });
+  const order = await ConsultationOrder.findOne({
+    momoOrderId: payload.orderId,
+  });
   if (!order) {
     const error = new Error("Không tìm thấy đơn theo mã MoMo");
     error.statusCode = 404;
@@ -382,6 +401,9 @@ const handleMomoResult = async (payload, source = "return") => {
             : `Thanh toán MoMo thành công qua ${source}`,
         ),
       );
+      if (order.status !== ORDER_STATUS.CANCELLED) {
+        await grantPaymentLoyaltyPoints(order);
+      }
     }
   } else if (order.paymentStatus !== PAYMENT_STATUS.PAID) {
     order.paymentStatus = PAYMENT_STATUS.FAILED;
@@ -399,7 +421,9 @@ const handleMomoResult = async (payload, source = "return") => {
 
 const removeSelectedCartItems = async (cart, selectedIds) => {
   const selectedSet = new Set(selectedIds.map(String));
-  cart.items = cart.items.filter((item) => !selectedSet.has(item._id.toString()));
+  cart.items = cart.items.filter(
+    (item) => !selectedSet.has(item._id.toString()),
+  );
   await cart.save();
 };
 
@@ -425,14 +449,107 @@ const buildOrderItems = (items) =>
     };
   });
 
+const generateCouponCode = () =>
+  `TV${Date.now()}${Math.random().toString(36).slice(2, 5).toUpperCase()}`;
+
+const grantPaymentLoyaltyPoints = async (order) => {
+  const points = Math.max(1, Math.floor((order.total || 0) / 1000));
+  await User.findByIdAndUpdate(order.userId, {
+    $inc: { loyaltyPoints: points },
+  });
+  return points;
+};
+
+const applyCoupon = (couponCode, subtotal, user) => {
+  if (!couponCode) return { discountAmount: 0, coupon: null };
+  const code = String(couponCode || "")
+    .trim()
+    .toUpperCase();
+  if (!code) return { discountAmount: 0, coupon: null };
+  const coupon = (user.coupons || []).find(
+    (item) => item.code.toUpperCase() === code,
+  );
+  if (!coupon) {
+    const error = new Error("Mã khuyến mãi không tồn tại hoặc chưa được cấp");
+    error.statusCode = 400;
+    throw error;
+  }
+  if (coupon.isUsed) {
+    const error = new Error("Mã khuyến mãi này đã được sử dụng");
+    error.statusCode = 400;
+    throw error;
+  }
+  if (coupon.expiresAt && new Date(coupon.expiresAt) < new Date()) {
+    const error = new Error("Mã khuyến mãi đã hết hạn");
+    error.statusCode = 400;
+    throw error;
+  }
+  if (coupon.minOrderValue && subtotal < coupon.minOrderValue) {
+    const error = new Error(
+      `Đơn tối thiểu ${coupon.minOrderValue} để áp mã này`,
+    );
+    error.statusCode = 400;
+    throw error;
+  }
+  const discountAmount =
+    coupon.type === "percent"
+      ? Math.round((subtotal * coupon.value) / 100)
+      : Math.min(subtotal, coupon.value || 0);
+  return { discountAmount, coupon };
+};
+
+const createReviewReward = async (userId, order, review) => {
+  const existingReward = (order.reviewRewards || []).find(
+    (item) => item.itemIndex === review.itemIndex,
+  );
+  if (existingReward) {
+    return existingReward;
+  }
+
+  const code = generateCouponCode();
+  const coupon = {
+    code,
+    type: "percent",
+    value: 15,
+    description: "Giảm 15% cho lần đặt dịch vụ tiếp theo",
+    minOrderValue: 0,
+    expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+    isUsed: false,
+  };
+  await User.findByIdAndUpdate(userId, { $push: { coupons: coupon } });
+
+  const rewardInfo = {
+    type: "coupon",
+    value: 15,
+    code,
+    message: `Cảm ơn bạn đã đánh giá! Tặng mã giảm 15%: ${code}`,
+  };
+
+  order.rewardInfo = rewardInfo;
+  order.reviewRewards = order.reviewRewards || [];
+  order.reviewRewards.push({
+    itemIndex: review.itemIndex,
+    type: rewardInfo.type,
+    value: rewardInfo.value,
+    code: rewardInfo.code,
+    message: rewardInfo.message,
+    createdAt: new Date(),
+  });
+  await order.save();
+  return rewardInfo;
+};
+
 const calculateConsultationPrice = (
   hourlyRate = 0,
   durationMinutes = 60,
   meetingType = "online",
 ) => {
   const surchargeRate =
-    meetingType === "in-person" ? IN_PERSON_SURCHARGE_RATE : ONLINE_SURCHARGE_RATE;
-  const basePrice = (Math.max(0, Number(hourlyRate || 0)) * durationMinutes) / 60;
+    meetingType === "in-person"
+      ? IN_PERSON_SURCHARGE_RATE
+      : ONLINE_SURCHARGE_RATE;
+  const basePrice =
+    (Math.max(0, Number(hourlyRate || 0)) * durationMinutes) / 60;
   return Math.round(basePrice * (1 + surchargeRate));
 };
 
@@ -450,16 +567,22 @@ exports.checkout = async (req, res) => {
     const {
       selectedItemIds,
       paymentMethod = PAYMENT_METHOD.COD,
+      couponCode = "",
+      pointsToUse = 0,
       contactInfo = {},
     } = req.body;
 
     if (!Object.values(PAYMENT_METHOD).includes(paymentMethod)) {
-      return res.status(400).json({ message: "Phương thức thanh toán không hợp lệ" });
+      return res
+        .status(400)
+        .json({ message: "Phương thức thanh toán không hợp lệ" });
     }
 
     const contact = normalizeContactInfo(contactInfo);
     if (!contact.fullName || !contact.phone) {
-      return res.status(400).json({ message: "Vui lòng nhập họ tên và số điện thoại" });
+      return res
+        .status(400)
+        .json({ message: "Vui lòng nhập họ tên và số điện thoại" });
     }
 
     const cart = await ConsultationCart.findOne({ userId }).populate(
@@ -479,7 +602,9 @@ exports.checkout = async (req, res) => {
     );
 
     if (selectedItems.length === 0) {
-      return res.status(400).json({ message: "Vui lòng chọn ít nhất một dịch vụ tư vấn" });
+      return res
+        .status(400)
+        .json({ message: "Vui lòng chọn ít nhất một dịch vụ tư vấn" });
     }
 
     const inactiveCounselor = selectedItems.find(
@@ -511,12 +636,31 @@ exports.checkout = async (req, res) => {
         item.meetingType,
       );
     });
-    const subtotal = items.reduce((sum, item) => sum + Number(item.price || 0), 0);
-    const total = subtotal;
+    const subtotal = items.reduce(
+      (sum, item) => sum + Number(item.price || 0),
+      0,
+    );
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: "Không tìm thấy người dùng" });
+    }
+    const { discountAmount, coupon } = applyCoupon(couponCode, subtotal, user);
+    const points = Math.max(0, Number(pointsToUse || 0));
+    if (points > 0 && points > user.loyaltyPoints) {
+      return res
+        .status(400)
+        .json({ message: "Không đủ điểm tích lũy để sử dụng" });
+    }
+    const pointsApplied = Math.min(
+      points,
+      Math.max(0, subtotal - discountAmount),
+    );
+    const total = Math.max(0, subtotal - discountAmount - pointsApplied);
 
     if (paymentMethod === PAYMENT_METHOD.MOMO_SANDBOX && total <= 0) {
       return res.status(400).json({
-        message: "MoMo Sandbox yêu cầu số tiền lớn hơn 0. Dịch vụ miễn phí có thể dùng COD.",
+        message:
+          "MoMo Sandbox yêu cầu số tiền lớn hơn 0. Dịch vụ miễn phí có thể dùng COD.",
       });
     }
 
@@ -530,6 +674,10 @@ exports.checkout = async (req, res) => {
         paymentMethod === PAYMENT_METHOD.COD
           ? PAYMENT_STATUS.UNPAID
           : PAYMENT_STATUS.PENDING,
+      couponCode: coupon ? coupon.code : "",
+      discountAmount,
+      pointsUsed: pointsApplied,
+      totalAfterDiscount: total,
       subtotal,
       total,
       status: ORDER_STATUS.NEW,
@@ -561,7 +709,22 @@ exports.checkout = async (req, res) => {
       throw error;
     }
 
-    await removeSelectedCartItems(cart, selectedItems.map((item) => item._id));
+    await removeSelectedCartItems(
+      cart,
+      selectedItems.map((item) => item._id),
+    );
+
+    if (pointsApplied > 0) {
+      user.loyaltyPoints -= pointsApplied;
+      user.updatedAt = Date.now();
+      await user.save();
+    }
+    if (coupon) {
+      await User.updateOne(
+        { _id: userId, "coupons.code": coupon.code },
+        { $set: { "coupons.$.isUsed": true, updatedAt: Date.now() } },
+      );
+    }
 
     res.status(201).json({
       order: decorateOrder(order),
@@ -605,25 +768,35 @@ exports.createMomoPayment = async (req, res) => {
       userId: getUserId(req),
     });
 
-    if (!order) return res.status(404).json({ message: "Không tìm thấy yêu cầu" });
+    if (!order)
+      return res.status(404).json({ message: "Không tìm thấy yêu cầu" });
     expireMomoPaymentIfNeeded(order);
 
     if (order.paymentMethod !== PAYMENT_METHOD.MOMO_SANDBOX) {
-      return res.status(400).json({ message: "Yêu cầu này không dùng MoMo Sandbox" });
+      return res
+        .status(400)
+        .json({ message: "Yêu cầu này không dùng MoMo Sandbox" });
     }
     if (order.status !== ORDER_STATUS.NEW) {
-      return res.status(400).json({ message: "Chỉ tạo lại thanh toán khi yêu cầu còn ở trạng thái mới" });
+      return res.status(400).json({
+        message: "Chỉ tạo lại thanh toán khi yêu cầu còn ở trạng thái mới",
+      });
     }
     if (order.paymentStatus === PAYMENT_STATUS.PAID) {
       return res.status(400).json({ message: "Yêu cầu đã thanh toán" });
     }
     if (order.total <= 0) {
-      return res.status(400).json({ message: "Số tiền thanh toán phải lớn hơn 0" });
+      return res
+        .status(400)
+        .json({ message: "Số tiền thanh toán phải lớn hơn 0" });
     }
 
     const payment = await requestMomoPayment(order);
     order.timeline.push(
-      createTimelineEntry(ORDER_STATUS.NEW, "Người dùng tạo lại phiên thanh toán MoMo"),
+      createTimelineEntry(
+        ORDER_STATUS.NEW,
+        "Người dùng tạo lại phiên thanh toán MoMo",
+      ),
     );
     await order.save();
 
@@ -638,7 +811,9 @@ exports.createMomoPayment = async (req, res) => {
 
 exports.getOrders = async (req, res) => {
   try {
-    const orders = await ConsultationOrder.find({ userId: getUserId(req) }).sort({
+    const orders = await ConsultationOrder.find({
+      userId: getUserId(req),
+    }).sort({
       createdAt: -1,
     });
 
@@ -660,7 +835,8 @@ exports.getOrderDetail = async (req, res) => {
       _id: req.params.id,
       userId: getUserId(req),
     });
-    if (!order) return res.status(404).json({ message: "Không tìm thấy yêu cầu" });
+    if (!order)
+      return res.status(404).json({ message: "Không tìm thấy yêu cầu" });
 
     const changed = autoConfirmOrder(order);
     await saveIfChanged(order, changed || order.isModified("paymentStatus"));
@@ -687,7 +863,8 @@ exports.reviewOrderItem = async (req, res) => {
       _id: req.params.id,
       userId: getUserId(req),
     });
-    if (!order) return res.status(404).json({ message: "Không tìm thấy yêu cầu" });
+    if (!order)
+      return res.status(404).json({ message: "Không tìm thấy yêu cầu" });
     if (order.status !== ORDER_STATUS.COMPLETED) {
       return res.status(400).json({
         message: "Chỉ được đánh giá sau khi yêu cầu tư vấn đã hoàn tất",
@@ -696,13 +873,17 @@ exports.reviewOrderItem = async (req, res) => {
 
     const item = order.items[itemIndex];
     if (!item) {
-      return res.status(404).json({ message: "Không tìm thấy mục tư vấn cần đánh giá" });
+      return res
+        .status(404)
+        .json({ message: "Không tìm thấy mục tư vấn cần đánh giá" });
     }
 
     const rating = Number(req.body.rating);
     const comment = String(req.body.comment || "").trim();
     if (!Number.isFinite(rating) || rating < 1 || rating > 5) {
-      return res.status(400).json({ message: "Đánh giá phải nằm trong khoảng 1 đến 5" });
+      return res
+        .status(400)
+        .json({ message: "Đánh giá phải nằm trong khoảng 1 đến 5" });
     }
 
     const review = await CounselorReview.findOneAndUpdate(
@@ -723,12 +904,18 @@ exports.reviewOrderItem = async (req, res) => {
       { upsert: true, returnDocument: "after", setDefaultsOnInsert: true },
     );
 
+    const rewardInfo = await createReviewReward(getUserId(req), order, {
+      itemIndex,
+      rating,
+    });
+
     const reviews = await CounselorReview.find({
       consultationOrderId: order._id,
     }).sort({ itemIndex: 1 });
 
     res.json({
       review,
+      rewardInfo,
       order: decorateOrder(order, reviews),
     });
   } catch (error) {
@@ -742,12 +929,15 @@ exports.cancelOrder = async (req, res) => {
       _id: req.params.id,
       userId: getUserId(req),
     });
-    if (!order) return res.status(404).json({ message: "Không tìm thấy yêu cầu" });
+    if (!order)
+      return res.status(404).json({ message: "Không tìm thấy yêu cầu" });
 
     const changed = autoConfirmOrder(order);
     const reason = String(req.body.reason || "").trim();
     if (reason.length < 6) {
-      return res.status(400).json({ message: "Vui lòng nhập lý do hủy rõ ràng" });
+      return res
+        .status(400)
+        .json({ message: "Vui lòng nhập lý do hủy rõ ràng" });
     }
 
     const policy = getCancelPolicy(order);
@@ -812,7 +1002,10 @@ exports.getAdminOrders = async (req, res) => {
     if (paymentStatus) filter.paymentStatus = paymentStatus;
     if (paymentMethod) filter.paymentMethod = paymentMethod;
     if (search) {
-      const regex = new RegExp(search.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i");
+      const regex = new RegExp(
+        search.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"),
+        "i",
+      );
       filter.$or = [
         { orderCode: regex },
         { "contactInfo.fullName": regex },
@@ -874,14 +1067,24 @@ exports.getAdminDashboard = async (req, res) => {
       if (changed) await syncSchedulesAfterOrderStatusChange(order);
     }
 
-    const statusCounts = Object.values(ORDER_STATUS).reduce((result, status) => {
-      result[status] = orders.filter((order) => order.status === status).length;
-      return result;
-    }, {});
-    const paymentCounts = Object.values(PAYMENT_STATUS).reduce((result, status) => {
-      result[status] = orders.filter((order) => order.paymentStatus === status).length;
-      return result;
-    }, {});
+    const statusCounts = Object.values(ORDER_STATUS).reduce(
+      (result, status) => {
+        result[status] = orders.filter(
+          (order) => order.status === status,
+        ).length;
+        return result;
+      },
+      {},
+    );
+    const paymentCounts = Object.values(PAYMENT_STATUS).reduce(
+      (result, status) => {
+        result[status] = orders.filter(
+          (order) => order.paymentStatus === status,
+        ).length;
+        return result;
+      },
+      {},
+    );
     const collectedRevenue = orders
       .filter((order) => order.paymentStatus === PAYMENT_STATUS.PAID)
       .reduce((sum, order) => sum + Number(order.total || 0), 0);
@@ -919,7 +1122,10 @@ const allowedTransitions = {
     ORDER_STATUS.CANCEL_REQUESTED,
     ORDER_STATUS.CANCELLED,
   ],
-  [ORDER_STATUS.CANCEL_REQUESTED]: [ORDER_STATUS.CANCELLED, ORDER_STATUS.PREPARING],
+  [ORDER_STATUS.CANCEL_REQUESTED]: [
+    ORDER_STATUS.CANCELLED,
+    ORDER_STATUS.PREPARING,
+  ],
   [ORDER_STATUS.PROCESSING]: [ORDER_STATUS.COMPLETED],
   [ORDER_STATUS.COMPLETED]: [],
   [ORDER_STATUS.CANCELLED]: [],
@@ -941,9 +1147,11 @@ const syncSchedulesAfterOrderStatusChange = async (order, note = "") => {
   }
 
   if (
-    [ORDER_STATUS.CONFIRMED, ORDER_STATUS.PREPARING, ORDER_STATUS.PROCESSING].includes(
-      order.status,
-    )
+    [
+      ORDER_STATUS.CONFIRMED,
+      ORDER_STATUS.PREPARING,
+      ORDER_STATUS.PROCESSING,
+    ].includes(order.status)
   ) {
     await updateSchedulesForOrderStatus(order, "confirmed");
   }
@@ -960,7 +1168,8 @@ exports.updateOrderStatus = async (req, res) => {
       "userId",
       "username fullName email phone",
     );
-    if (!order) return res.status(404).json({ message: "Không tìm thấy yêu cầu" });
+    if (!order)
+      return res.status(404).json({ message: "Không tìm thấy yêu cầu" });
 
     const changed = autoConfirmOrder(order);
     if (changed) await order.save();
@@ -973,18 +1182,25 @@ exports.updateOrderStatus = async (req, res) => {
     }
 
     if (
-      [ORDER_STATUS.CONFIRMED, ORDER_STATUS.PREPARING, ORDER_STATUS.PROCESSING].includes(
-        status,
-      ) &&
+      [
+        ORDER_STATUS.CONFIRMED,
+        ORDER_STATUS.PREPARING,
+        ORDER_STATUS.PROCESSING,
+      ].includes(status) &&
       !canAdminProcessPayment(order)
     ) {
       return res.status(400).json({
-        message: "Đơn MoMo chưa thanh toán thành công nên không được xác nhận/xử lý",
+        message:
+          "Đơn MoMo chưa thanh toán thành công nên không được xác nhận/xử lý",
       });
     }
 
-    if (order.status === ORDER_STATUS.CANCEL_REQUESTED && status === ORDER_STATUS.PREPARING) {
-      const restoredStatus = order.cancelRequestFromStatus || ORDER_STATUS.PREPARING;
+    if (
+      order.status === ORDER_STATUS.CANCEL_REQUESTED &&
+      status === ORDER_STATUS.PREPARING
+    ) {
+      const restoredStatus =
+        order.cancelRequestFromStatus || ORDER_STATUS.PREPARING;
       order.status = restoredStatus;
       order.cancelRequestFromStatus = "";
       order.timeline.push(
@@ -1001,8 +1217,12 @@ exports.updateOrderStatus = async (req, res) => {
       if (status === ORDER_STATUS.COMPLETED) {
         order.completedAt = new Date();
         if (order.paymentMethod === PAYMENT_METHOD.COD) {
+          const wasAlreadyPaid = order.paymentStatus === PAYMENT_STATUS.PAID;
           order.paymentStatus = PAYMENT_STATUS.PAID;
           order.paidAt = order.paidAt || new Date();
+          if (!wasAlreadyPaid) {
+            await grantPaymentLoyaltyPoints(order);
+          }
         }
       }
       if (status === ORDER_STATUS.CANCELLED) {
@@ -1018,7 +1238,10 @@ exports.updateOrderStatus = async (req, res) => {
         order.cancelRequestedAt = new Date();
       }
       order.timeline.push(
-        createTimelineEntry(status, note || `Admin cập nhật: ${ORDER_STATUS_LABELS[status]}`),
+        createTimelineEntry(
+          status,
+          note || `Admin cập nhật: ${ORDER_STATUS_LABELS[status]}`,
+        ),
       );
     }
 
@@ -1034,14 +1257,17 @@ exports.updatePaymentStatus = async (req, res) => {
   try {
     const { paymentStatus, note = "" } = req.body;
     if (!Object.values(PAYMENT_STATUS).includes(paymentStatus)) {
-      return res.status(400).json({ message: "Trạng thái thanh toán không hợp lệ" });
+      return res
+        .status(400)
+        .json({ message: "Trạng thái thanh toán không hợp lệ" });
     }
 
     const order = await ConsultationOrder.findById(req.params.id).populate(
       "userId",
       "username fullName email phone",
     );
-    if (!order) return res.status(404).json({ message: "Không tìm thấy yêu cầu" });
+    if (!order)
+      return res.status(404).json({ message: "Không tìm thấy yêu cầu" });
 
     const changed = autoConfirmOrder(order);
     if (changed) await order.save();
@@ -1060,12 +1286,43 @@ exports.updatePaymentStatus = async (req, res) => {
     order.timeline.push(
       createTimelineEntry(
         order.status,
-        note || `Admin cập nhật thanh toán: ${PAYMENT_STATUS_LABELS[paymentStatus]}`,
+        note ||
+          `Admin cập nhật thanh toán: ${PAYMENT_STATUS_LABELS[paymentStatus]}`,
       ),
     );
     await order.save();
 
     res.json(decorateOrder(order));
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+exports.getRewardHistory = async (req, res) => {
+  try {
+    const userId = getUserId(req);
+    const orders = await ConsultationOrder.find({ userId })
+      .select("orderCode reviewRewards createdAt")
+      .sort({ createdAt: -1 });
+
+    const history = [];
+    for (const order of orders) {
+      for (const reward of order.reviewRewards || []) {
+        history.push({
+          orderCode: order.orderCode,
+          orderId: order._id,
+          itemIndex: reward.itemIndex,
+          type: reward.type,
+          value: reward.value,
+          code: reward.code,
+          message: reward.message,
+          createdAt: reward.createdAt,
+        });
+      }
+    }
+
+    history.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    res.json(history);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

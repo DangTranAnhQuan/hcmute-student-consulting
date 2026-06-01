@@ -601,7 +601,7 @@ export default function ConsultationAdminOrdersPage() {
                       : "bg-primary hover:bg-primary-dark"
                   }`}
                 >
-                  {updatingId ? "Đang xử lý..." : `Xác nhận ${actionModal.label}`}
+                  {updatingId ? "Đang xử lý..." : "Xác nhận"}
                 </button>
               </div>
             </div>
