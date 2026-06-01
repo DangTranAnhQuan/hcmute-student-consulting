@@ -36,7 +36,8 @@ api.interceptors.response.use(
     }
     const isTokenError =
       error.response?.status === 401 ||
-      (error.response?.status === 403 && message.toLowerCase().includes("token"));
+      (error.response?.status === 403 &&
+        message.toLowerCase().includes("token"));
 
     if (isTokenError) {
       localStorage.removeItem("accessToken");
@@ -73,6 +74,19 @@ export const counselorAPI = {
   detail: (id) => api.get(`/counselors/${id}`),
   availableSlots: (id, date) =>
     api.get(`/counselors/${id}/available-slots`, { params: { date } }),
+  similar: (id) => api.get(`/counselors/${id}/similar`),
+  stats: (id) => api.get(`/counselors/${id}/stats`),
+};
+
+export const userAPI = {
+  addFavoriteCounselor: (id) => api.post(`/auth/favorite-counselors/${id}`),
+  removeFavoriteCounselor: (id) =>
+    api.delete(`/auth/favorite-counselors/${id}`),
+  markViewedCounselor: (id) => api.post(`/auth/viewed-counselors/${id}`),
+  getFavorites: () => api.get("/auth/favorites"),
+  getCoupons: () => api.get("/auth/coupons"),
+  redeemPoints: (pointsToConvert) =>
+    api.patch("/auth/points/redeem", { pointsToConvert }),
 };
 
 export const consultationCartAPI = {
@@ -88,17 +102,22 @@ export const consultationOrderAPI = {
   checkout: (data) => api.post("/consultation-orders/checkout", data),
   list: () => api.get("/consultation-orders"),
   detail: (id) => api.get(`/consultation-orders/${id}`),
-  cancel: (id, reason) => api.post(`/consultation-orders/${id}/cancel`, { reason }),
+  cancel: (id, reason) =>
+    api.post(`/consultation-orders/${id}/cancel`, { reason }),
   payMomo: (id) => api.post(`/consultation-orders/${id}/pay/momo`),
   reviewItem: (id, itemIndex, data) =>
     api.post(`/consultation-orders/${id}/items/${itemIndex}/review`, data),
+  rewardHistory: () => api.get("/consultation-orders/rewards/history"),
   adminDashboard: () => api.get("/consultation-orders/admin/dashboard"),
   adminList: (params = {}) =>
     api.get("/consultation-orders/admin/all", { params }),
   updateStatus: (id, status, note = "") =>
     api.put(`/consultation-orders/admin/${id}/status`, { status, note }),
   updatePaymentStatus: (id, paymentStatus, note = "") =>
-    api.put(`/consultation-orders/admin/${id}/payment`, { paymentStatus, note }),
+    api.put(`/consultation-orders/admin/${id}/payment`, {
+      paymentStatus,
+      note,
+    }),
 };
 
 export const faqAPI = {

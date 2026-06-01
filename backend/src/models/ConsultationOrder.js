@@ -165,6 +165,37 @@ const consultationOrderSchema = new mongoose.Schema(
       enum: Object.values(PAYMENT_STATUS),
       default: PAYMENT_STATUS.UNPAID,
     },
+    couponCode: { type: String, default: "" },
+    discountAmount: { type: Number, default: 0, min: 0 },
+    pointsUsed: { type: Number, default: 0, min: 0 },
+    totalAfterDiscount: { type: Number, default: 0, min: 0 },
+    rewardInfo: {
+      type: {
+        type: String,
+        enum: ["none", "points", "coupon"],
+        default: "none",
+      },
+      value: { type: Number, default: 0, min: 0 },
+      code: { type: String, default: "" },
+      message: { type: String, default: "" },
+    },
+    reviewRewards: {
+      type: [
+        {
+          itemIndex: { type: Number, required: true, min: 0 },
+          type: {
+            type: String,
+            enum: ["points", "coupon"],
+            required: true,
+          },
+          value: { type: Number, default: 0, min: 0 },
+          code: { type: String, default: "" },
+          message: { type: String, default: "" },
+          createdAt: { type: Date, default: Date.now },
+        },
+      ],
+      default: [],
+    },
     subtotal: {
       type: Number,
       default: 0,
