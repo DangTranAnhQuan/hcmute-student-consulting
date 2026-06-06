@@ -1,7 +1,9 @@
 const express = require("express");
+const http = require("http");
 const mongoose = require("mongoose");
 const cookieParser = require("cookie-parser");
 const cors = require("cors");
+const { Server } = require("socket.io");
 
 require("dotenv").config({
   path: require("path").join(__dirname, "..", ".env"),
@@ -17,25 +19,22 @@ const forumRoutes = require("./routes/forumRoutes");
 const consultationCartRoutes = require("./routes/consultationCartRoutes");
 const consultationOrderRoutes = require("./routes/consultationOrderRoutes");
 const contentRoutes = require("./routes/contentRoutes");
+const notificationRoutes = require("./routes/notificationRoutes");
+const { setNotificationIO, attachSocketHandlers } = require("./services/notificationHub");
 
 const app = express();
+const server = http.createServer(app);
 
 // Middleware
 const allowedOrigins = [
-  process.env.CLIENT_URL || "http://localhost:3000",
+  process.env.CLIENT_URL,
   "http://localhost:3001",
   "http://localhost:3000",
 ].filter(Boolean);
 
 app.use(
   cors({
-    origin: (origin, callback) => {
-      if (!origin || allowedOrigins.includes(origin)) {
-        return callback(null, true);
-      }
-
-      return callback(new Error(`CORS blocked for origin: ${origin}`));
-    },
+    origin: allowedOrigins,
     credentials: true,
   }),
 );
@@ -61,6 +60,19 @@ app.use("/api/forum", forumRoutes);
 app.use("/api/content", contentRoutes);
 app.use("/api/consultation-cart", consultationCartRoutes);
 app.use("/api/consultation-orders", consultationOrderRoutes);
+app.use("/api/notifications", notificationRoutes);
+
+// Socket.IO Configuration
+const io = new Server(server, {
+  cors: {
+    origin: allowedOrigins,
+    methods: ["GET", "POST"],
+    credentials: true,
+  },
+});
+
+setNotificationIO(io);
+io.on("connection", attachSocketHandlers);
 
 // Health check
 app.get("/api/health", (req, res) => {
@@ -68,6 +80,6 @@ app.get("/api/health", (req, res) => {
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
+server.listen(PORT, () => {
   console.log(`🚀 Server đang chạy tại http://localhost:${PORT}`);
 });

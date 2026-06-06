@@ -1,5 +1,7 @@
-import React from "react";
+import React, { useState } from "react";
 import { Badge } from "../common/CommonUI";
+import { contentAPI } from "../../services/api";
+import { useAuth } from "../../redux/hooks";
 
 export const DetailBanner = ({ item, type }) => {
   const fallbackImage =
@@ -132,30 +134,104 @@ const renderStars = (value) => {
   ));
 };
 
-export const RatingCommentSection = ({ initialComments = [] }) => {
-  const [comments, setComments] = React.useState(initialComments);
-  const [newComment, setNewComment] = React.useState("");
-  const [rating, setRating] = React.useState(5);
+export const RatingCommentSection = ({ articleId, initialComments = [] }) => {
+  const { user, isAuthenticated } = useAuth();
+  const [comments, setComments] = useState(initialComments);
+  const [newComment, setNewComment] = useState("");
+  const [rating, setRating] = useState(5);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState("");
+
+  const [editingCommentId, setEditingCommentId] = useState(null);
+  const [editContent, setEditContent] = useState("");
+  const [editRating, setEditRating] = useState(5);
 
   const averageRating = comments.length
     ? (comments.reduce((sum, item) => sum + item.rating, 0) / comments.length).toFixed(1)
     : "0.0";
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
-    if (!newComment.trim()) return;
+    if (!newComment.trim() || isSubmitting) return;
 
-    const nextComment = {
-      id: `local-${Date.now()}`,
-      user: "Bạn",
-      rating,
-      content: newComment.trim(),
-      createdAt: new Date(),
-    };
+    if (!isAuthenticated) {
+      setError("Bạn cần đăng nhập để bình luận.");
+      return;
+    }
 
-    setComments((prev) => [nextComment, ...prev]);
-    setNewComment("");
-    setRating(5);
+    setIsSubmitting(true);
+    setError("");
+
+    try {
+      const response = await contentAPI.addComment(articleId, {
+        content: newComment.trim(),
+        rating,
+      });
+
+      setComments((prev) => [response.data.comment, ...prev]);
+      setNewComment("");
+      setRating(5);
+    } catch (err) {
+      setError(err.message || "Không thể gửi bình luận. Vui lòng thử lại.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleEditClick = (comment) => {
+    setEditingCommentId(comment.id);
+    setEditContent(comment.content);
+    setEditRating(comment.rating);
+  };
+
+  const handleCancelEdit = () => {
+    setEditingCommentId(null);
+    setEditContent("");
+    setEditRating(5);
+  };
+
+  const handleUpdateComment = async (commentId) => {
+    if (!editContent.trim() || isSubmitting) return;
+
+    setIsSubmitting(true);
+    setError("");
+
+    try {
+      const response = await contentAPI.updateComment(articleId, commentId, {
+        content: editContent.trim(),
+        rating: editRating,
+      });
+
+      setComments((prev) =>
+        prev.map((c) => (c.id === commentId ? response.data.comment : c))
+      );
+      setEditingCommentId(null);
+    } catch (err) {
+      setError(err.message || "Không thể cập nhật bình luận. Vui lòng thử lại.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleDeleteComment = async (commentId) => {
+    if (!window.confirm("Bạn có chắc chắn muốn xóa bình luận này không?")) return;
+
+    setIsSubmitting(true);
+    setError("");
+
+    try {
+      await contentAPI.deleteComment(articleId, commentId);
+      setComments((prev) => prev.filter((c) => c.id !== commentId));
+    } catch (err) {
+      setError(err.message || "Không thể xóa bình luận. Vui lòng thử lại.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const canEditOrDelete = (commentUserId) => {
+    if (!isAuthenticated || !user) return false;
+    return user._id === commentUserId || user.role === "admin";
   };
 
   return (
@@ -188,29 +264,100 @@ export const RatingCommentSection = ({ initialComments = [] }) => {
           value={newComment}
           onChange={(event) => setNewComment(event.target.value)}
           rows={3}
-          placeholder="Chia sẻ ý kiến của bạn..."
+          placeholder={isAuthenticated ? "Chia sẻ ý kiến của bạn..." : "Vui lòng đăng nhập để bình luận"}
           className="w-full border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-primary"
+          disabled={!isAuthenticated || isSubmitting}
         />
+
+        {error && !editingCommentId && <p className="text-sm text-red-600">{error}</p>}
 
         <button
           type="submit"
-          className="bg-primary hover:bg-primary-dark text-white px-5 py-2 rounded-lg font-semibold transition"
+          className="bg-primary hover:bg-primary-dark text-white px-5 py-2 rounded-lg font-semibold transition disabled:bg-gray-400"
+          disabled={!isAuthenticated || isSubmitting}
         >
-          Gửi bình luận
+          {isSubmitting && !editingCommentId ? "Đang gửi..." : "Gửi bình luận"}
         </button>
       </form>
 
       <div className="space-y-4">
         {comments.map((comment) => (
           <div key={comment.id} className="border border-gray-200 rounded-lg p-4">
-            <div className="flex flex-wrap items-center justify-between gap-2 mb-1">
-              <p className="font-semibold text-gray-900">{comment.user}</p>
-              <p className="text-xs text-gray-500">
-                {new Date(comment.createdAt).toLocaleString("vi-VN")}
-              </p>
-            </div>
-            <div className="text-sm mb-2">{renderStars(comment.rating)}</div>
-            <p className="text-sm text-gray-700">{comment.content}</p>
+            {editingCommentId === comment.id ? (
+              <div className="space-y-3">
+                <div className="flex items-center gap-2 text-sm text-gray-700">
+                  <span>Sửa đánh giá:</span>
+                  {[1, 2, 3, 4, 5].map((value) => (
+                    <button
+                      key={value}
+                      type="button"
+                      onClick={() => setEditRating(value)}
+                      className="text-lg"
+                    >
+                      <span className={value <= editRating ? "text-yellow-500" : "text-gray-300"}>★</span>
+                    </button>
+                  ))}
+                </div>
+                <textarea
+                  value={editContent}
+                  onChange={(event) => setEditContent(event.target.value)}
+                  rows={3}
+                  className="w-full border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-primary"
+                  disabled={isSubmitting}
+                />
+                {error && editingCommentId === comment.id && (
+                  <p className="text-sm text-red-600">{error}</p>
+                )}
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => handleUpdateComment(comment.id)}
+                    disabled={isSubmitting}
+                    className="bg-primary text-white px-3 py-1 rounded text-sm disabled:bg-gray-400"
+                  >
+                    Lưu
+                  </button>
+                  <button
+                    onClick={handleCancelEdit}
+                    disabled={isSubmitting}
+                    className="bg-gray-200 text-gray-700 px-3 py-1 rounded text-sm disabled:bg-gray-300"
+                  >
+                    Hủy
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <>
+                <div className="flex flex-wrap items-start justify-between gap-2 mb-1">
+                  <div>
+                    <p className="font-semibold text-gray-900">{comment.user}</p>
+                    <p className="text-xs text-gray-500">
+                      {new Date(comment.createdAt).toLocaleString("vi-VN")}
+                      {comment.createdAt !== comment.updatedAt && " (đã sửa)"}
+                    </p>
+                  </div>
+                  {canEditOrDelete(comment.userId) && (
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => handleEditClick(comment)}
+                        className="text-blue-600 text-sm hover:underline"
+                        disabled={isSubmitting}
+                      >
+                        Sửa
+                      </button>
+                      <button
+                        onClick={() => handleDeleteComment(comment.id)}
+                        className="text-red-600 text-sm hover:underline"
+                        disabled={isSubmitting}
+                      >
+                        Xóa
+                      </button>
+                    </div>
+                  )}
+                </div>
+                <div className="text-sm mb-2">{renderStars(comment.rating)}</div>
+                <p className="text-sm text-gray-700">{comment.content}</p>
+              </>
+            )}
           </div>
         ))}
       </div>

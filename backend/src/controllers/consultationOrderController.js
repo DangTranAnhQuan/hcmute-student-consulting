@@ -20,6 +20,7 @@ const {
   deleteSchedulesForOrder,
   updateSchedulesForOrderStatus,
 } = require("../services/scheduleService");
+const { createNotification } = require("../services/notificationHub");
 
 const AUTO_CONFIRM_MINUTES = 30;
 const AUTO_CONFIRM_MS = AUTO_CONFIRM_MINUTES * 60 * 1000;
@@ -726,6 +727,18 @@ exports.checkout = async (req, res) => {
       );
     }
 
+    await createNotification({
+      recipientUserId: userId,
+      targetRoles: ["admin"],
+      type: "consultation-order-created",
+      title: `Yêu cầu tư vấn mới: ${order.orderCode}`,
+      message: `Sinh viên vừa tạo một yêu cầu mới với tổng tiền ${total.toLocaleString("vi-VN")}đ.`,
+      link: `/consultation-orders/${order._id}`,
+      entityType: "ConsultationOrder",
+      entityId: String(order._id),
+      metadata: { status: order.status, paymentMethod, paymentStatus: order.paymentStatus },
+    });
+
     res.status(201).json({
       order: decorateOrder(order),
       payment,
@@ -978,6 +991,21 @@ exports.cancelOrder = async (req, res) => {
     if (policy.mode === "DIRECT") {
       await cancelSchedulesForOrder(order, reason, "user");
     }
+
+    await createNotification({
+      recipientUserId: order.userId?._id || order.userId,
+      targetRoles: ["admin"],
+      type: "consultation-order-cancelled",
+      title: `Đơn tư vấn đã bị hủy: ${order.orderCode}`,
+      message:
+        policy.mode === "REQUEST"
+          ? `Sinh viên gửi yêu cầu hủy với lý do: ${reason}`
+          : `Sinh viên đã hủy trực tiếp đơn với lý do: ${reason}`,
+      link: `/consultation-orders/${order._id}`,
+      entityType: "ConsultationOrder",
+      entityId: String(order._id),
+      metadata: { status: order.status, cancelMode: policy.mode },
+    });
     res.json(decorateOrder(order));
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -1247,6 +1275,18 @@ exports.updateOrderStatus = async (req, res) => {
 
     await order.save();
     await syncSchedulesAfterOrderStatusChange(order, note);
+
+    await createNotification({
+      recipientUserId: order.userId?._id || order.userId,
+      targetRoles: ["admin"],
+      type: "consultation-order-status-updated",
+      title: `Trạng thái yêu cầu ${order.orderCode} đã đổi`,
+      message: `${ORDER_STATUS_LABELS[order.status]}${note ? ` - ${note}` : ""}`,
+      link: `/consultation-orders/${order._id}`,
+      entityType: "ConsultationOrder",
+      entityId: String(order._id),
+      metadata: { status: order.status },
+    });
     res.json(decorateOrder(order));
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -1291,6 +1331,18 @@ exports.updatePaymentStatus = async (req, res) => {
       ),
     );
     await order.save();
+
+    await createNotification({
+      recipientUserId: order.userId?._id || order.userId,
+      targetRoles: ["admin"],
+      type: "consultation-order-payment-updated",
+      title: `Thanh toán của ${order.orderCode} đã thay đổi`,
+      message: `${PAYMENT_STATUS_LABELS[paymentStatus]}${note ? ` - ${note}` : ""}`,
+      link: `/consultation-orders/${order._id}`,
+      entityType: "ConsultationOrder",
+      entityId: String(order._id),
+      metadata: { paymentStatus },
+    });
 
     res.json(decorateOrder(order));
   } catch (error) {
