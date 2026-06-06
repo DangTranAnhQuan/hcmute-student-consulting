@@ -122,6 +122,13 @@ export const consultationOrderAPI = {
     }),
 };
 
+export const notificationAPI = {
+  list: () => api.get("/notifications"),
+  summary: () => api.get("/notifications/summary"),
+  markRead: (id) => api.patch(`/notifications/${id}/read`),
+  markAllRead: () => api.patch("/notifications/read-all"),
+};
+
 export const faqAPI = {
   list: (params = {}) => api.get("/faqs", { params }),
 };
@@ -133,6 +140,11 @@ export const searchAPI = {
 export const contentAPI = {
   list: (params = {}) => api.get("/content/articles", { params }),
   detail: (id) => api.get(`/content/articles/${id}`),
+  addComment: (id, data) => api.post(`/content/articles/${id}/comments`, data),
+  updateComment: (articleId, commentId, data) =>
+    api.put(`/content/articles/${articleId}/comments/${commentId}`, data),
+  deleteComment: (articleId, commentId) =>
+    api.delete(`/content/articles/${articleId}/comments/${commentId}`),
 };
 
 export const forumAPI = {

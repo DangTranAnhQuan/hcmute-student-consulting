@@ -1,5 +1,15 @@
 const mongoose = require("mongoose");
 
+const commentSchema = new mongoose.Schema(
+  {
+    user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+    username: { type: String, required: true },
+    rating: { type: Number, required: true, min: 1, max: 5 },
+    content: { type: String, required: true, trim: true },
+  },
+  { timestamps: true },
+);
+
 const articleSchema = new mongoose.Schema(
   {
     title: { type: String, required: true, trim: true },
@@ -19,6 +29,7 @@ const articleSchema = new mongoose.Schema(
     saves: { type: Number, default: 0 },
     tags: [{ type: String, trim: true }],
     views: { type: Number, default: 0 },
+    comments: [commentSchema],
   },
   { timestamps: true },
 );
