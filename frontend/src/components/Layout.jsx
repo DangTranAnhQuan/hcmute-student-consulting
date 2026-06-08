@@ -1,5 +1,6 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
+import NotificationBell from "./notifications/NotificationBell";
 
 export const Header = ({ title, subtitle, backUrl }) => {
   return (
@@ -151,6 +152,7 @@ export const Navbar = ({ user, onLogout }) => {
   const accountLinks = user
     ? [
         { href: "/dashboard", label: "Dashboard" },
+        { href: "/notifications", label: "Thông báo" },
         { href: "/profile", label: "Hồ sơ cá nhân" },
         { href: "/consultation-cart", label: "Giỏ tư vấn" },
         { href: "/consultation-orders", label: "Yêu cầu của tôi" },
@@ -240,6 +242,7 @@ export const Navbar = ({ user, onLogout }) => {
           <div className="hidden items-center gap-3 lg:flex">
             {user ? (
               <>
+                <NotificationBell />
                 <Link
                   to="/book-counselor"
                   className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-bold text-white shadow-sm hover:bg-blue-700"
