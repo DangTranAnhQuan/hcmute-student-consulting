@@ -19,6 +19,10 @@ const store = configureStore({
     forum: forumReducer,
     schedule: scheduleReducer,
   },
+  middleware: (getDefaultMiddleware) =>
+    getDefaultMiddleware({
+      serializableCheck: false, // Tắt kiểm tra serializable
+    }),
 });
 
 export default store;

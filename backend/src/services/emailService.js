@@ -8,6 +8,36 @@ const transporter = nodemailer.createTransport({
   },
 });
 
+
+
+exports.sendOtpMail = async ({ to, subject, text, otp }) => {
+  if (!process.env.EMAIL_USER || !process.env.EMAIL_PASSWORD) {
+    if (process.env.NODE_ENV !== "production") {
+      console.warn(`[auth:otp] EMAIL_USER/EMAIL_PASSWORD is not configured. Dev OTP for ${to}: ${otp}`);
+      return {
+        sent: false,
+        devOtp: otp,
+        message: "Chưa cấu hình email nên hệ thống không gửi OTP qua Gmail. Dùng mã OTP thử nghiệm hiển thị bên dưới để tiếp tục.",
+      };
+    }
+    const error = new Error("Chưa cấu hình EMAIL_USER/EMAIL_PASS hợp lệ trong backend/.env.");
+    error.statusCode = 503;
+    error.errorCode = "EMAIL_NOT_CONFIGURED";
+    throw error;
+  }
+
+  try {
+    await transporter.sendMail({ to, subject, text });
+    return { sent: true };
+  } catch (error) {
+    console.error("Error sending OTP email:", error);
+    const err = new Error("Không gửi được email OTP. Vui lòng kiểm tra Gmail App Password, EMAIL_USER/EMAIL_PASS hoặc kết nối mạng.");
+    err.statusCode = 502;
+    err.errorCode = "EMAIL_SEND_FAILED";
+    throw err;
+  }
+};
+
 exports.sendBookingConfirmation = async (booking, counselor, user) => {
   try {
     const mailOptions = {

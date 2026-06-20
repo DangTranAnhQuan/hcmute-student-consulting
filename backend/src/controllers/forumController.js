@@ -1,5 +1,6 @@
 const ForumThread = require("../models/ForumThread");
 const User = require("../models/User");
+const { paginate } = require("../utils/paginationHelper");
 
 const escapeRegex = (value = "") => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
@@ -44,6 +45,9 @@ const formatThread = (thread, viewerId = "") => {
 exports.listThreads = async (req, res) => {
   try {
     const keyword = req.query.q?.trim();
+    const page = Number(req.query.page) || 1;
+    const limit = Number(req.query.limit) || 10;
+
     const filter = keyword
       ? {
           $or: [
@@ -54,12 +58,16 @@ exports.listThreads = async (req, res) => {
         }
       : {};
 
-    const threads = await ForumThread.find(filter).sort({
-      pinned: -1,
-      updatedAt: -1,
+    const result = await paginate(ForumThread, filter, {
+      page,
+      limit,
+      sort: { pinned: -1, updatedAt: -1 }
     });
 
-    return res.json({ threads: threads.map((thread) => formatThread(thread, req.user?.id)) });
+    return res.json({
+      threads: result.data.map((thread) => formatThread(thread, req.user?.id)),
+      pagination: result.pagination
+    });
   } catch (err) {
     console.error("[forum:listThreads] server error", err);
     return res.status(500).json({ message: "Lỗi server", details: err.message });

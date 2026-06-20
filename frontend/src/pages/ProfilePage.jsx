@@ -52,7 +52,7 @@ const ProfilePage = () => {
       .rewardHistory()
       .then((res) => setRewardHistory(res.data || []))
       .catch(() => {});
-  }, []);
+  }, [user, navigate, getProfile]);
 
   useEffect(() => {
     if (user?.email) {

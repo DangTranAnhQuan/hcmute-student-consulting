@@ -1,6 +1,7 @@
 const jwt = require("jsonwebtoken");
+const User = require("../models/User"); // Import User model
 
-exports.verifyToken = (req, res, next) => {
+exports.verifyToken = async (req, res, next) => {
   const token =
     req.cookies.accessToken || req.headers.authorization?.split(" ")[1];
 
@@ -10,7 +11,14 @@ exports.verifyToken = (req, res, next) => {
 
   try {
     const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
-    req.user = decoded;
+
+    // Fetch the full user object from DB and attach to request
+    const user = await User.findById(decoded.id).select("-password");
+    if (!user) {
+      return res.status(401).json({ message: "Người dùng không tồn tại" });
+    }
+
+    req.user = user;
     next();
   } catch (err) {
     return res
@@ -19,7 +27,7 @@ exports.verifyToken = (req, res, next) => {
   }
 };
 
-exports.optionalAuth = (req, res, next) => {
+exports.optionalAuth = async (req, res, next) => {
   const token =
     req.cookies.accessToken || req.headers.authorization?.split(" ")[1];
 
@@ -28,7 +36,8 @@ exports.optionalAuth = (req, res, next) => {
   }
 
   try {
-    req.user = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
+    const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
+    req.user = await User.findById(decoded.id).select("-password");
   } catch (err) {
     req.user = null;
   }

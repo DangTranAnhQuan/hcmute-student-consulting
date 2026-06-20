@@ -1,5 +1,6 @@
 const Article = require("../models/Article");
 const { createNotification } = require("../services/notificationHub");
+const { paginate } = require("../utils/paginationHelper");
 
 const escapeRegex = (value = "") => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
@@ -10,7 +11,6 @@ const formatContent = (doc) => {
   const value = doc.toObject ? doc.toObject() : doc;
   const id = value._id.toString();
 
-  // Format comments if they exist
   const formattedComments = (value.comments || []).map(comment => ({
     id: comment._id.toString(),
     user: comment.username,
@@ -68,14 +68,9 @@ const buildFilter = (query = {}) => {
 exports.listPublic = async (req, res) => {
   try {
     const filter = buildFilter(req.query);
-    const facetFilter = { status: "Published" };
-    if (req.query.contentType) {
-      const contentTypes = String(req.query.contentType)
-        .split(",")
-        .map((item) => item.trim())
-        .filter(Boolean);
-      if (contentTypes.length > 0) facetFilter.contentType = { $in: contentTypes };
-    }
+    const page = Number(req.query.page) || 1;
+    const limit = Number(req.query.limit) || 10;
+
     const sortBy = req.query.sortBy || "latest";
     const sort =
       sortBy === "popular"
@@ -84,15 +79,15 @@ exports.listPublic = async (req, res) => {
           ? { saves: -1, updatedAt: -1 }
           : { updatedAt: -1 };
 
-    const [items, categories, contentTypes] = await Promise.all([
-      Article.find(filter).sort(sort).limit(60),
-      Article.distinct("topic", facetFilter),
+    const result = await paginate(Article, filter, { page, limit, sort });
+    const [categories, contentTypes] = await Promise.all([
+      Article.distinct("topic", { status: "Published" }),
       Article.distinct("contentType", { status: "Published" }),
     ]);
 
     res.json({
-      data: items.map(formatContent),
-      total: items.length,
+      data: result.data.map(formatContent),
+      pagination: result.pagination,
       categories: categories.filter(Boolean).sort(),
       contentTypes: contentTypes.filter(Boolean).sort(),
     });
@@ -158,7 +153,6 @@ exports.addComment = async (req, res) => {
     article.comments.push(newComment);
     await article.save();
 
-    // Trigger notification using the hub
     try {
       await createNotification({
         title: "Bình luận mới",

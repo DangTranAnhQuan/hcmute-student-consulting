@@ -29,6 +29,7 @@ import ConsultationCheckoutPage from "./pages/ConsultationCheckoutPage";
 import ConsultationOrderDetailPage from "./pages/ConsultationOrderDetailPage";
 import ConsultationOrdersPage from "./pages/ConsultationOrdersPage";
 import SchedulesPage from "./pages/SchedulesPage";
+import NotificationsPage from "./pages/NotificationsPage";
 
 // Components
 import { Navbar, Footer } from "./components/Layout";
@@ -156,6 +157,14 @@ function App() {
               element={
                 <ProtectedRoute>
                   <ConsultationOrderDetailPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/notifications"
+              element={
+                <ProtectedRoute>
+                  <NotificationsPage />
                 </ProtectedRoute>
               }
             />

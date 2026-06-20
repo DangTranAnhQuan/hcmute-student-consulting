@@ -174,7 +174,7 @@ export const Tag = ({ label, variant = "default", closable = false, onClose }) =
   );
 };
 
-export default {
+const CommonUI = {
   Badge,
   Chip,
   Accordion,
@@ -183,3 +183,4 @@ export default {
   Tag,
 };
 
+export default CommonUI;

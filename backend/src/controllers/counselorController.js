@@ -5,6 +5,7 @@ const Schedule = require("../models/Schedule");
 const CounselorReview = require("../models/CounselorReview");
 const { ACTIVE_SCHEDULE_STATUSES } = require("../services/scheduleService");
 const { attachCounselorStats } = require("../services/counselorStatsService");
+const { paginate } = require("../utils/paginationHelper");
 
 const DEFAULT_REVIEW_PAGE = 1;
 const DEFAULT_REVIEW_LIMIT = 10;
@@ -38,13 +39,24 @@ const toPositiveInteger = (value, fallback, max = Number.MAX_SAFE_INTEGER) => {
   return Math.min(parsedValue, max);
 };
 
-// Get all counselors
+// Get all counselors (with pagination)
 exports.getAllCounselors = async (req, res) => {
   try {
-    const counselors = await Counselor.find({ isActive: true })
-      .populate("availability")
-      .sort("-createdAt");
-    res.json(await attachCounselorStats(counselors));
+    const page = Number(req.query.page) || 1;
+    const limit = Number(req.query.limit) || 10;
+    const filter = { isActive: true };
+
+    const result = await paginate(Counselor, filter, {
+      page,
+      limit,
+      populate: "availability",
+      sort: "-createdAt"
+    });
+
+    res.json({
+      data: await attachCounselorStats(result.data),
+      pagination: result.pagination
+    });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -153,7 +165,13 @@ exports.getCounselorReviews = async (req, res) => {
       reviewer: r.userId?.fullName || r.userId?.username || "Sinh viên ẩn danh",
     }));
 
-    res.json({ reviews: safeReviews, total, page, limit });
+    res.json({
+      reviews: safeReviews,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit)
+    });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -202,8 +220,8 @@ exports.updateCounselor = async (req, res) => {
 
 exports.getAvailableSlots = async (req, res) => {
   try {
-    const counselorId = req.params.id; // ✅ Lấy counselorId từ URL path
-    const { date } = req.query; // ✅ Lấy date từ query string
+    const counselorId = req.params.id;
+    const { date } = req.query;
 
     if (!counselorId || !date) {
       return res
@@ -224,7 +242,6 @@ exports.getAvailableSlots = async (req, res) => {
       return res.json({ slots: [], bookedSlots: [] });
     }
 
-    // Check for blackout dates
     const isBlackout = availability.blackoutDates.some((bd) => {
       const blackoutDate = new Date(bd.date);
       return blackoutDate.toDateString() === selectedDate.toDateString();

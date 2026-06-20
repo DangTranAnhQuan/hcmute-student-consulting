@@ -4,6 +4,8 @@ const Counselor = require("../models/Counselor");
 const User = require("../models/User");
 const bcrypt = require("bcryptjs");
 const { attachCounselorStats } = require("../services/counselorStatsService");
+const { createNotification } = require("../services/notificationHub");
+const { paginate } = require("../utils/paginationHelper");
 
 const DEFAULT_ADMIN_CREATED_PASSWORD = "123456";
 const CONTENT_TYPES = ["Article", "News", "Event"];
@@ -120,7 +122,7 @@ const resourceConfig = {
       "hourlyRate",
       "isActive",
     ],
-    populate: ["userId username email fullName"],
+    populate: "userId",
   },
 };
 
@@ -277,18 +279,25 @@ exports.list = async (req, res) => {
     }
 
     const filter = buildSearch(config.searchable, req.query.q);
-    let query = config.model.find(filter).sort({ updatedAt: -1 });
-    if (config.populate) {
-      config.populate.forEach((populate) => {
-        const [path, ...selectParts] = populate.split(" ");
-        query = query.populate(path, selectParts.join(" "));
-      });
-    }
-    let rows = await query;
+    const page = Number(req.query.page) || 1;
+    const limit = Number(req.query.limit) || 10;
+
+    const result = await paginate(config.model, filter, {
+      page,
+      limit,
+      populate: config.populate,
+      sort: { updatedAt: -1 }
+    });
+
+    let rows = result.data;
     if (resource === "counselors") {
       rows = await attachCounselorStats(rows);
     }
-    return res.json({ data: rows.map(formatDoc) });
+
+    return res.json({
+      data: rows.map(formatDoc),
+      pagination: result.pagination
+    });
   } catch (err) {
     console.error("[admin:list] server error", err);
     return res.status(500).json({ message: "Lỗi server", details: err.message });
@@ -348,6 +357,33 @@ exports.create = async (req, res) => {
     }
 
     const created = await config.model.create(payload);
+
+    await createNotification({
+      targetRoles: ["user", "admin"],
+      type: `content-${resource.slice(0, -1)}`,
+      title:
+        resource === "counselors"
+          ? `Tư vấn viên mới: ${created.fullName}`
+          : resource === "faqs"
+            ? `FAQ mới: ${created.question}`
+            : `Nội dung mới: ${created.title}`,
+      message:
+        resource === "counselors"
+          ? "Một tư vấn viên mới đã được thêm vào hệ thống."
+          : resource === "faqs"
+            ? "Có FAQ mới phục vụ sinh viên."
+            : `Có ${created.contentType || "nội dung"} mới vừa được xuất bản hoặc cập nhật.`,
+      link:
+        resource === "counselors"
+          ? `/book-counselor/${created._id}`
+          : resource === "faqs"
+            ? "/faq"
+            : `/detail/${created.contentType === "Event" ? "event" : created.contentType === "News" ? "news" : "article"}/${created._id}`,
+      entityType: resource,
+      entityId: String(created._id),
+      metadata: { resource, status: created.status },
+    });
+
     return res.status(201).json(formatDoc(created));
   } catch (err) {
     console.error("[admin:create] server error", err);
