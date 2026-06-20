@@ -31,9 +31,24 @@ router.delete(
   authCtrl.removeFavoriteCounselor,
 );
 router.post(
+  "/favorite-articles/:id",
+  verifyToken,
+  authCtrl.addFavoriteArticle,
+);
+router.delete(
+  "/favorite-articles/:id",
+  verifyToken,
+  authCtrl.removeFavoriteArticle,
+);
+router.post(
   "/viewed-counselors/:id",
   verifyToken,
   authCtrl.markViewedCounselor,
+);
+router.post(
+  "/viewed-articles/:id",
+  verifyToken,
+  authCtrl.markViewedArticle,
 );
 router.get("/favorites", verifyToken, authCtrl.getFavorites);
 router.get("/coupons", verifyToken, authCtrl.getCoupons);

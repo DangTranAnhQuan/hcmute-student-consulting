@@ -60,6 +60,9 @@ export const authAPI = {
   resetPassword: (data) => api.post("/auth/reset-password", data),
   getProfile: () => api.get("/auth/profile"),
   updateProfile: (data) => api.put("/auth/profile", data),
+  addFavoriteArticle: (id) => api.post(`/auth/favorite-articles/${id}`),
+  removeFavoriteArticle: (id) => api.delete(`/auth/favorite-articles/${id}`),
+  markViewedArticle: (id) => api.post(`/auth/viewed-articles/${id}`),
 };
 
 export const adminAPI = {
@@ -70,7 +73,8 @@ export const adminAPI = {
 };
 
 export const counselorAPI = {
-  list: () => api.get("/counselors"),
+  list: (params = {}) => api.get("/counselors", { params }),
+  top10: () => api.get("/counselors/top10"),
   detail: (id) => api.get(`/counselors/${id}`),
   availableSlots: (id, date) =>
     api.get(`/counselors/${id}/available-slots`, { params: { date } }),
@@ -139,6 +143,8 @@ export const searchAPI = {
 
 export const contentAPI = {
   list: (params = {}) => api.get("/content/articles", { params }),
+  top10: () => api.get("/content/articles/top10"),
+  suggestions: () => api.get("/content/articles/suggestions"),
   detail: (id) => api.get(`/content/articles/${id}`),
   addComment: (id, data) => api.post(`/content/articles/${id}/comments`, data),
   updateComment: (articleId, commentId, data) =>

@@ -15,6 +15,9 @@ const ProfilePage = () => {
     fullName: "",
     phone: "",
     address: "",
+    faculty: "",
+    major: "",
+    avatar: "",
   });
   const [formErrors, setFormErrors] = useState({});
   const [successMessage, setSuccessMessage] = useState("");
@@ -34,13 +37,25 @@ const ProfilePage = () => {
   const favoriteCounselors = Array.isArray(user?.favoriteCounselors)
     ? user.favoriteCounselors
     : [];
+  const favoriteArticles = Array.isArray(user?.favoriteArticles)
+    ? user.favoriteArticles
+    : [];
   const viewedCounselors = Array.isArray(user?.recentlyViewedCounselors)
     ? user.recentlyViewedCounselors
     : [];
+  const viewedArticles = Array.isArray(user?.recentlyViewedArticles)
+    ? user.recentlyViewedArticles
+    : [];
+
   const counselorLabel = (counselor) =>
     typeof counselor === "string"
       ? counselor
       : counselor.fullName || counselor._id || "Tư vấn viên";
+
+  const articleLabel = (article) =>
+    typeof article === "string"
+      ? article
+      : article.title || article._id || "Bài viết";
 
   useEffect(() => {
     if (!user) {
@@ -62,6 +77,9 @@ const ProfilePage = () => {
         fullName: user.fullName || "",
         phone: user.phone || "",
         address: user.address || "",
+        faculty: user.faculty || "",
+        major: user.major || "",
+        avatar: user.avatar || "",
       });
     }
   }, [user]);
@@ -104,6 +122,21 @@ const ProfilePage = () => {
       } catch (err) {
         console.error("Update profile failed:", err);
       }
+    }
+  };
+
+  const handleAvatarChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      if (file.size > 2 * 1024 * 1024) {
+        setRedeemMessage({ type: "error", text: "File quá lớn (tối đa 2MB)" });
+        return;
+      }
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setFormData({ ...formData, avatar: reader.result });
+      };
+      reader.readAsDataURL(file);
     }
   };
 
@@ -211,6 +244,74 @@ const ProfilePage = () => {
                 />
               </div>
 
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                <Input
+                  type="text"
+                  name="faculty"
+                  label="Khoa"
+                  placeholder="Ví dụ: Khoa CNTT"
+                  value={formData.faculty}
+                  onChange={handleChange}
+                  disabled={!isEditing}
+                  className={!isEditing ? "bg-gray-100" : ""}
+                />
+
+                <Input
+                  type="text"
+                  name="major"
+                  label="Ngành học"
+                  placeholder="Ví dụ: Kỹ thuật phần mềm"
+                  value={formData.major}
+                  onChange={handleChange}
+                  disabled={!isEditing}
+                  className={!isEditing ? "bg-gray-100" : ""}
+                />
+              </div>
+
+              <div className="mt-4">
+                <label className="mb-2 block text-sm font-semibold text-gray-800">
+                  Ảnh đại diện
+                </label>
+                {isEditing ? (
+                  <div className="space-y-3">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleAvatarChange}
+                      className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                    />
+                    <p className="text-[10px] text-gray-400">Hỗ trợ JPG, PNG. Tối đa 2MB.</p>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-3 rounded-xl border border-gray-100 bg-gray-50 px-4 py-3">
+                    {formData.avatar ? (
+                      <img
+                        src={formData.avatar}
+                        alt="Avatar"
+                        className="h-10 w-10 rounded-full object-cover border border-gray-200"
+                      />
+                    ) : (
+                      <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold">
+                        {formData.fullName?.[0] || formData.username?.[0]}
+                      </div>
+                    )}
+                    <span className="text-sm text-gray-500 truncate max-w-[200px]">
+                      {formData.avatar ? "Đã tải lên" : "Chưa có ảnh"}
+                    </span>
+                  </div>
+                )}
+                {formData.avatar && isEditing && (
+                  <div className="mt-2 flex items-center gap-3">
+                    <p className="text-xs text-gray-500">Xem trước:</p>
+                    <img
+                      src={formData.avatar}
+                      alt="Avatar Preview"
+                      className="h-12 w-12 rounded-full object-cover border border-gray-200 shadow-sm"
+                    />
+                  </div>
+                )}
+              </div>
+
               <Input
                 type="text"
                 name="address"
@@ -253,10 +354,9 @@ const ProfilePage = () => {
                   <Button
                     variant="primary"
                     onClick={handleSave}
-                    loading={isLoading}
                     className="flex-1"
                   >
-                    Lưu thay đổi
+                    Lưu
                   </Button>
                   <Button
                     variant="secondary"
@@ -268,6 +368,9 @@ const ProfilePage = () => {
                         fullName: user.fullName || "",
                         phone: user.phone || "",
                         address: user.address || "",
+                        faculty: user.faculty || "",
+                        major: user.major || "",
+                        avatar: user.avatar || "",
                       });
                     }}
                     className="flex-1"
@@ -381,52 +484,83 @@ const ProfilePage = () => {
 
         <Card className="mt-8">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">
-            Tư vấn viên yêu thích và đã xem
+            Tương tác yêu thích và lịch sử
           </h3>
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
-              <p className="text-sm font-semibold text-gray-900">Yêu thích</p>
-              {favoriteCounselors.length > 0 ? (
-                <ul className="mt-3 space-y-2 text-sm text-gray-700">
-                  {favoriteCounselors.slice(0, 5).map((counselor) => (
-                    <li key={counselor._id || counselor}>
-                      <Link
-                        to={`/book-counselor/${counselor._id || counselor}`}
-                        className="font-semibold text-primary hover:underline"
-                      >
-                        {counselorLabel(counselor)}
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p className="mt-3 text-sm text-gray-600">
-                  Bạn chưa yêu thích tư vấn viên nào.
-                </p>
-              )}
+          <div className="grid gap-6 md:grid-cols-2">
+            <div>
+              <p className="text-sm font-semibold text-gray-900 mb-3">Chuyên viên</p>
+              <div className="space-y-4">
+                <div className="rounded-lg border border-gray-200 bg-gray-50 p-3">
+                  <p className="text-xs font-bold text-gray-500 uppercase mb-2">Yêu thích</p>
+                  {favoriteCounselors.length > 0 ? (
+                    <ul className="space-y-2 text-sm text-gray-700">
+                      {favoriteCounselors.slice(0, 5).map((c) => (
+                        <li key={c._id || c}>
+                          <Link to={`/book-counselor/${c._id || c}`} className="font-semibold text-primary hover:underline">
+                            {counselorLabel(c)}
+                          </Link>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="text-xs text-gray-400 italic">Chưa có</p>
+                  )}
+                </div>
+                <div className="rounded-lg border border-gray-200 bg-gray-50 p-3">
+                  <p className="text-xs font-bold text-gray-500 uppercase mb-2">Đã xem gần đây</p>
+                  {viewedCounselors.length > 0 ? (
+                    <ul className="space-y-2 text-sm text-gray-700">
+                      {viewedCounselors.slice(0, 5).map((c) => (
+                        <li key={c._id || c}>
+                          <Link to={`/book-counselor/${c._id || c}`} className="font-semibold text-primary hover:underline">
+                            {counselorLabel(c)}
+                          </Link>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="text-xs text-gray-400 italic">Chưa có</p>
+                  )}
+                </div>
+              </div>
             </div>
-            <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
-              <p className="text-sm font-semibold text-gray-900">
-                Đã xem gần đây
-              </p>
-              {viewedCounselors.length > 0 ? (
-                <ul className="mt-3 space-y-2 text-sm text-gray-700">
-                  {viewedCounselors.slice(0, 5).map((counselor) => (
-                    <li key={counselor._id || counselor}>
-                      <Link
-                        to={`/book-counselor/${counselor._id || counselor}`}
-                        className="font-semibold text-primary hover:underline"
-                      >
-                        {counselorLabel(counselor)}
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p className="mt-3 text-sm text-gray-600">
-                  Chưa có tư vấn viên xem gần đây.
-                </p>
-              )}
+
+            <div>
+              <p className="text-sm font-semibold text-gray-900 mb-3">Cẩm nang & Bài viết</p>
+              <div className="space-y-4">
+                <div className="rounded-lg border border-gray-200 bg-gray-50 p-3">
+                  <p className="text-xs font-bold text-gray-500 uppercase mb-2">Yêu thích</p>
+                  {favoriteArticles.length > 0 ? (
+                    <ul className="space-y-2 text-sm text-gray-700">
+                      {favoriteArticles.slice(0, 5).map((a) => (
+                        <li key={a._id || a}>
+                          <Link to={`/detail/article/${a._id || a}`} className="font-semibold text-primary hover:underline line-clamp-1">
+                            {articleLabel(a)}
+                          </Link>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="text-xs text-gray-400 italic">Chưa có</p>
+                  )}
+                </div>
+                <div className="rounded-lg border border-gray-200 bg-gray-50 p-3">
+                  <p className="text-xs font-bold text-gray-500 uppercase mb-2">Đã xem gần đây</p>
+                  {viewedArticles.length > 0 ? (
+                    <ul className="space-y-2 text-sm text-gray-700">
+                      {viewedArticles.slice(0, 5).map((a) => (
+                        <li key={a._id || a}>
+                          <Link to={`/detail/article/${a._id || a}`} className="font-semibold text-primary hover:underline line-clamp-1">
+                            {articleLabel(a)}
+                          </Link>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="text-xs text-gray-400 italic">Chưa có</p>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
         </Card>

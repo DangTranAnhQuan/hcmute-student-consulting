@@ -1,6 +1,7 @@
 const Article = require("../models/Article");
 const { createNotification } = require("../services/notificationHub");
 const { paginate } = require("../utils/paginationHelper");
+const articleService = require("../services/articleService");
 
 const escapeRegex = (value = "") => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
@@ -93,6 +94,26 @@ exports.listPublic = async (req, res) => {
     });
   } catch (err) {
     console.error("[content:listPublic] server error", err);
+    res.status(500).json({ message: "Lỗi server", details: err.message });
+  }
+};
+
+exports.getTop10 = async (req, res) => {
+  try {
+    const items = await articleService.getTop10Articles();
+    res.json({ data: items.map(formatContent) });
+  } catch (err) {
+    console.error("[content:getTop10] server error", err);
+    res.status(500).json({ message: "Lỗi server", details: err.message });
+  }
+};
+
+exports.getSuggestions = async (req, res) => {
+  try {
+    const items = await articleService.getSuggestions(req.user?.id);
+    res.json({ data: items.map(formatContent) });
+  } catch (err) {
+    console.error("[content:getSuggestions] server error", err);
     res.status(500).json({ message: "Lỗi server", details: err.message });
   }
 };

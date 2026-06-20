@@ -62,6 +62,18 @@ exports.getAllCounselors = async (req, res) => {
   }
 };
 
+exports.getTop10 = async (req, res) => {
+  try {
+    const candidates = await Counselor.find({ isActive: true })
+      .sort({ rating: -1, totalBookings: -1 })
+      .limit(10)
+      .populate("availability");
+    res.json({ data: await attachCounselorStats(candidates) });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 // Get counselor by ID
 exports.getCounselorById = async (req, res) => {
   try {

@@ -301,9 +301,17 @@ exports.getProfile = async (userId) => {
         "fullName expertise hourlyRate rating image currentStatus currentStatusLabel",
     })
     .populate({
+      path: "favoriteArticles",
+      select: "title image topic views createdAt",
+    })
+    .populate({
       path: "recentlyViewedCounselors",
       select:
         "fullName expertise hourlyRate rating image currentStatus currentStatusLabel",
+    })
+    .populate({
+      path: "recentlyViewedArticles",
+      select: "title image topic views createdAt",
     });
 
   if (!user) {
@@ -316,7 +324,7 @@ exports.getProfile = async (userId) => {
 };
 
 exports.updateProfile = async (userId, updateData) => {
-  const { username, fullName, phone, address } = updateData;
+  const { username, fullName, phone, address, faculty, major, avatar } = updateData;
 
   const user = await User.findByIdAndUpdate(
     userId,
@@ -325,9 +333,12 @@ exports.updateProfile = async (userId, updateData) => {
       fullName,
       phone,
       address,
+      faculty,
+      major,
+      avatar,
       updatedAt: Date.now(),
     },
-    { new: true },
+    { returnDocument: "after" },
   ).select("-password -otp -otpExpires");
 
   if (!user) {
@@ -362,7 +373,7 @@ exports.addFavoriteCounselor = async (userId, counselorId) => {
       $addToSet: { favoriteCounselors: counselorId },
       updatedAt: Date.now(),
     },
-    { new: true },
+    { returnDocument: "after" },
   ).select("-password -otp -otpExpires");
   return user;
 };
@@ -379,7 +390,41 @@ exports.removeFavoriteCounselor = async (userId, counselorId) => {
       $pull: { favoriteCounselors: counselorId },
       updatedAt: Date.now(),
     },
-    { new: true },
+    { returnDocument: "after" },
+  ).select("-password -otp -otpExpires");
+  return user;
+};
+
+exports.addFavoriteArticle = async (userId, articleId) => {
+  if (!articleId) {
+    const error = new Error("Dữ liệu yêu cầu không hợp lệ");
+    error.statusCode = 400;
+    throw error;
+  }
+  const user = await User.findByIdAndUpdate(
+    userId,
+    {
+      $addToSet: { favoriteArticles: articleId },
+      updatedAt: Date.now(),
+    },
+    { returnDocument: "after" },
+  ).select("-password -otp -otpExpires");
+  return user;
+};
+
+exports.removeFavoriteArticle = async (userId, articleId) => {
+  if (!articleId) {
+    const error = new Error("Dữ liệu yêu cầu không hợp lệ");
+    error.statusCode = 400;
+    throw error;
+  }
+  const user = await User.findByIdAndUpdate(
+    userId,
+    {
+      $pull: { favoriteArticles: articleId },
+      updatedAt: Date.now(),
+    },
+    { returnDocument: "after" },
   ).select("-password -otp -otpExpires");
   return user;
 };
@@ -406,6 +451,31 @@ exports.markViewedCounselor = async (userId, counselorId) => {
     ...new Set(
       user.recentlyViewedCounselors.filter(
         (id) => id.toString() !== counselorId,
+      ),
+    ),
+  ].slice(0, 10);
+  user.updatedAt = Date.now();
+  await user.save();
+  return user;
+};
+
+exports.markViewedArticle = async (userId, articleId) => {
+  if (!articleId) {
+    const error = new Error("Dữ liệu yêu cầu không hợp lệ");
+    error.statusCode = 400;
+    throw error;
+  }
+  const user = await User.findById(userId);
+  if (!user) {
+    const error = new Error("Không tìm thấy người dùng");
+    error.statusCode = 404;
+    throw error;
+  }
+  user.recentlyViewedArticles = [
+    articleId,
+    ...new Set(
+      user.recentlyViewedArticles.filter(
+        (id) => id.toString() !== articleId,
       ),
     ),
   ].slice(0, 10);

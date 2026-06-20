@@ -21,6 +21,9 @@ const userSchema = new mongoose.Schema({
   fullName: String,
   phone: String,
   address: String,
+  faculty: String,
+  major: String,
+  avatar: String,
   loyaltyPoints: { type: Number, default: 0, min: 0 },
   favoriteCounselors: [
     {
@@ -28,10 +31,22 @@ const userSchema = new mongoose.Schema({
       ref: "Counselor",
     },
   ],
+  favoriteArticles: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Article",
+    },
+  ],
   recentlyViewedCounselors: [
     {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Counselor",
+    },
+  ],
+  recentlyViewedArticles: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Article",
     },
   ],
   coupons: { type: [couponSchema], default: [] },

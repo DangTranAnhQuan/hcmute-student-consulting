@@ -5,6 +5,7 @@ const { verifyToken } = require("../middleware/auth");
 
 // Public routes
 router.get("/", counselorController.getAllCounselors);
+router.get("/top10", counselorController.getTop10);
 router.get("/:id/available-slots", counselorController.getAvailableSlots);
 router.get("/:id/similar", counselorController.getSimilarCounselors);
 router.get("/:id/stats", counselorController.getCounselorStats);

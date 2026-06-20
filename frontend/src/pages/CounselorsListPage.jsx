@@ -2,7 +2,8 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { Spinner } from "../components/UI";
 import AvailableSlotPicker from "../components/booking/AvailableSlotPicker";
-import { consultationCartAPI, counselorAPI } from "../services/api";
+import { consultationCartAPI, counselorAPI, userAPI } from "../services/api";
+import { useAuth } from "../redux/hooks";
 import {
   defaultPreferredDate,
   formatCurrency,
@@ -69,6 +70,7 @@ const handleImageError = (event) => {
 };
 
 export default function CounselorsListPage() {
+  const { user } = useAuth();
   const [counselors, setCounselors] = useState([]);
   const [filterExpertise, setFilterExpertise] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
@@ -81,12 +83,30 @@ export default function CounselorsListPage() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
+  const favoriteCounselorIds = useMemo(() =>
+    (user?.favoriteCounselors || []).map(c => typeof c === 'string' ? c : c._id)
+  , [user]);
+
+  const toggleFavorite = async (id, e) => {
+    e.preventDefault();
+    if (!user) return;
+    try {
+      if (favoriteCounselorIds.includes(id)) {
+        await userAPI.removeFavoriteCounselor(id);
+      } else {
+        await userAPI.addFavoriteCounselor(id);
+      }
+    } catch (err) {
+      console.error("Toggle favorite failed", err);
+    }
+  };
+
   useEffect(() => {
     const loadCounselors = async () => {
       try {
         setLoading(true);
         const response = await counselorAPI.list();
-        setCounselors(response.data || []);
+        setCounselors(response.data.data || []);
       } catch (err) {
         setError(err.response?.data?.message || "Không tải được danh sách tư vấn viên");
       } finally {
@@ -429,12 +449,26 @@ export default function CounselorsListPage() {
                     }`}
                   >
                     <div className={showBookingForm ? "md:w-2/5" : "w-full"}>
-                      <img
-                        src={imageForCounselor(counselor)}
-                        alt={counselor.fullName}
-                        onError={handleImageError}
-                        className="mb-4 h-44 w-full rounded-lg object-cover"
-                      />
+                      <div className="relative group">
+                        <button
+                          onClick={(e) => toggleFavorite(counselor._id, e)}
+                          className={`absolute top-2 right-2 z-10 p-1.5 rounded-full backdrop-blur-md transition ${
+                            favoriteCounselorIds.includes(counselor._id)
+                              ? "bg-red-500 text-white"
+                              : "bg-white/30 text-white hover:bg-white/50"
+                          }`}
+                        >
+                          <svg className="w-4 h-4" fill={favoriteCounselorIds.includes(counselor._id) ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                          </svg>
+                        </button>
+                        <img
+                          src={imageForCounselor(counselor)}
+                          alt={counselor.fullName}
+                          onError={handleImageError}
+                          className="mb-4 h-44 w-full rounded-lg object-cover"
+                        />
+                      </div>
                       <h3 className="text-xl font-bold text-gray-900">
                         {counselor.fullName}
                       </h3>

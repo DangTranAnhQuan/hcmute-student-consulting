@@ -1,6 +1,8 @@
-import React from "react";
+import React, { useEffect, useState, useMemo } from "react";
+import { Link } from "react-router-dom";
 import { Spinner } from "../components/UI";
-import { contentAPI } from "../services/api";
+import { contentAPI, authAPI } from "../services/api";
+import { useAuth } from "../redux/hooks";
 
 const categoryMeta = {
   "Academic Affairs": { icon: "📚", label: "Academic Affairs" },
@@ -31,17 +33,54 @@ const formatDate = (value) =>
   }).format(new Date(value));
 
 const ArticlesPage = () => {
-  const [items, setItems] = React.useState([]);
-  const [categories, setCategories] = React.useState([]);
-  const [filters, setFilters] = React.useState({
+  const { user } = useAuth();
+  const [items, setItems] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [suggestions, setSuggestions] = useState([]);
+  const [filters, setFilters] = useState({
     q: "",
     topic: "",
     sortBy: "latest",
   });
-  const [viewMode, setViewMode] = React.useState("grid");
-  const [page, setPage] = React.useState(0);
-  const [loading, setLoading] = React.useState(true);
-  const [error, setError] = React.useState("");
+  const [viewMode, setViewMode] = useState("grid");
+  const [page, setPage] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  const favoriteArticleIds = useMemo(() =>
+    (user?.favoriteArticles || []).map(a => typeof a === 'string' ? a : a._id)
+  , [user]);
+
+  const viewedArticles = useMemo(() =>
+    (user?.recentlyViewedArticles || [])
+  , [user]);
+
+  useEffect(() => {
+    const fetchSuggestions = async () => {
+      try {
+        const res = await contentAPI.suggestions();
+        setSuggestions(res.data.data || []);
+      } catch (err) {
+        console.error("Failed to fetch suggestions", err);
+      }
+    };
+    if (user) fetchSuggestions();
+  }, [user]);
+
+  const toggleFavorite = async (id, e) => {
+    e.preventDefault();
+    if (!user) return;
+    try {
+      if (favoriteArticleIds.includes(id)) {
+        await authAPI.removeFavoriteArticle(id);
+      } else {
+        await authAPI.addFavoriteArticle(id);
+      }
+      // Ideally we should refresh the profile in redux here
+    } catch (err) {
+      console.error("Toggle favorite failed", err);
+    }
+  };
 
   React.useEffect(() => {
     const timer = setTimeout(async () => {
@@ -217,6 +256,34 @@ const ArticlesPage = () => {
                 </button>
               </div>
             </section>
+
+            {viewedArticles.length > 0 && (
+              <section className="rounded-lg bg-white p-5 shadow">
+                <h2 className="mb-4 text-lg font-bold text-gray-900">Đã xem gần đây</h2>
+                <div className="space-y-3">
+                  {viewedArticles.slice(0, 3).map((a) => (
+                    <Link key={a._id} to={`/detail/article/${a._id}`} className="flex gap-3 items-center group">
+                      <img src={a.image} className="h-12 w-12 rounded object-cover" alt="" />
+                      <p className="text-xs font-medium text-gray-700 group-hover:text-primary line-clamp-2">{a.title}</p>
+                    </Link>
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {suggestions.length > 0 && (
+              <section className="rounded-lg bg-white p-5 shadow">
+                <h2 className="mb-4 text-lg font-bold text-gray-900">Gợi ý cho bạn</h2>
+                <div className="space-y-3">
+                  {suggestions.map((a) => (
+                    <Link key={a.id} to={`/detail/article/${a.id}`} className="flex gap-3 items-center group">
+                      <img src={a.image} className="h-12 w-12 rounded object-cover" alt="" />
+                      <p className="text-xs font-medium text-gray-700 group-hover:text-primary line-clamp-2">{a.title}</p>
+                    </Link>
+                  ))}
+                </div>
+              </section>
+            )}
           </div>
         </aside>
 
@@ -246,8 +313,20 @@ const ArticlesPage = () => {
                   <a
                     key={item.id}
                     href={`/detail/article/${item.id}`}
-                    className="overflow-hidden rounded-lg bg-white shadow-md hover:shadow-lg"
+                    className="group relative overflow-hidden rounded-lg bg-white shadow-md hover:shadow-lg transition"
                   >
+                    <button
+                      onClick={(e) => toggleFavorite(item.id, e)}
+                      className={`absolute top-3 right-3 z-10 p-2 rounded-full backdrop-blur-md transition ${
+                        favoriteArticleIds.includes(item.id)
+                          ? "bg-red-500 text-white"
+                          : "bg-white/20 text-white hover:bg-white/40"
+                      }`}
+                    >
+                      <svg className="w-5 h-5" fill={favoriteArticleIds.includes(item.id) ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                      </svg>
+                    </button>
                     <img
                       src={item.image}
                       alt={item.title}

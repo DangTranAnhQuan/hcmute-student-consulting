@@ -1,9 +1,29 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { Link } from "react-router-dom";
+import HorizontalScroll from "../components/common/HorizontalScroll";
+import { counselorAPI, contentAPI } from "../services/api";
 
 const HomePage = () => {
   const { isAuthenticated, user } = useSelector((state) => state.auth);
+  const [topCounselors, setTopCounselors] = useState([]);
+  const [topArticles, setTopArticles] = useState([]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [cRes, aRes] = await Promise.allSettled([
+          counselorAPI.top10(),
+          contentAPI.top10(),
+        ]);
+        if (cRes.status === "fulfilled") setTopCounselors(cRes.value.data.data || []);
+        if (aRes.status === "fulfilled") setTopArticles(aRes.value.data.data || []);
+      } catch (err) {
+        console.error("Failed to fetch top data", err);
+      }
+    };
+    fetchData();
+  }, []);
 
   const primaryHref = isAuthenticated
     ? user?.role === "admin"
@@ -189,6 +209,53 @@ const HomePage = () => {
           </div>
         </div>
       </section>
+
+      <HorizontalScroll
+        title="Top 10 Chuyên viên nổi bật"
+        subtitle="Những chuyên viên nhận được nhiều đánh giá tích cực và lượt đặt lịch nhất."
+        items={topCounselors}
+        renderItem={(c) => (
+          <Link
+            to={`/book-counselor/${c._id}`}
+            className="block group rounded-2xl border border-slate-200 bg-white overflow-hidden hover:shadow-lg transition"
+          >
+            <img src={c.image} alt={c.fullName} className="h-48 w-full object-cover group-hover:scale-105 transition duration-500" />
+            <div className="p-4">
+              <h3 className="font-bold text-slate-900 group-hover:text-blue-600">{c.fullName}</h3>
+              <p className="text-xs text-slate-500 mt-1">{c.expertise?.slice(0, 2).join(", ")}</p>
+              <div className="mt-3 flex items-center justify-between">
+                <span className="text-sm font-bold text-green-600">{c.hourlyRate?.toLocaleString()}đ</span>
+                <div className="flex items-center gap-1">
+                  <span className="text-yellow-400 text-sm">★</span>
+                  <span className="text-xs font-bold text-slate-700">{c.rating || "5.0"}</span>
+                </div>
+              </div>
+            </div>
+          </Link>
+        )}
+      />
+
+      <HorizontalScroll
+        title="Top 10 Bài viết xem nhiều"
+        subtitle="Cẩm nang học vụ và tin tức quan trọng dành cho sinh viên."
+        items={topArticles}
+        renderItem={(a) => (
+          <Link
+            to={`/detail/article/${a.id}`}
+            className="block group rounded-2xl border border-slate-200 bg-white overflow-hidden hover:shadow-lg transition"
+          >
+            <img src={a.image} alt={a.title} className="h-40 w-full object-cover group-hover:scale-105 transition duration-500" />
+            <div className="p-4">
+              <span className="text-[10px] font-bold uppercase text-blue-600 bg-blue-50 px-2 py-1 rounded-full">{a.topic}</span>
+              <h3 className="font-bold text-slate-900 mt-2 line-clamp-2 group-hover:text-blue-600 h-12">{a.title}</h3>
+              <p className="text-[11px] text-slate-500 mt-3 flex items-center justify-between">
+                <span>{new Date(a.date).toLocaleDateString("vi-VN")}</span>
+                <span>{a.views} lượt xem</span>
+              </p>
+            </div>
+          </Link>
+        )}
+      />
 
     </div>
   );

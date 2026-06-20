@@ -205,6 +205,34 @@ exports.removeFavoriteCounselor = async (req, res) => {
   }
 };
 
+exports.addFavoriteArticle = async (req, res) => {
+  try {
+    const userId = req.user?.id;
+    const articleId = req.params.id;
+    const user = await authService.addFavoriteArticle(userId, articleId);
+    res.json(user);
+  } catch (err) {
+    return sendServerError(res, "addFavoriteArticle", err, {
+      userId: req.user?.id,
+      articleId: req.params.id,
+    });
+  }
+};
+
+exports.removeFavoriteArticle = async (req, res) => {
+  try {
+    const userId = req.user?.id;
+    const articleId = req.params.id;
+    const user = await authService.removeFavoriteArticle(userId, articleId);
+    res.json(user);
+  } catch (err) {
+    return sendServerError(res, "removeFavoriteArticle", err, {
+      userId: req.user?.id,
+      articleId: req.params.id,
+    });
+  }
+};
+
 exports.markViewedCounselor = async (req, res) => {
   try {
     const userId = req.user?.id;
@@ -215,6 +243,20 @@ exports.markViewedCounselor = async (req, res) => {
     return sendServerError(res, "markViewedCounselor", err, {
       userId: req.user?.id,
       counselorId: req.params.id,
+    });
+  }
+};
+
+exports.markViewedArticle = async (req, res) => {
+  try {
+    const userId = req.user?.id;
+    const articleId = req.params.id;
+    const user = await authService.markViewedArticle(userId, articleId);
+    res.json(user);
+  } catch (err) {
+    return sendServerError(res, "markViewedArticle", err, {
+      userId: req.user?.id,
+      articleId: req.params.id,
     });
   }
 };

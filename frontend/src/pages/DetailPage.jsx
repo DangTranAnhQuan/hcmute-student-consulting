@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { Spinner } from "../components/UI";
 import {
@@ -8,7 +8,8 @@ import {
   RelatedPosts,
   RatingCommentSection,
 } from "../components/detail/DetailSections";
-import { contentAPI } from "../services/api";
+import { contentAPI, authAPI } from "../services/api";
+import { useAuth } from "../redux/hooks";
 
 const typeLabel = {
   news: "Tin tức",
@@ -24,18 +25,23 @@ const backUrl = {
 
 const DetailPage = () => {
   const { type, id } = useParams();
-  const [detailItem, setDetailItem] = React.useState(null);
-  const [relatedItems, setRelatedItems] = React.useState([]);
-  const [loading, setLoading] = React.useState(true);
-  const [error, setError] = React.useState("");
+  const { user } = useAuth();
+  const [detailItem, setDetailItem] = useState(null);
+  const [relatedItems, setRelatedItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-  React.useEffect(() => {
+  useEffect(() => {
     const loadDetail = async () => {
       try {
         setLoading(true);
         const response = await contentAPI.detail(id);
         setDetailItem(response.data.item);
         setRelatedItems(response.data.related || []);
+
+        if (user && type === "article") {
+          authAPI.markViewedArticle(id).catch(() => {});
+        }
       } catch (err) {
         setError(err.response?.data?.message || "Không tải được nội dung");
       } finally {
@@ -49,7 +55,7 @@ const DetailPage = () => {
       setError("Loại nội dung không được hỗ trợ");
       setLoading(false);
     }
-  }, [id, type]);
+  }, [id, type, user]);
 
   if (loading) {
     return (

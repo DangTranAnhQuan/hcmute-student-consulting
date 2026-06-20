@@ -1,6 +1,7 @@
-import React from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { Spinner } from "../components/UI";
-import { contentAPI } from "../services/api";
+import { contentAPI, authAPI } from "../services/api";
+import { useAuth } from "../redux/hooks";
 
 const formatDate = (value) =>
   new Intl.DateTimeFormat("vi-VN", {
@@ -18,12 +19,31 @@ const fallbackImage =
 const PAGE_SIZE = 6;
 
 const NewsPage = () => {
-  const [items, setItems] = React.useState([]);
-  const [page, setPage] = React.useState(0);
-  const [loading, setLoading] = React.useState(true);
-  const [error, setError] = React.useState("");
+  const { user } = useAuth();
+  const [items, setItems] = useState([]);
+  const [page, setPage] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-  React.useEffect(() => {
+  const favoriteArticleIds = useMemo(() =>
+    (user?.favoriteArticles || []).map(a => typeof a === 'string' ? a : a._id)
+  , [user]);
+
+  const toggleFavorite = async (id, e) => {
+    e.preventDefault();
+    if (!user) return;
+    try {
+      if (favoriteArticleIds.includes(id)) {
+        await authAPI.removeFavoriteArticle(id);
+      } else {
+        await authAPI.addFavoriteArticle(id);
+      }
+    } catch (err) {
+      console.error("Toggle favorite failed", err);
+    }
+  };
+
+  useEffect(() => {
     const loadNews = async () => {
       try {
         setLoading(true);
@@ -187,8 +207,20 @@ const NewsPage = () => {
             <a
               key={item.id}
               href={`/detail/${detailType(item)}/${item.id}`}
-              className="overflow-hidden rounded-lg bg-white shadow-md hover:shadow-lg"
+              className="group relative overflow-hidden rounded-lg bg-white shadow-md hover:shadow-lg transition"
             >
+              <button
+                onClick={(e) => toggleFavorite(item.id, e)}
+                className={`absolute top-3 right-3 z-10 p-2 rounded-full backdrop-blur-md transition ${
+                  favoriteArticleIds.includes(item.id)
+                    ? "bg-red-500 text-white"
+                    : "bg-white/20 text-white hover:bg-white/40"
+                }`}
+              >
+                <svg className="w-4 h-4" fill={favoriteArticleIds.includes(item.id) ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                </svg>
+              </button>
               <img
                 src={item.image}
                 alt={item.title}
