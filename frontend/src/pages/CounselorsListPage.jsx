@@ -70,7 +70,7 @@ const handleImageError = (event) => {
 };
 
 export default function CounselorsListPage() {
-  const { user } = useAuth();
+  const { user, getProfile } = useAuth();
   const [counselors, setCounselors] = useState([]);
   const [filterExpertise, setFilterExpertise] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
@@ -96,6 +96,7 @@ export default function CounselorsListPage() {
       } else {
         await userAPI.addFavoriteCounselor(id);
       }
+      await getProfile(); // Sync Redux state
     } catch (err) {
       console.error("Toggle favorite failed", err);
     }

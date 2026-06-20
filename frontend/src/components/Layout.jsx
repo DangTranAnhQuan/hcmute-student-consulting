@@ -266,9 +266,17 @@ export const Navbar = ({ user, onLogout }) => {
                     className="flex max-w-[230px] items-center gap-3 rounded-full border border-slate-200 bg-white py-1.5 pl-2 pr-3 text-sm font-semibold text-slate-800 shadow-sm hover:border-blue-300 hover:text-blue-700"
                     title={displayName}
                   >
-                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-100 text-xs font-black text-blue-700">
-                      {displayName.slice(0, 1).toUpperCase()}
-                    </span>
+                    {user?.avatar ? (
+                      <img
+                        src={user.avatar}
+                        alt={displayName}
+                        className="h-8 w-8 shrink-0 rounded-full object-cover"
+                      />
+                    ) : (
+                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-100 text-xs font-black text-blue-700">
+                        {displayName.slice(0, 1).toUpperCase()}
+                      </span>
+                    )}
                     <span className="truncate">{displayName}</span>
                     <span className="text-slate-400">▾</span>
                   </button>

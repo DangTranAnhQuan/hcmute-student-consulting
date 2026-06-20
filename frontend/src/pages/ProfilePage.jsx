@@ -58,16 +58,18 @@ const ProfilePage = () => {
       : article.title || article._id || "Bài viết";
 
   useEffect(() => {
-    if (!user) {
+    if (!user && !isLoading) {
       navigate("/login");
-      return;
     }
+  }, [user, isLoading, navigate]);
+
+  useEffect(() => {
     getProfile().catch(() => {});
     consultationOrderAPI
       .rewardHistory()
       .then((res) => setRewardHistory(res.data || []))
       .catch(() => {});
-  }, [user, navigate, getProfile]);
+  }, [getProfile]);
 
   useEffect(() => {
     if (user?.email) {

@@ -33,7 +33,7 @@ const formatDate = (value) =>
   }).format(new Date(value));
 
 const ArticlesPage = () => {
-  const { user } = useAuth();
+  const { user, getProfile } = useAuth();
   const [items, setItems] = useState([]);
   const [categories, setCategories] = useState([]);
   const [suggestions, setSuggestions] = useState([]);
@@ -76,7 +76,7 @@ const ArticlesPage = () => {
       } else {
         await authAPI.addFavoriteArticle(id);
       }
-      // Ideally we should refresh the profile in redux here
+      await getProfile(); // Sync Redux state
     } catch (err) {
       console.error("Toggle favorite failed", err);
     }

@@ -1,3 +1,4 @@
+import { useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { authAPI } from "../services/api";
 import {
@@ -92,7 +93,7 @@ export const useAuth = () => {
   const dispatch = useDispatch();
   const auth = useSelector((state) => state.auth);
 
-  const login = async (email, password) => {
+  const login = useCallback(async (email, password) => {
     dispatch(loginStart());
     try {
       const response = await authAPI.login({ email, password });
@@ -110,9 +111,9 @@ export const useAuth = () => {
       dispatch(loginFailure(errorMessage));
       throw error;
     }
-  };
+  }, [dispatch]);
 
-  const register = async (username, email, password) => {
+  const register = useCallback(async (username, email, password) => {
     dispatch(registerStart());
     try {
       const response = await authAPI.register({ username, email, password });
@@ -124,9 +125,9 @@ export const useAuth = () => {
       dispatch(registerFailure(errorMessage));
       throw error;
     }
-  };
+  }, [dispatch]);
 
-  const verifyOTP = async (email, otp) => {
+  const verifyOTP = useCallback(async (email, otp) => {
     dispatch(verifyOTPStart());
     try {
       const response = await authAPI.verifyOTP(email, otp);
@@ -147,9 +148,9 @@ export const useAuth = () => {
       dispatch(verifyOTPFailure(errorMessage));
       throw error;
     }
-  };
+  }, [dispatch]);
 
-  const forgotPassword = async (email) => {
+  const forgotPassword = useCallback(async (email) => {
     dispatch(forgotPasswordStart());
     try {
       const response = await authAPI.forgotPassword(email);
@@ -161,9 +162,9 @@ export const useAuth = () => {
       dispatch(forgotPasswordFailure(errorMessage));
       throw error;
     }
-  };
+  }, [dispatch]);
 
-  const verifyResetOTP = async (email, otp) => {
+  const verifyResetOTP = useCallback(async (email, otp) => {
     dispatch(verifyResetOTPStart());
     try {
       const response = await authAPI.verifyResetOTP(email, otp);
@@ -175,9 +176,9 @@ export const useAuth = () => {
       dispatch(verifyResetOTPFailure(errorMessage));
       throw error;
     }
-  };
+  }, [dispatch]);
 
-  const resetPassword = async (email, otp, newPassword) => {
+  const resetPassword = useCallback(async (email, otp, newPassword) => {
     dispatch(resetPasswordStart());
     try {
       const response = await authAPI.resetPassword({ email, otp, newPassword });
@@ -192,9 +193,9 @@ export const useAuth = () => {
       dispatch(resetPasswordFailure(errorMessage));
       throw error;
     }
-  };
+  }, [dispatch]);
 
-  const getProfile = async () => {
+  const getProfile = useCallback(async () => {
     dispatch(getProfileStart());
     try {
       const response = await authAPI.getProfile();
@@ -206,9 +207,9 @@ export const useAuth = () => {
       dispatch(getProfileFailure(errorMessage));
       throw error;
     }
-  };
+  }, [dispatch]);
 
-  const updateProfile = async (userData) => {
+  const updateProfile = useCallback(async (userData) => {
     dispatch(updateProfileStart());
     try {
       const response = await authAPI.updateProfile(userData);
@@ -220,11 +221,11 @@ export const useAuth = () => {
       dispatch(updateProfileFailure(errorMessage));
       throw error;
     }
-  };
+  }, [dispatch]);
 
-  const handleLogout = () => {
+  const handleLogout = useCallback(() => {
     dispatch(logout());
-  };
+  }, [dispatch]);
 
   return {
     ...auth,

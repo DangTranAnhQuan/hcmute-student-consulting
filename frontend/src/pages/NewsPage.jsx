@@ -19,7 +19,7 @@ const fallbackImage =
 const PAGE_SIZE = 6;
 
 const NewsPage = () => {
-  const { user } = useAuth();
+  const { user, getProfile } = useAuth();
   const [items, setItems] = useState([]);
   const [page, setPage] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -38,6 +38,7 @@ const NewsPage = () => {
       } else {
         await authAPI.addFavoriteArticle(id);
       }
+      await getProfile(); // Sync Redux state
     } catch (err) {
       console.error("Toggle favorite failed", err);
     }

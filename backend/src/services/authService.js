@@ -339,7 +339,26 @@ exports.updateProfile = async (userId, updateData) => {
       updatedAt: Date.now(),
     },
     { returnDocument: "after" },
-  ).select("-password -otp -otpExpires");
+  )
+    .select("-password -otp -otpExpires")
+    .populate({
+      path: "favoriteCounselors",
+      select:
+        "fullName expertise hourlyRate rating image currentStatus currentStatusLabel",
+    })
+    .populate({
+      path: "favoriteArticles",
+      select: "title image topic views createdAt",
+    })
+    .populate({
+      path: "recentlyViewedCounselors",
+      select:
+        "fullName expertise hourlyRate rating image currentStatus currentStatusLabel",
+    })
+    .populate({
+      path: "recentlyViewedArticles",
+      select: "title image topic views createdAt",
+    });
 
   if (!user) {
     const error = new Error("Không tìm thấy người dùng");
