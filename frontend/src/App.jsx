@@ -49,7 +49,10 @@ function AppContent() {
 
   React.useEffect(() => {
     dispatch(fetchSystemSettings());
-    if (user) {
+  }, [dispatch]);
+
+  React.useEffect(() => {
+    if (user && !user.fullName) { // Chỉ fetch nếu chưa có thông tin đầy đủ
       authAPI.getProfile()
         .then(res => {
           dispatch(getProfileSuccess(res.data));
@@ -57,7 +60,7 @@ function AppContent() {
         .catch(err => {
         });
     }
-  }, [dispatch, user]);
+  }, [dispatch, user?.id]);
 
   const handleLogout = () => {
     logout();

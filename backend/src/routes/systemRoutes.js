@@ -35,9 +35,8 @@ const upload = multer({
   limits: { fileSize: 5 * 1024 * 1024 } // Giới hạn 5MB
 });
 
-// Route lấy cấu hình - Có thể cho phép User xem (nếu cần public)
-// Nhưng theo yêu cầu REVISED_ADMIN_PLAN, chúng ta để trong luồng Admin
-router.get("/", verifyToken, verifyAdmin, systemCtrl.getSettings);
+// Route lấy cấu hình - Cho phép tất cả User đã đăng nhập xem để hiển thị UI (siteTitle, Footer...)
+router.get("/", verifyToken, systemCtrl.getSettings);
 
 /**
  * @route PUT /api/admin/system-settings
