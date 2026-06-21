@@ -16,6 +16,7 @@ router.post("/login", loginLimiter, authCtrl.login);
 router.post("/forgot-password", forgotPasswordLimiter, authCtrl.forgotPassword);
 router.post("/verify-reset-otp", resetPasswordLimiter, authCtrl.verifyResetOTP);
 router.post("/reset-password", resetPasswordLimiter, authCtrl.resetPassword);
+router.post("/logout", authCtrl.logout);
 
 // Protected routes
 router.get("/profile", verifyToken, authCtrl.getProfile);

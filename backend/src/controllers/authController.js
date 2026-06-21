@@ -296,3 +296,17 @@ exports.redeemPoints = async (req, res) => {
     return sendServerError(res, "redeemPoints", err, { userId: req.user?.id });
   }
 };
+
+exports.logout = async (req, res) => {
+  try {
+    res.clearCookie("accessToken", {
+      httpOnly: true,
+      secure: false, // Set to true if using HTTPS
+      sameSite: "strict",
+    });
+    const result = await authService.logout();
+    res.json(result);
+  } catch (err) {
+    return sendServerError(res, "logout", err);
+  }
+};

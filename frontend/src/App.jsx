@@ -37,16 +37,15 @@ import { Navbar, Footer } from "./components/Layout";
 
 // Utils
 import { ProtectedRoute, PublicRoute } from "./utils/ProtectedRoute";
-import { logout, getProfileSuccess, setBannedStatus } from "./redux/authSlice";
+import { getProfileSuccess, setBannedStatus } from "./redux/authSlice";
 import { fetchSystemSettings } from "./redux/systemSettingsSlice";
 import { authAPI } from "./services/api";
+import { useAuth } from "./redux/hooks";
 import ConfirmModal from "./components/common/ConfirmModal";
 
 function AppContent() {
   const dispatch = useDispatch();
-  const location = useLocation();
-  const { user, isBannedAccount } = useSelector((state) => state.auth);
-  const { settings } = useSelector((state) => state.systemSettings);
+  const { user, isBannedAccount, logout } = useAuth();
 
   React.useEffect(() => {
     dispatch(fetchSystemSettings());
@@ -58,10 +57,10 @@ function AppContent() {
         .catch(err => {
         });
     }
-  }, [dispatch, user?.id]);
+  }, [dispatch, user]);
 
   const handleLogout = () => {
-    dispatch(logout());
+    logout();
     dispatch(setBannedStatus(false));
   };
 

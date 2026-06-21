@@ -586,3 +586,7 @@ exports.redeemPoints = async (userId, pointsToConvert) => {
     remainingPoints: user.loyaltyPoints,
   };
 };
+
+exports.logout = async () => {
+  return { message: "Đăng xuất thành công" };
+};

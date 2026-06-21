@@ -93,9 +93,6 @@ const adminSlice = createSlice({
       state.isModalOpen = false;
       state.editingItem = null;
     },
-    clearAdminError: (state) => {
-      state.error = null;
-    },
   },
   extraReducers: (builder) => {
     builder

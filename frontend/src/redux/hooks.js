@@ -223,7 +223,12 @@ export const useAuth = () => {
     }
   }, [dispatch]);
 
-  const handleLogout = useCallback(() => {
+  const handleLogout = useCallback(async () => {
+    try {
+      await authAPI.logout();
+    } catch (err) {
+      console.error("Backend logout failed", err);
+    }
     dispatch(logout());
   }, [dispatch]);
 

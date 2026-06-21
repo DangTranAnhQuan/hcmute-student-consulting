@@ -14,7 +14,7 @@ const LoginPage = () => {
       if (response.role === "admin") {
         navigate("/admin/consultation-orders");
       } else {
-        navigate("/dashboard");
+        navigate("/");
       }
     } catch (err) {
       console.error("Login failed:", err);
