@@ -1,18 +1,33 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import AdminTabs from "../components/admin/AdminTabs";
 import AdminToolbar from "../components/admin/AdminToolbar";
 import AdminDataTable from "../components/admin/AdminDataTable";
 import AdminFormModal from "../components/admin/AdminFormModal";
-import { fetchAdminResource } from "../redux/adminSlice";
+import { fetchAdminResource, clearAdminError } from "../redux/adminSlice";
+import { useCustomToast } from "../context/CustomToastContext";
 
 const AdminPage = () => {
   const dispatch = useDispatch();
+  const { showToast } = useCustomToast();
   const { activeModule, error } = useSelector((state) => state.admin);
 
-  React.useEffect(() => {
-    dispatch(fetchAdminResource({ resource: activeModule }));
+  useEffect(() => {
+    // Xóa sạch lỗi cũ khi đổi tab để tránh hiện "Resource không tồn tại"
+    dispatch(clearAdminError());
+
+    if (["articles", "faqs", "counselors"].includes(activeModule)) {
+      dispatch(fetchAdminResource({ resource: activeModule }));
+    }
   }, [dispatch, activeModule]);
+
+  // Hiển thị Toast cho lỗi Rate Limit
+  useEffect(() => {
+    if (error && (error.includes("quá nhiều thao tác") || error.includes("15 phút"))) {
+      showToast(error, "error");
+      dispatch(clearAdminError());
+    }
+  }, [error, dispatch, showToast]);
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">

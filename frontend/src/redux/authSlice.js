@@ -2,10 +2,18 @@ import { createSlice } from "@reduxjs/toolkit";
 
 const decodeTokenPayload = (token) => {
   try {
-    const payload = token.split(".")[1];
-    const normalized = payload.replace(/-/g, "+").replace(/_/g, "/");
-    return JSON.parse(window.atob(normalized));
+    if (!token || typeof token !== "string") return null;
+    const parts = token.split(".");
+    if (parts.length !== 3) return null;
+
+    const payload = parts[1];
+    // Thêm padding cho base64 nếu thiếu
+    const base64 = payload.replace(/-/g, "+").replace(/_/g, "/");
+    const padded = base64.padEnd(base64.length + (4 - (base64.length % 4)) % 4, '=');
+
+    return JSON.parse(window.atob(padded));
   } catch (error) {
+    console.error("Token decoding failed:", error);
     return null;
   }
 };
@@ -13,14 +21,19 @@ const decodeTokenPayload = (token) => {
 const getStoredAuth = () => {
   const token = localStorage.getItem("accessToken");
   const user = localStorage.getItem("user");
-  const payload = token ? decodeTokenPayload(token) : null;
 
-  if (!token || !payload?.exp || payload.exp * 1000 <= Date.now()) {
+  if (!token) return { token: null, user: null };
+
+  const payload = decodeTokenPayload(token);
+
+  // Chỉ xóa nếu chắc chắn là token đã hết hạn
+  if (payload?.exp && payload.exp * 1000 <= Date.now()) {
     localStorage.removeItem("accessToken");
     localStorage.removeItem("user");
     return { token: null, user: null };
   }
 
+  // Nếu giải mã lỗi nhưng vẫn có token, cứ giữ lại để server kiểm tra qua API
   return {
     token,
     user: user ? JSON.parse(user) : null,
@@ -35,12 +48,16 @@ const initialState = {
   isLoading: false,
   error: null,
   isAuthenticated: !!storedAuth.token,
+  isBannedAccount: false,
 };
 
 const authSlice = createSlice({
   name: "auth",
   initialState,
   reducers: {
+    setBannedStatus: (state, action) => {
+      state.isBannedAccount = action.payload;
+    },
     registerStart: (state) => {
       state.isLoading = true;
       state.error = null;
@@ -142,6 +159,7 @@ const authSlice = createSlice({
     getProfileSuccess: (state, action) => {
       state.isLoading = false;
       state.user = action.payload;
+      state.isAuthenticated = true; // Đảm bảo trạng thái xác thực
       localStorage.setItem("user", JSON.stringify(action.payload));
     },
     getProfileFailure: (state, action) => {
@@ -180,6 +198,7 @@ export const {
   loginSuccess,
   loginFailure,
   logout,
+  setBannedStatus,
   forgotPasswordStart,
   forgotPasswordSuccess,
   forgotPasswordFailure,

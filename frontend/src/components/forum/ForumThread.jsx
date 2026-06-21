@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
   deleteForumThread,
@@ -8,9 +8,11 @@ import {
 } from "../../redux/forumSlice";
 import AnswerThread from "./AnswerThread";
 import ReplyForm from "./ReplyForm";
+import ConfirmModal from "../common/ConfirmModal";
 
 const ForumThread = ({ threadId }) => {
   const dispatch = useDispatch();
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const thread = useSelector((state) =>
     state.forum.threads.find((item) => item.id === threadId),
   );
@@ -84,11 +86,7 @@ const ForumThread = ({ threadId }) => {
                 </button>
                 <button
                   type="button"
-                  onClick={() => {
-                    if (window.confirm("Xóa chủ đề này?")) {
-                      dispatch(deleteForumThread(thread.id));
-                    }
-                  }}
+                  onClick={() => setShowDeleteConfirm(true)}
                   className="px-3 py-1 rounded bg-red-50 text-red-700"
                 >
                   Xóa
@@ -118,6 +116,20 @@ const ForumThread = ({ threadId }) => {
         <h3 className="text-lg font-semibold">Viết trả lời</h3>
         <ReplyForm threadId={thread.id} />
       </div>
+
+      <ConfirmModal
+        isOpen={showDeleteConfirm}
+        title="Xác nhận xóa chủ đề"
+        message={`Bạn có chắc chắn muốn xóa chủ đề "${thread.title}"? Thao tác này không thể hoàn tác.`}
+        onConfirm={() => {
+          dispatch(deleteForumThread(thread.id));
+          setShowDeleteConfirm(false);
+        }}
+        onCancel={() => setShowDeleteConfirm(false)}
+        confirmText="Xóa ngay"
+        cancelText="Hủy"
+        type="danger"
+      />
     </div>
   );
 };

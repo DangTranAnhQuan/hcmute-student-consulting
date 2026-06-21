@@ -17,13 +17,14 @@ const userSchema = new mongoose.Schema({
   username: { type: String, required: true },
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
-  role: { type: String, enum: ["user", "admin"], default: "user" },
+  role: { type: String, enum: ["user", "admin", "counselor"], default: "user" },
   fullName: String,
   phone: String,
   address: String,
   faculty: String,
   major: String,
   avatar: String,
+  isBanned: { type: Boolean, default: false },
   loyaltyPoints: { type: Number, default: 0, min: 0 },
   favoriteCounselors: [
     {

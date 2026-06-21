@@ -5,14 +5,17 @@ import store from "./redux/store";
 import App from "./App";
 import "./index.css";
 import { RealtimeNotificationProvider } from "./context/RealtimeNotificationContext";
+import { CustomToastProvider } from "./context/CustomToastContext";
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(
   <React.StrictMode>
     <Provider store={store}>
-      <RealtimeNotificationProvider>
-        <App />
-      </RealtimeNotificationProvider>
+      <CustomToastProvider>
+        <RealtimeNotificationProvider>
+          <App />
+        </RealtimeNotificationProvider>
+      </CustomToastProvider>
     </Provider>
   </React.StrictMode>,
 );

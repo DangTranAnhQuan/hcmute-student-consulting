@@ -7,6 +7,8 @@ import faqReducer from "./faqSlice";
 import adminReducer from "./adminSlice";
 import forumReducer from "./forumSlice";
 import scheduleReducer from "./scheduleSlice";
+import adminUserReducer from "./adminUserSlice";
+import systemSettingsReducer from "./systemSettingsSlice";
 
 const store = configureStore({
   reducer: {
@@ -18,6 +20,8 @@ const store = configureStore({
     admin: adminReducer,
     forum: forumReducer,
     schedule: scheduleReducer,
+    adminUser: adminUserReducer,
+    systemSettings: systemSettingsReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

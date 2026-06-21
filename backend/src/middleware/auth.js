@@ -18,6 +18,13 @@ exports.verifyToken = async (req, res, next) => {
       return res.status(401).json({ message: "Người dùng không tồn tại" });
     }
 
+    if (user.isBanned) {
+      return res.status(403).json({
+        message: "Tài khoản của bạn đã bị khóa.",
+        errorCode: "USER_BANNED",
+      });
+    }
+
     req.user = user;
     next();
   } catch (err) {

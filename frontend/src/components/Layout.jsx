@@ -1,5 +1,6 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
+import { useSelector } from "react-redux";
 import NotificationBell from "./notifications/NotificationBell";
 
 export const Header = ({ title, subtitle, backUrl }) => {
@@ -46,6 +47,7 @@ const DropdownLink = ({ to, children, tone = "default" }) => (
 );
 
 export const Footer = () => {
+  const { settings } = useSelector((state) => state.systemSettings);
   const quickLinks = [
     { href: "/news", label: "Tin tức" },
     { href: "/articles", label: "Bài viết" },
@@ -63,7 +65,7 @@ export const Footer = () => {
                 HU
               </span>
               <span>
-                <span className="block text-lg font-bold">HCMUTE Student Care</span>
+                <span className="block text-lg font-bold">{settings?.siteTitle || "HCMUTE Student Care"}</span>
                 <span className="text-sm text-slate-400">Hệ thống tư vấn sinh viên</span>
               </span>
             </Link>
@@ -110,9 +112,9 @@ export const Footer = () => {
           <div>
             <h3 className="text-sm font-bold uppercase tracking-wide text-slate-200">Liên hệ</h3>
             <div className="mt-4 space-y-2 text-sm text-slate-400">
-              <p>Email: info@hcmute.edu.vn</p>
-              <p>Điện thoại: (028) 3847 0100</p>
-              <p>01 Võ Văn Ngân, TP. Thủ Đức</p>
+              <p>Email: {settings?.contactInfo?.email || "info@hcmute.edu.vn"}</p>
+              <p>Điện thoại: {settings?.contactInfo?.phone || "(028) 3847 0100"}</p>
+              <p>{settings?.contactInfo?.address || "01 Võ Văn Ngân, TP. Thủ Đức"}</p>
             </div>
           </div>
         </div>
@@ -126,6 +128,7 @@ export const Footer = () => {
 };
 
 export const Navbar = ({ user, onLogout }) => {
+  const { settings } = useSelector((state) => state.systemSettings);
   const location = useLocation();
   const [menuOpen, setMenuOpen] = React.useState(false);
   const [exploreOpen, setExploreOpen] = React.useState(false);
@@ -185,7 +188,7 @@ export const Navbar = ({ user, onLogout }) => {
               </span>
               <span className="hidden leading-tight sm:block">
                 <span className="block text-base font-black tracking-tight text-slate-950">
-                  HCMUTE
+                  {settings?.siteTitle || "HCMUTE"}
                 </span>
                 <span className="block text-xs font-semibold text-slate-500">
                   Student Care
@@ -286,7 +289,11 @@ export const Navbar = ({ user, onLogout }) => {
                         <div className="border-b border-slate-100 px-3 py-2">
                           <p className="truncate text-sm font-bold text-slate-900">{displayName}</p>
                           <p className="truncate text-xs text-slate-500">
-                            {user?.role === "admin" ? "Quản trị viên" : "Sinh viên"}
+                            {user?.role === "admin"
+                              ? "Quản trị viên"
+                              : user?.role === "counselor"
+                                ? "Ban tư vấn"
+                                : "Sinh viên"}
                           </p>
                         </div>
                         <div className="py-2">

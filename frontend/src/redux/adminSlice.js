@@ -1,7 +1,7 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import { adminAPI } from "../services/api";
 
-const moduleOrder = ["articles", "faqs", "counselors"];
+const moduleOrder = ["articles", "faqs", "counselors", "users", "settings"];
 
 const emptyData = moduleOrder.reduce((acc, key) => {
   acc[key] = [];
@@ -18,25 +18,37 @@ export const fetchAdminResource = createAsyncThunk(
 
 export const createAdminItem = createAsyncThunk(
   "admin/createItem",
-  async ({ resource, data }) => {
-    const response = await adminAPI.create(resource, data);
-    return { resource, item: response.data };
+  async ({ resource, data }, { rejectWithValue }) => {
+    try {
+      const response = await adminAPI.create(resource, data);
+      return { resource, item: response.data };
+    } catch (error) {
+      return rejectWithValue(error.response?.data || { message: error.message });
+    }
   },
 );
 
 export const updateAdminItem = createAsyncThunk(
   "admin/updateItem",
-  async ({ resource, id, data }) => {
-    const response = await adminAPI.update(resource, id, data);
-    return { resource, item: response.data };
+  async ({ resource, id, data }, { rejectWithValue }) => {
+    try {
+      const response = await adminAPI.update(resource, id, data);
+      return { resource, item: response.data };
+    } catch (error) {
+      return rejectWithValue(error.response?.data || { message: error.message });
+    }
   },
 );
 
 export const deleteAdminItem = createAsyncThunk(
   "admin/deleteItem",
-  async ({ resource, id }) => {
-    await adminAPI.remove(resource, id);
-    return { resource, id };
+  async ({ resource, id }, { rejectWithValue }) => {
+    try {
+      await adminAPI.remove(resource, id);
+      return { resource, id };
+    } catch (error) {
+      return rejectWithValue(error.response?.data || { message: error.message });
+    }
   },
 );
 
@@ -59,10 +71,13 @@ const adminSlice = createSlice({
     setActiveModule: (state, action) => {
       state.activeModule = action.payload;
       state.searchQuery = "";
-      state.error = null;
+      state.error = null; // Xóa sạch lỗi khi chuyển tab
     },
     setSearchQuery: (state, action) => {
       state.searchQuery = action.payload;
+    },
+    clearAdminError: (state) => {
+      state.error = null;
     },
     openCreateModal: (state) => {
       state.modalMode = "create";
@@ -142,7 +157,12 @@ const adminSlice = createSlice({
           ),
         (state, action) => {
           state.isLoading = false;
-          state.error = action.error?.message || "Thao tác admin thất bại";
+          const errorPayload = action.payload || action.error;
+          if (errorPayload?.status === 429 || errorPayload?.errorCode === "ADMIN_RATE_LIMIT") {
+            state.error = errorPayload.message || "Bạn đã thực hiện quá nhiều thao tác quản trị. Vui lòng thử lại sau 15 phút.";
+          } else {
+            state.error = errorPayload?.message || "Thao tác admin thất bại";
+          }
         },
       );
   },

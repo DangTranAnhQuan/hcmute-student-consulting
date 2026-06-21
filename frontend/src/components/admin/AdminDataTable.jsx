@@ -1,6 +1,9 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { openEditModal, deleteAdminItem } from "../../redux/adminSlice";
+import UserTable from "./UserTable";
+import SystemSettingsForm from "./SystemSettingsForm";
+import ConfirmModal from "../common/ConfirmModal";
 
 const PAGE_SIZE = 6;
 
@@ -347,10 +350,11 @@ const Pagination = ({ currentPage, totalPages, totalItems, onPageChange }) => {
 
 const AdminDataTable = () => {
   const dispatch = useDispatch();
-  const { activeModule, data, searchQuery, isLoading } = useSelector(
+  const { activeModule, data, searchQuery, isLoading, error } = useSelector(
     (state) => state.admin,
   );
   const [page, setPage] = useState(1);
+  const [deleteTarget, setDeleteTarget] = useState(null);
 
   const keyword = searchQuery.trim().toLowerCase();
   const rows = useMemo(
@@ -380,9 +384,14 @@ const AdminDataTable = () => {
   }, [page, totalPages]);
 
   const removeRow = (row) => {
-    const name = row.title || row.question || row.fullName || "bản ghi này";
-    if (!window.confirm(`Xóa ${name}?`)) return;
-    dispatch(deleteAdminItem({ resource: activeModule, id: row.id }));
+    setDeleteTarget(row);
+  };
+
+  const confirmDelete = () => {
+    if (deleteTarget) {
+      dispatch(deleteAdminItem({ resource: activeModule, id: deleteTarget.id }));
+      setDeleteTarget(null);
+    }
   };
 
   const renderRow = (row) => {
@@ -395,9 +404,25 @@ const AdminDataTable = () => {
     return <ArticleCard key={row.id} row={row} onDelete={removeRow} />;
   };
 
+  if (activeModule === "users") {
+    return (
+      <section className="rounded-xl bg-white p-4 shadow-md sm:p-5">
+        <UserTable />
+      </section>
+    );
+  }
+
+  if (activeModule === "settings") {
+    return (
+      <section className="rounded-xl bg-white p-4 shadow-md sm:p-5">
+        <SystemSettingsForm />
+      </section>
+    );
+  }
+
   return (
     <section className="rounded-xl bg-white p-4 shadow-md sm:p-5">
-      {isLoading && (
+      {isLoading && !error && (
         <div className="mb-4 rounded-lg border border-blue-100 bg-blue-50 px-4 py-2 text-sm text-blue-700">
           Đang tải dữ liệu...
         </div>
@@ -417,6 +442,19 @@ const AdminDataTable = () => {
             onPageChange={setPage}
           />
         </>
+      )}
+
+      {deleteTarget && (
+        <ConfirmModal
+          isOpen={!!deleteTarget}
+          title="Xác nhận xóa"
+          message={`Bạn có chắc chắn muốn xóa "${deleteTarget.title || deleteTarget.question || deleteTarget.fullName || "bản ghi này"}"?`}
+          onConfirm={confirmDelete}
+          onCancel={() => setDeleteTarget(null)}
+          confirmText="Xóa ngay"
+          cancelText="Hủy"
+          type="danger"
+        />
       )}
     </section>
   );

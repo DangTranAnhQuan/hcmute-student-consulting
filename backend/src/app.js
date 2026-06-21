@@ -20,6 +20,9 @@ const consultationCartRoutes = require("./routes/consultationCartRoutes");
 const consultationOrderRoutes = require("./routes/consultationOrderRoutes");
 const contentRoutes = require("./routes/contentRoutes");
 const notificationRoutes = require("./routes/notificationRoutes");
+const userAdminRoutes = require("./routes/userAdminRoutes");
+const systemRoutes = require("./routes/systemRoutes");
+const maintenanceMiddleware = require("./middleware/maintenanceMiddleware");
 const { setNotificationIO, attachSocketHandlers } = require("./services/notificationHub");
 
 const app = express();
@@ -41,6 +44,10 @@ app.use(
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ limit: "10mb", extended: true }));
 app.use(cookieParser());
+app.use(express.static(require("path").join(__dirname, "..", "public")));
+
+// Maintenance check middleware
+app.use("/api", maintenanceMiddleware);
 
 // Database connection
 mongoose
@@ -54,6 +61,8 @@ mongoose
 app.use("/api/auth", authRoutes);
 app.use("/api/counselors", counselorRoutes);
 app.use("/api/schedules", scheduleRoutes);
+app.use("/api/admin/users", userAdminRoutes);
+app.use("/api/admin/system-settings", systemRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/faqs", faqRoutes);
 app.use("/api/search", searchRoutes);

@@ -3,12 +3,16 @@ import { Link, useNavigate } from "react-router-dom";
 import { Input, Button, Card, Header, Alert, Spinner } from "../components/UI";
 import { useAuth } from "../redux/hooks";
 import { consultationOrderAPI, userAPI } from "../services/api";
+import ConfirmModal from "../components/common/ConfirmModal";
+import { useCustomToast } from "../context/CustomToastContext";
 
 const ProfilePage = () => {
   const navigate = useNavigate();
+  const { showToast } = useCustomToast();
   const { user, isLoading, error, getProfile, updateProfile, logout } =
     useAuth();
   const [isEditing, setIsEditing] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [formData, setFormData] = useState({
     username: "",
     email: "",
@@ -118,11 +122,11 @@ const ProfilePage = () => {
     if (validateForm()) {
       try {
         await updateProfile(formData);
-        setSuccessMessage("Cập nhật hồ sơ thành công!");
+        showToast("Cập nhật hồ sơ thành công!");
         setIsEditing(false);
-        setTimeout(() => setSuccessMessage(""), 3000);
       } catch (err) {
         console.error("Update profile failed:", err);
+        showToast("Cập nhật hồ sơ thất bại", "error");
       }
     }
   };
@@ -329,7 +333,11 @@ const ProfilePage = () => {
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
               <p className="text-sm text-blue-700">
                 <strong>Vai trò:</strong>{" "}
-                {user.role === "admin" ? "Quản trị viên" : "Người dùng"}
+                {user.role === "admin"
+                  ? "Quản trị viên"
+                  : user.role === "counselor"
+                    ? "Ban tư vấn"
+                    : "Người dùng"}
               </p>
             </div>
 
@@ -573,19 +581,26 @@ const ProfilePage = () => {
           </h3>
           <Button
             variant="danger"
-            onClick={() => {
-              if (
-                window.confirm(
-                  "Bạn có chắc chắn muốn xóa tài khoản không? Hành động này không thể hoàn tác.",
-                )
-              ) {
-                console.log("Delete account");
-              }
-            }}
+            onClick={() => setShowDeleteModal(true)}
           >
             Xóa tài khoản vĩnh viễn
           </Button>
         </Card>
+
+        <ConfirmModal
+          isOpen={showDeleteModal}
+          title="Xác nhận xóa tài khoản"
+          message="Bạn có chắc chắn muốn xóa tài khoản không? Hành động này không thể hoàn tác và bạn sẽ mất tất cả dữ liệu."
+          onConfirm={() => {
+            console.log("Delete account requested");
+            setShowDeleteModal(false);
+            showToast("Yêu cầu xóa tài khoản đã được ghi nhận.", "info");
+          }}
+          onCancel={() => setShowDeleteModal(false)}
+          confirmText="Xóa vĩnh viễn"
+          cancelText="Hủy"
+          type="danger"
+        />
       </div>
     </div>
   );

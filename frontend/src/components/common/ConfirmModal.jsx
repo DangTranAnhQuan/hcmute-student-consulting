@@ -1,23 +1,48 @@
-import React from 'react';
+import React from "react";
 
-const ConfirmModal = ({ open, title = 'Confirm', description = '', onCancel, onConfirm }) => {
-  if (!open) return null;
+const ConfirmModal = ({
+  isOpen,
+  title,
+  message,
+  onConfirm,
+  onCancel,
+  confirmText = "Xác nhận",
+  cancelText = "Hủy",
+  type = "danger", // danger, primary, warning
+  showCancel = true
+}) => {
+  if (!isOpen) return null;
+
+  const typeStyles = {
+    danger: "bg-red-600 hover:bg-red-700",
+    primary: "bg-blue-600 hover:bg-blue-700",
+    warning: "bg-yellow-600 hover:bg-yellow-700",
+  };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/40" onClick={onCancel} />
-
-      <div className="relative w-full max-w-md bg-white rounded-xl shadow-xl p-6">
-        <h3 className="text-lg font-bold text-gray-900">{title}</h3>
-        {description && <p className="text-sm text-gray-600 mt-2">{description}</p>}
-
-        <div className="mt-6 flex justify-end gap-3">
-          <button onClick={onCancel} className="px-4 py-2 rounded-lg bg-gray-100 hover:bg-gray-200">
-            Cancel
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+      <div className="bg-white rounded-2xl shadow-xl max-w-md w-full overflow-hidden transform transition-all">
+        <div className="p-6">
+          <h3 className="text-xl font-bold text-gray-900 mb-2">{title}</h3>
+          <p className="text-gray-600">{message}</p>
+        </div>
+        <div className="bg-gray-50 px-6 py-4 flex flex-col sm:flex-row-reverse gap-3">
+          <button
+            type="button"
+            onClick={onConfirm}
+            className={`px-5 py-2.5 rounded-xl text-sm font-bold text-white shadow-lg transition-all ${typeStyles[type]}`}
+          >
+            {confirmText}
           </button>
-          <button onClick={onConfirm} className="px-4 py-2 rounded-lg bg-danger text-white">
-            Confirm
-          </button>
+          {showCancel && (
+            <button
+              type="button"
+              onClick={onCancel}
+              className="px-5 py-2.5 rounded-xl text-sm font-bold text-gray-700 bg-white border border-gray-200 hover:bg-gray-50 transition-all"
+            >
+              {cancelText}
+            </button>
+          )}
         </div>
       </div>
     </div>
@@ -25,4 +50,3 @@ const ConfirmModal = ({ open, title = 'Confirm', description = '', onCancel, onC
 };
 
 export default ConfirmModal;
-

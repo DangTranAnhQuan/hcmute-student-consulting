@@ -6,6 +6,8 @@ const labels = {
   articles: "Bài viết",
   faqs: "FAQ",
   counselors: "Tư vấn viên",
+  users: "Người dùng",
+  settings: "Hệ thống",
 };
 
 const AdminTabs = () => {

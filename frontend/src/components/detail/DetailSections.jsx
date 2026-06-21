@@ -2,6 +2,8 @@ import React, { useState } from "react";
 import { Badge } from "../common/CommonUI";
 import { contentAPI } from "../../services/api";
 import { useAuth } from "../../redux/hooks";
+import ConfirmModal from "../common/ConfirmModal";
+import { useCustomToast } from "../../context/CustomToastContext";
 
 export const DetailBanner = ({ item, type }) => {
   const fallbackImage =
@@ -136,6 +138,7 @@ const renderStars = (value) => {
 
 export const RatingCommentSection = ({ articleId, initialComments = [] }) => {
   const { user, isAuthenticated } = useAuth();
+  const { showToast } = useCustomToast();
   const [comments, setComments] = useState(initialComments);
   const [newComment, setNewComment] = useState("");
   const [rating, setRating] = useState(5);
@@ -145,6 +148,7 @@ export const RatingCommentSection = ({ articleId, initialComments = [] }) => {
   const [editingCommentId, setEditingCommentId] = useState(null);
   const [editContent, setEditContent] = useState("");
   const [editRating, setEditRating] = useState(5);
+  const [deleteCommentId, setDeleteCommentId] = useState(null);
 
   const averageRating = comments.length
     ? (comments.reduce((sum, item) => sum + item.rating, 0) / comments.length).toFixed(1)
@@ -206,6 +210,7 @@ export const RatingCommentSection = ({ articleId, initialComments = [] }) => {
         prev.map((c) => (c.id === commentId ? response.data.comment : c))
       );
       setEditingCommentId(null);
+      showToast("Cập nhật bình luận thành công!");
     } catch (err) {
       setError(err.message || "Không thể cập nhật bình luận. Vui lòng thử lại.");
     } finally {
@@ -213,19 +218,24 @@ export const RatingCommentSection = ({ articleId, initialComments = [] }) => {
     }
   };
 
-  const handleDeleteComment = async (commentId) => {
-    if (!window.confirm("Bạn có chắc chắn muốn xóa bình luận này không?")) return;
+  const handleDeleteComment = (commentId) => {
+    setDeleteCommentId(commentId);
+  };
 
+  const confirmDeleteComment = async () => {
+    if (!deleteCommentId) return;
     setIsSubmitting(true);
     setError("");
 
     try {
-      await contentAPI.deleteComment(articleId, commentId);
-      setComments((prev) => prev.filter((c) => c.id !== commentId));
+      await contentAPI.deleteComment(articleId, deleteCommentId);
+      setComments((prev) => prev.filter((c) => c.id !== deleteCommentId));
+      showToast("Đã xóa bình luận.");
     } catch (err) {
       setError(err.message || "Không thể xóa bình luận. Vui lòng thử lại.");
     } finally {
       setIsSubmitting(false);
+      setDeleteCommentId(null);
     }
   };
 
@@ -361,6 +371,17 @@ export const RatingCommentSection = ({ articleId, initialComments = [] }) => {
           </div>
         ))}
       </div>
+
+      <ConfirmModal
+        isOpen={!!deleteCommentId}
+        title="Xác nhận xóa bình luận"
+        message="Bạn có chắc chắn muốn xóa bình luận này không? Hành động này không thể hoàn tác."
+        onConfirm={confirmDeleteComment}
+        onCancel={() => setDeleteCommentId(null)}
+        confirmText="Xóa ngay"
+        cancelText="Hủy"
+        type="danger"
+      />
     </section>
   );
 };

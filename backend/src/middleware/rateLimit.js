@@ -90,3 +90,21 @@ exports.resetPasswordLimiter = createAuthLimiter({
   message: "Quá nhiều lần đặt lại mật khẩu, vui lòng thử lại sau ít phút",
   includeEmail: true,
 });
+
+/**
+ * Giới hạn request cho các thao tác Admin nhạy cảm
+ * Max 30 requests trong 15 phút
+ */
+exports.adminLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 phút
+  max: 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: "Bạn đã thực hiện quá nhiều thao tác quản trị. Vui lòng thử lại sau 15 phút.",
+  handler: (req, res, next, options) => {
+    return res.status(options.statusCode).json({
+      message: options.message,
+      errorCode: "ADMIN_RATE_LIMIT",
+    });
+  },
+});

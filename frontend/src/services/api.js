@@ -1,4 +1,6 @@
 import axios from "axios";
+import store from "../redux/store";
+import { setBannedStatus } from "../redux/authSlice";
 
 const API_URL = process.env.REACT_APP_API_URL || "http://localhost:3000/api";
 
@@ -34,18 +36,48 @@ api.interceptors.response.use(
     if (message) {
       error.message = message;
     }
-    const isTokenError =
-      error.response?.status === 401 ||
-      (error.response?.status === 403 &&
-        message.toLowerCase().includes("token"));
 
-    if (isTokenError) {
+    // 1. Nếu là lỗi bảo trì (503), KHÔNG đăng xuất, KHÔNG chuyển hướng
+    if (
+      error.response?.status === 503 ||
+      error.response?.data?.errorCode === "MAINTENANCE_MODE"
+    ) {
+      return Promise.reject(error);
+    }
+
+    // 2. Nếu là lỗi xác thực (401 - Unauthorized)
+    if (error.response?.status === 401) {
       localStorage.removeItem("accessToken");
       localStorage.removeItem("user");
+      // Chỉ redirect nếu không phải đang ở trang login
       if (!window.location.pathname.includes("/login")) {
         window.location.href = "/login";
       }
+      return Promise.reject(error);
     }
+
+    // 3. Nếu là lỗi bị cấm (403 - Forbidden)
+    if (error.response?.status === 403) {
+      // Nếu bị khóa tài khoản
+      if (
+        error.response?.data?.errorCode === "USER_BANNED" ||
+        message.toLowerCase().includes("khóa")
+      ) {
+        store.dispatch(setBannedStatus(true));
+        return Promise.reject(error);
+      }
+
+      // Các lỗi 403 khác (ví dụ: student truy cập admin API) -> KHÔNG đăng xuất
+      // Chỉ trả về lỗi để UI xử lý thông báo "Không có quyền"
+      return Promise.reject(error);
+    }
+
+    // 4. Nếu bị Rate Limit (429 - Too Many Requests)
+    if (error.response?.status === 429) {
+      // Có thể tùy chỉnh thêm logic nếu cần
+      return Promise.reject(error);
+    }
+
     return Promise.reject(error);
   },
 );
@@ -123,6 +155,20 @@ export const consultationOrderAPI = {
     api.put(`/consultation-orders/admin/${id}/payment`, {
       paymentStatus,
       note,
+    }),
+};
+
+export const adminUserAPI = {
+  list: (params) => api.get("/admin/users", { params }),
+  updateRole: (id, newRole) => api.patch(`/admin/users/${id}/role`, { newRole }),
+  toggleBan: (id, isBanned) => api.patch(`/admin/users/${id}/ban`, { isBanned }),
+};
+
+export const systemSettingsAPI = {
+  get: () => api.get("/admin/system-settings"),
+  update: (formData) =>
+    api.put("/admin/system-settings", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
     }),
 };
 

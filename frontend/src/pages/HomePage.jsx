@@ -6,6 +6,7 @@ import { counselorAPI, contentAPI } from "../services/api";
 
 const HomePage = () => {
   const { isAuthenticated, user } = useSelector((state) => state.auth);
+  const { settings } = useSelector((state) => state.systemSettings);
   const [topCounselors, setTopCounselors] = useState([]);
   const [topArticles, setTopArticles] = useState([]);
 
@@ -79,8 +80,10 @@ const HomePage = () => {
     <div className="min-h-screen bg-slate-50">
       <section className="relative overflow-hidden bg-slate-950 text-white">
         <img
-          src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=1800&h=980&fit=crop"
-          alt="Sinh viên HCMUTE trao đổi cùng cố vấn"
+          src={settings?.banners && settings.banners.length > 0
+            ? `${process.env.REACT_APP_API_URL || "http://localhost:3000"}${settings.banners[0]}`
+            : "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=1800&h=980&fit=crop"}
+          alt={settings?.siteTitle || "Sinh viên HCMUTE trao đổi cùng cố vấn"}
           className="absolute inset-0 h-full w-full object-cover"
         />
         <div className="absolute inset-0 bg-slate-950/70" />
@@ -88,10 +91,10 @@ const HomePage = () => {
         <div className="relative mx-auto grid max-w-7xl gap-10 px-4 py-20 sm:px-6 lg:grid-cols-[1.05fr_0.95fr] lg:px-8 lg:py-24">
           <div className="flex max-w-3xl flex-col justify-center">
             <p className="mb-5 inline-flex w-fit rounded-full border border-white/20 bg-white/10 px-4 py-2 text-sm font-semibold text-blue-100 backdrop-blur">
-              HCMUTE Student Care
+              {settings?.siteTitle || "HCMUTE Student Care"}
             </p>
             <h1 className="text-4xl font-black leading-tight tracking-tight md:text-6xl">
-              HCMUTE Student Care
+              {settings?.siteTitle || "HCMUTE Student Care"}
             </h1>
             <p className="mt-6 max-w-2xl text-lg leading-8 text-slate-200">
               Hệ thống tư vấn sinh viên giúp đặt lịch, thanh toán, theo dõi yêu cầu

@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Spinner } from "../components/UI";
 import AvailableSlotPicker from "../components/booking/AvailableSlotPicker";
+import ConfirmModal from "../components/common/ConfirmModal";
 import { consultationCartAPI } from "../services/api";
 import {
   formatCurrency,
@@ -32,6 +33,8 @@ export default function ConsultationCartPage() {
   const [savingId, setSavingId] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [showClearConfirm, setShowClearConfirm] = useState(false);
+  const [deleteId, setDeleteId] = useState(null);
 
   const loadCart = async () => {
     try {
@@ -142,23 +145,32 @@ export default function ConsultationCartPage() {
   };
 
   const removeItem = async (itemId) => {
+    setDeleteId(itemId);
+  };
+
+  const confirmRemoveItem = async () => {
+    if (!deleteId) return;
     try {
-      setSavingId(itemId);
+      setSavingId(deleteId);
       setError("");
       setSuccess("");
-      const response = await consultationCartAPI.removeItem(itemId);
+      const response = await consultationCartAPI.removeItem(deleteId);
       setCart(response.data);
-      setSelectedIds((current) => current.filter((id) => id !== itemId));
+      setSelectedIds((current) => current.filter((id) => id !== deleteId));
       setSuccess("Đã xóa mục khỏi giỏ");
     } catch (err) {
       setError(err.response?.data?.message || "Không xóa được mục khỏi giỏ");
     } finally {
       setSavingId("");
+      setDeleteId(null);
     }
   };
 
   const clearCart = async () => {
-    if (!window.confirm("Xóa toàn bộ giỏ tư vấn?")) return;
+    setShowClearConfirm(true);
+  };
+
+  const confirmClearCart = async () => {
     try {
       setError("");
       setSuccess("");
@@ -169,6 +181,8 @@ export default function ConsultationCartPage() {
       setSuccess("Đã xóa toàn bộ giỏ tư vấn");
     } catch (err) {
       setError(err.response?.data?.message || "Không xóa được giỏ tư vấn");
+    } finally {
+      setShowClearConfirm(false);
     }
   };
 
@@ -533,6 +547,28 @@ export default function ConsultationCartPage() {
           </div>
         )}
       </div>
+
+      <ConfirmModal
+        isOpen={showClearConfirm}
+        title="Xác nhận xóa giỏ hàng"
+        message="Bạn có chắc chắn muốn xóa toàn bộ mục trong giỏ tư vấn không?"
+        onConfirm={confirmClearCart}
+        onCancel={() => setShowClearConfirm(false)}
+        confirmText="Xóa toàn bộ"
+        cancelText="Hủy"
+        type="danger"
+      />
+
+      <ConfirmModal
+        isOpen={!!deleteId}
+        title="Xác nhận xóa"
+        message="Bạn có chắc chắn muốn xóa mục tư vấn này khỏi giỏ không?"
+        onConfirm={confirmRemoveItem}
+        onCancel={() => setDeleteId(null)}
+        confirmText="Xóa ngay"
+        cancelText="Hủy"
+        type="danger"
+      />
     </div>
   );
 }
