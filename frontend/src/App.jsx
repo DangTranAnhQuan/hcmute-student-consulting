@@ -31,6 +31,8 @@ import ConsultationOrderDetailPage from "./pages/ConsultationOrderDetailPage";
 import ConsultationOrdersPage from "./pages/ConsultationOrdersPage";
 import SchedulesPage from "./pages/SchedulesPage";
 import NotificationsPage from "./pages/NotificationsPage";
+import AdminChatPage from "./pages/AdminChatPage";
+import ChatWidget from "./components/chat/ChatWidget";
 
 // Components
 import { Navbar, Footer } from "./components/Layout";
@@ -52,13 +54,14 @@ function AppContent() {
   }, [dispatch]);
 
   React.useEffect(() => {
-    if (user && !user.fullName) { // Chỉ fetch nếu chưa có thông tin đầy đủ
-      authAPI.getProfile()
-        .then(res => {
+    if (user && !user.fullName) {
+      // Chỉ fetch nếu chưa có thông tin đầy đủ
+      authAPI
+        .getProfile()
+        .then((res) => {
           dispatch(getProfileSuccess(res.data));
         })
-        .catch(err => {
-        });
+        .catch((err) => {});
     }
   }, [dispatch, user?.id]);
 
@@ -209,6 +212,14 @@ function AppContent() {
             }
           />
           <Route
+            path="/admin/chat"
+            element={
+              <ProtectedRoute requiredRole="admin">
+                <AdminChatPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/admin/consultation-orders"
             element={
               <ProtectedRoute requiredRole="admin">
@@ -223,6 +234,7 @@ function AppContent() {
       </main>
 
       <Footer />
+      <ChatWidget />
 
       {/* Custom Modal thông báo tài khoản bị khóa (Redux-based) */}
       <ConfirmModal

@@ -23,7 +23,10 @@ const AdminPage = () => {
 
   // Hiển thị Toast cho lỗi Rate Limit
   useEffect(() => {
-    if (error && (error.includes("quá nhiều thao tác") || error.includes("15 phút"))) {
+    if (
+      error &&
+      (error.includes("quá nhiều thao tác") || error.includes("15 phút"))
+    ) {
       showToast(error, "error");
       dispatch(clearAdminError());
     }
@@ -36,14 +39,24 @@ const AdminPage = () => {
           Admin CMS
         </h1>
         <p className="text-gray-600">
-          Quản lý nội dung xuất bản, FAQ và tư vấn viên. Dữ liệu Published sẽ hiển thị cho người dùng, tư vấn viên tạm ẩn sẽ không còn được đặt yêu cầu mới.
+          Quản lý nội dung xuất bản, FAQ và tư vấn viên. Dữ liệu Published sẽ
+          hiển thị cho người dùng, tư vấn viên tạm ẩn sẽ không còn được đặt yêu
+          cầu mới.
         </p>
-        <a
-          href="/admin/consultation-orders"
-          className="mt-4 inline-flex rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary-dark"
-        >
-          Quản lý yêu cầu tư vấn
-        </a>
+        <div className="mt-4 flex flex-wrap gap-3">
+          <a
+            href="/admin/consultation-orders"
+            className="inline-flex rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary-dark"
+          >
+            Quản lý yêu cầu tư vấn
+          </a>
+          <a
+            href="/admin/chat"
+            className="inline-flex rounded-lg bg-slate-800 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-900"
+          >
+            Chat với người dùng
+          </a>
+        </div>
       </div>
 
       {error && (

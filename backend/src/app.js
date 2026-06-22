@@ -20,10 +20,15 @@ const consultationCartRoutes = require("./routes/consultationCartRoutes");
 const consultationOrderRoutes = require("./routes/consultationOrderRoutes");
 const contentRoutes = require("./routes/contentRoutes");
 const notificationRoutes = require("./routes/notificationRoutes");
+const chatRoutes = require("./routes/chatRoutes");
 const userAdminRoutes = require("./routes/userAdminRoutes");
 const systemRoutes = require("./routes/systemRoutes");
 const maintenanceMiddleware = require("./middleware/maintenanceMiddleware");
-const { setNotificationIO, attachSocketHandlers } = require("./services/notificationHub");
+const {
+  setNotificationIO,
+  attachSocketHandlers,
+} = require("./services/notificationHub");
+const { setChatIO, attachChatHandlers } = require("./services/chatHub");
 
 const app = express();
 const server = http.createServer(app);
@@ -71,6 +76,7 @@ app.use("/api/content", contentRoutes);
 app.use("/api/consultation-cart", consultationCartRoutes);
 app.use("/api/consultation-orders", consultationOrderRoutes);
 app.use("/api/notifications", notificationRoutes);
+app.use("/api/chat", chatRoutes);
 
 // Socket.IO Configuration
 const io = new Server(server, {
@@ -82,7 +88,9 @@ const io = new Server(server, {
 });
 
 setNotificationIO(io);
+setChatIO(io);
 io.on("connection", attachSocketHandlers);
+io.on("connection", attachChatHandlers);
 
 // Health check
 app.get("/api/health", (req, res) => {

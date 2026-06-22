@@ -22,3 +22,15 @@ export const createNotificationSocket = ({ userId, role }) => {
 
   return socket;
 };
+
+export const createChatSocket = ({ token }) => {
+  const socket = io(SOCKET_URL, {
+    withCredentials: true,
+    transports: ["websocket", "polling"],
+    auth: {
+      token,
+    },
+  });
+
+  return socket;
+};
