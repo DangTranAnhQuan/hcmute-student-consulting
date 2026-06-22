@@ -2,10 +2,16 @@ const ChatMessage = require("../models/ChatMessage");
 
 const serializeMessage = (doc) => {
   const value = doc.toObject ? doc.toObject() : doc;
+  const senderId =
+    value.senderId?._id?.toString?.() || value.senderId?.toString?.();
+  const receiverUserId =
+    value.receiverUserId?._id?.toString?.() ||
+    value.receiverUserId?.toString?.();
+
   return {
     id: value._id?.toString?.() || value._id,
-    senderId: value.senderId?.toString?.() || value.senderId,
-    receiverUserId: value.receiverUserId?.toString?.() || value.receiverUserId,
+    senderId: senderId || value.senderId,
+    receiverUserId: receiverUserId || value.receiverUserId,
     senderRole: value.senderRole,
     content: value.content,
     createdAt: value.createdAt,

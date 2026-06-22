@@ -76,7 +76,7 @@ const AdminChatPage = () => {
       .catch((error) => {
         console.error("Lấy danh sách chat người dùng thất bại", error);
       });
-  }, [user]);
+  }, [user, selectedUser]);
 
   React.useEffect(() => {
     if (!selectedUser) return;

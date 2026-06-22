@@ -17,8 +17,10 @@ const HomePage = () => {
           counselorAPI.top10(),
           contentAPI.top10(),
         ]);
-        if (cRes.status === "fulfilled") setTopCounselors(cRes.value.data.data || []);
-        if (aRes.status === "fulfilled") setTopArticles(aRes.value.data.data || []);
+        if (cRes.status === "fulfilled")
+          setTopCounselors(cRes.value.data.data || []);
+        if (aRes.status === "fulfilled")
+          setTopArticles(aRes.value.data.data || []);
       } catch (err) {
         console.error("Failed to fetch top data", err);
       }
@@ -70,19 +72,37 @@ const HomePage = () => {
   ];
 
   const steps = [
-    { number: "01", title: "Chọn tư vấn viên", desc: "Lọc theo chuyên môn, phí tư vấn và lịch phù hợp." },
-    { number: "02", title: "Thêm vào giỏ", desc: "Chọn từng yêu cầu hoặc nhóm yêu cầu muốn thanh toán." },
-    { number: "03", title: "Thanh toán", desc: "Hoàn tất bằng COD hoặc MoMo Sandbox theo cấu hình API." },
-    { number: "04", title: "Theo dõi", desc: "Xem trạng thái xử lý, lịch sử và chi tiết từng yêu cầu." },
+    {
+      number: "01",
+      title: "Chọn tư vấn viên",
+      desc: "Lọc theo chuyên môn, phí tư vấn và lịch phù hợp.",
+    },
+    {
+      number: "02",
+      title: "Thêm vào giỏ",
+      desc: "Chọn từng yêu cầu hoặc nhóm yêu cầu muốn thanh toán.",
+    },
+    {
+      number: "03",
+      title: "Thanh toán",
+      desc: "Hoàn tất bằng COD hoặc MoMo Sandbox theo cấu hình API.",
+    },
+    {
+      number: "04",
+      title: "Theo dõi",
+      desc: "Xem trạng thái xử lý, lịch sử và chi tiết từng yêu cầu.",
+    },
   ];
 
   return (
     <div className="min-h-screen bg-slate-50">
       <section className="relative overflow-hidden bg-slate-950 text-white">
         <img
-          src={settings?.banners && settings.banners.length > 0
-            ? `${process.env.REACT_APP_API_URL || "http://localhost:3000"}${settings.banners[0]}`
-            : "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=1800&h=980&fit=crop"}
+          src={
+            settings?.banners && settings.banners.length > 0
+              ? `${process.env.REACT_APP_API_URL || "http://localhost:3001"}${settings.banners[0]}`
+              : "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=1800&h=980&fit=crop"
+          }
           alt={settings?.siteTitle || "Sinh viên HCMUTE trao đổi cùng cố vấn"}
           className="absolute inset-0 h-full w-full object-cover"
         />
@@ -97,8 +117,9 @@ const HomePage = () => {
               {settings?.siteTitle || "HCMUTE Student Care"}
             </h1>
             <p className="mt-6 max-w-2xl text-lg leading-8 text-slate-200">
-              Hệ thống tư vấn sinh viên giúp đặt lịch, thanh toán, theo dõi yêu cầu
-              và cập nhật nội dung hỗ trợ học tập trong một trải nghiệm thống nhất.
+              Hệ thống tư vấn sinh viên giúp đặt lịch, thanh toán, theo dõi yêu
+              cầu và cập nhật nội dung hỗ trợ học tập trong một trải nghiệm
+              thống nhất.
             </p>
 
             <div className="mt-8 flex flex-wrap gap-3">
@@ -122,15 +143,21 @@ const HomePage = () => {
               <div className="grid gap-3 sm:grid-cols-3">
                 <div className="rounded-2xl bg-white p-4 text-slate-950">
                   <p className="text-3xl font-black">12+</p>
-                  <p className="mt-1 text-sm font-semibold text-slate-500">Tư vấn viên</p>
+                  <p className="mt-1 text-sm font-semibold text-slate-500">
+                    Tư vấn viên
+                  </p>
                 </div>
                 <div className="rounded-2xl bg-white p-4 text-slate-950">
                   <p className="text-3xl font-black">30+</p>
-                  <p className="mt-1 text-sm font-semibold text-slate-500">Nội dung</p>
+                  <p className="mt-1 text-sm font-semibold text-slate-500">
+                    Nội dung
+                  </p>
                 </div>
                 <div className="rounded-2xl bg-white p-4 text-slate-950">
                   <p className="text-3xl font-black">2</p>
-                  <p className="mt-1 text-sm font-semibold text-slate-500">Thanh toán</p>
+                  <p className="mt-1 text-sm font-semibold text-slate-500">
+                    Thanh toán
+                  </p>
                 </div>
               </div>
             </div>
@@ -141,12 +168,17 @@ const HomePage = () => {
       <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
         <div className="mb-8 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
           <div>
-            <p className="text-sm font-bold uppercase tracking-wide text-blue-700">Dịch vụ</p>
+            <p className="text-sm font-bold uppercase tracking-wide text-blue-700">
+              Dịch vụ
+            </p>
             <h2 className="mt-2 text-3xl font-black tracking-tight text-slate-950">
               Tư vấn theo đúng nhu cầu sinh viên
             </h2>
           </div>
-          <Link to="/book-counselor" className="text-sm font-bold text-blue-700 hover:text-blue-900">
+          <Link
+            to="/book-counselor"
+            className="text-sm font-bold text-blue-700 hover:text-blue-900"
+          >
             Xem tư vấn viên →
           </Link>
         </div>
@@ -163,8 +195,12 @@ const HomePage = () => {
                 className="h-48 w-full object-cover"
               />
               <div className="p-5">
-                <h3 className="text-lg font-black text-slate-950">{service.title}</h3>
-                <p className="mt-2 text-sm leading-6 text-slate-600">{service.desc}</p>
+                <h3 className="text-lg font-black text-slate-950">
+                  {service.title}
+                </h3>
+                <p className="mt-2 text-sm leading-6 text-slate-600">
+                  {service.desc}
+                </p>
               </div>
             </article>
           ))}
@@ -175,14 +211,16 @@ const HomePage = () => {
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="grid gap-10 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
             <div>
-              <p className="text-sm font-bold uppercase tracking-wide text-blue-700">Quy trình</p>
+              <p className="text-sm font-bold uppercase tracking-wide text-blue-700">
+                Quy trình
+              </p>
               <h2 className="mt-2 text-3xl font-black tracking-tight text-slate-950">
                 Từ đặt tư vấn đến theo dõi trạng thái
               </h2>
               <p className="mt-4 text-base leading-7 text-slate-600">
-                Luồng xử lý được tách rõ cho người dùng và admin: người dùng đặt yêu
-                cầu, thanh toán, theo dõi; admin xác nhận, cập nhật trạng thái và quản
-                lý nội dung CMS.
+                Luồng xử lý được tách rõ cho người dùng và admin: người dùng đặt
+                yêu cầu, thanh toán, theo dõi; admin xác nhận, cập nhật trạng
+                thái và quản lý nội dung CMS.
               </p>
               <div className="mt-6 flex flex-wrap gap-3">
                 <Link
@@ -202,10 +240,19 @@ const HomePage = () => {
 
             <div className="grid gap-4 sm:grid-cols-2">
               {steps.map((step) => (
-                <div key={step.number} className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
-                  <p className="text-sm font-black text-blue-700">{step.number}</p>
-                  <h3 className="mt-3 text-lg font-black text-slate-950">{step.title}</h3>
-                  <p className="mt-2 text-sm leading-6 text-slate-600">{step.desc}</p>
+                <div
+                  key={step.number}
+                  className="rounded-2xl border border-slate-200 bg-slate-50 p-5"
+                >
+                  <p className="text-sm font-black text-blue-700">
+                    {step.number}
+                  </p>
+                  <h3 className="mt-3 text-lg font-black text-slate-950">
+                    {step.title}
+                  </h3>
+                  <p className="mt-2 text-sm leading-6 text-slate-600">
+                    {step.desc}
+                  </p>
                 </div>
               ))}
             </div>
@@ -222,15 +269,27 @@ const HomePage = () => {
             to={`/book-counselor/${c._id}`}
             className="block group rounded-2xl border border-slate-200 bg-white overflow-hidden hover:shadow-lg transition"
           >
-            <img src={c.image} alt={c.fullName} className="h-48 w-full object-cover group-hover:scale-105 transition duration-500" />
+            <img
+              src={c.image}
+              alt={c.fullName}
+              className="h-48 w-full object-cover group-hover:scale-105 transition duration-500"
+            />
             <div className="p-4">
-              <h3 className="font-bold text-slate-900 group-hover:text-blue-600">{c.fullName}</h3>
-              <p className="text-xs text-slate-500 mt-1">{c.expertise?.slice(0, 2).join(", ")}</p>
+              <h3 className="font-bold text-slate-900 group-hover:text-blue-600">
+                {c.fullName}
+              </h3>
+              <p className="text-xs text-slate-500 mt-1">
+                {c.expertise?.slice(0, 2).join(", ")}
+              </p>
               <div className="mt-3 flex items-center justify-between">
-                <span className="text-sm font-bold text-green-600">{c.hourlyRate?.toLocaleString()}đ</span>
+                <span className="text-sm font-bold text-green-600">
+                  {c.hourlyRate?.toLocaleString()}đ
+                </span>
                 <div className="flex items-center gap-1">
                   <span className="text-yellow-400 text-sm">★</span>
-                  <span className="text-xs font-bold text-slate-700">{c.rating || "5.0"}</span>
+                  <span className="text-xs font-bold text-slate-700">
+                    {c.rating || "5.0"}
+                  </span>
                 </div>
               </div>
             </div>
@@ -247,10 +306,18 @@ const HomePage = () => {
             to={`/detail/article/${a.id}`}
             className="block group rounded-2xl border border-slate-200 bg-white overflow-hidden hover:shadow-lg transition"
           >
-            <img src={a.image} alt={a.title} className="h-40 w-full object-cover group-hover:scale-105 transition duration-500" />
+            <img
+              src={a.image}
+              alt={a.title}
+              className="h-40 w-full object-cover group-hover:scale-105 transition duration-500"
+            />
             <div className="p-4">
-              <span className="text-[10px] font-bold uppercase text-blue-600 bg-blue-50 px-2 py-1 rounded-full">{a.topic}</span>
-              <h3 className="font-bold text-slate-900 mt-2 line-clamp-2 group-hover:text-blue-600 h-12">{a.title}</h3>
+              <span className="text-[10px] font-bold uppercase text-blue-600 bg-blue-50 px-2 py-1 rounded-full">
+                {a.topic}
+              </span>
+              <h3 className="font-bold text-slate-900 mt-2 line-clamp-2 group-hover:text-blue-600 h-12">
+                {a.title}
+              </h3>
               <p className="text-[11px] text-slate-500 mt-3 flex items-center justify-between">
                 <span>{new Date(a.date).toLocaleDateString("vi-VN")}</span>
                 <span>{a.views} lượt xem</span>
@@ -259,7 +326,6 @@ const HomePage = () => {
           </Link>
         )}
       />
-
     </div>
   );
 };

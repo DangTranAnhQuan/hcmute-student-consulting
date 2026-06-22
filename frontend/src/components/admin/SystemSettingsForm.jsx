@@ -1,6 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchSystemSettings, updateSystemSettings, clearSettingsError } from "../../redux/systemSettingsSlice";
+import {
+  fetchSystemSettings,
+  updateSystemSettings,
+  clearSettingsError,
+} from "../../redux/systemSettingsSlice";
 import { clearAdminError } from "../../redux/adminSlice";
 import { Spinner } from "../UI";
 import { useCustomToast } from "../../context/CustomToastContext";
@@ -8,7 +12,12 @@ import { useCustomToast } from "../../context/CustomToastContext";
 const SystemSettingsForm = () => {
   const dispatch = useDispatch();
   const { showToast } = useCustomToast();
-  const { settings, isLoading, isUpdating, error: settingsError } = useSelector((state) => state.systemSettings);
+  const {
+    settings,
+    isLoading,
+    isUpdating,
+    error: settingsError,
+  } = useSelector((state) => state.systemSettings);
 
   const [formData, setFormData] = useState({
     siteTitle: "",
@@ -28,7 +37,11 @@ const SystemSettingsForm = () => {
 
   // Theo dõi lỗi settings để hiện Toast Rate Limit
   useEffect(() => {
-    if (settingsError && (settingsError.includes("quá nhiều thao tác") || settingsError.includes("15 phút"))) {
+    if (
+      settingsError &&
+      (settingsError.includes("quá nhiều thao tác") ||
+        settingsError.includes("15 phút"))
+    ) {
       showToast(settingsError, "error");
       dispatch(clearSettingsError());
     }
@@ -55,7 +68,7 @@ const SystemSettingsForm = () => {
     }));
     // Xóa lỗi của field khi người dùng sửa
     if (fieldErrors[name]) {
-      setFieldErrors(prev => {
+      setFieldErrors((prev) => {
         const newErrors = { ...prev };
         delete newErrors[name];
         return newErrors;
@@ -93,37 +106,59 @@ const SystemSettingsForm = () => {
       } else {
         const errorPayload = action.payload;
 
-        if (errorPayload?.status === 429 || errorPayload?.errorCode === "ADMIN_RATE_LIMIT") {
-          showToast(errorPayload?.message || "Bạn đã thực hiện quá nhiều thao tác. Vui lòng thử lại sau 15 phút.", "error");
+        if (
+          errorPayload?.status === 429 ||
+          errorPayload?.errorCode === "ADMIN_RATE_LIMIT"
+        ) {
+          showToast(
+            errorPayload?.message ||
+              "Bạn đã thực hiện quá nhiều thao tác. Vui lòng thử lại sau 15 phút.",
+            "error",
+          );
         } else if (errorPayload?.errors) {
           // Xử lý validation errors từ express-validator
           const errors = {};
-          errorPayload.errors.forEach(err => {
+          errorPayload.errors.forEach((err) => {
             errors[err.path] = err.msg;
           });
           setFieldErrors(errors);
           showToast("Dữ liệu nhập vào không hợp lệ", "error");
         } else {
-          showToast(errorPayload?.message || "Lỗi khi cập nhật hệ thống", "error");
+          showToast(
+            errorPayload?.message || "Lỗi khi cập nhật hệ thống",
+            "error",
+          );
         }
       }
     });
   };
 
-  if (isLoading) return <div className="flex justify-center p-10"><Spinner /></div>;
+  if (isLoading)
+    return (
+      <div className="flex justify-center p-10">
+        <Spinner />
+      </div>
+    );
 
   return (
-    <form onSubmit={handleSubmit} className="bg-white p-6 rounded-xl shadow-md space-y-6">
+    <form
+      onSubmit={handleSubmit}
+      className="bg-white p-6 rounded-xl shadow-md space-y-6"
+    >
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
-          <label className="block text-sm font-medium text-gray-700">Tiêu đề Website</label>
+          <label className="block text-sm font-medium text-gray-700">
+            Tiêu đề Website
+          </label>
           <input
             name="siteTitle"
             value={formData.siteTitle}
             onChange={handleChange}
-            className={`mt-1 block w-full rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 ${fieldErrors.siteTitle ? 'border-red-500' : 'border-gray-300'}`}
+            className={`mt-1 block w-full rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 ${fieldErrors.siteTitle ? "border-red-500" : "border-gray-300"}`}
           />
-          {fieldErrors.siteTitle && <p className="mt-1 text-xs text-red-500">{fieldErrors.siteTitle}</p>}
+          {fieldErrors.siteTitle && (
+            <p className="mt-1 text-xs text-red-500">{fieldErrors.siteTitle}</p>
+          )}
         </div>
 
         <div className="flex items-center space-x-3 pt-6">
@@ -135,45 +170,70 @@ const SystemSettingsForm = () => {
             id="maintenance"
             className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
           />
-          <label htmlFor="maintenance" className="text-sm font-medium text-gray-700">Chế độ bảo trì</label>
+          <label
+            htmlFor="maintenance"
+            className="text-sm font-medium text-gray-700"
+          >
+            Chế độ bảo trì
+          </label>
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700">Email liên hệ</label>
+          <label className="block text-sm font-medium text-gray-700">
+            Email liên hệ
+          </label>
           <input
             name="contactEmail"
             value={formData.contactEmail}
             onChange={handleChange}
-            className={`mt-1 block w-full rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 ${fieldErrors.contactEmail ? 'border-red-500' : 'border-gray-300'}`}
+            className={`mt-1 block w-full rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 ${fieldErrors.contactEmail ? "border-red-500" : "border-gray-300"}`}
           />
-          {fieldErrors.contactEmail && <p className="mt-1 text-xs text-red-500">{fieldErrors.contactEmail}</p>}
+          {fieldErrors.contactEmail && (
+            <p className="mt-1 text-xs text-red-500">
+              {fieldErrors.contactEmail}
+            </p>
+          )}
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700">Số điện thoại</label>
+          <label className="block text-sm font-medium text-gray-700">
+            Số điện thoại
+          </label>
           <input
             name="contactPhone"
             value={formData.contactPhone}
             onChange={handleChange}
-            className={`mt-1 block w-full rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 ${fieldErrors.contactPhone ? 'border-red-500' : 'border-gray-300'}`}
+            className={`mt-1 block w-full rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 ${fieldErrors.contactPhone ? "border-red-500" : "border-gray-300"}`}
           />
-          {fieldErrors.contactPhone && <p className="mt-1 text-xs text-red-500">{fieldErrors.contactPhone}</p>}
+          {fieldErrors.contactPhone && (
+            <p className="mt-1 text-xs text-red-500">
+              {fieldErrors.contactPhone}
+            </p>
+          )}
         </div>
 
         <div className="md:col-span-2">
-          <label className="block text-sm font-medium text-gray-700">Địa chỉ</label>
+          <label className="block text-sm font-medium text-gray-700">
+            Địa chỉ
+          </label>
           <input
             name="contactAddress"
             value={formData.contactAddress}
             onChange={handleChange}
-            className={`mt-1 block w-full rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 ${fieldErrors.contactAddress ? 'border-red-500' : 'border-gray-300'}`}
+            className={`mt-1 block w-full rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 ${fieldErrors.contactAddress ? "border-red-500" : "border-gray-300"}`}
           />
-          {fieldErrors.contactAddress && <p className="mt-1 text-xs text-red-500">{fieldErrors.contactAddress}</p>}
+          {fieldErrors.contactAddress && (
+            <p className="mt-1 text-xs text-red-500">
+              {fieldErrors.contactAddress}
+            </p>
+          )}
         </div>
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700">Banners</label>
+        <label className="block text-sm font-medium text-gray-700">
+          Banners
+        </label>
         <input
           type="file"
           multiple
@@ -182,7 +242,16 @@ const SystemSettingsForm = () => {
         />
         <div className="mt-4 flex flex-wrap gap-4">
           {previews.map((src, index) => (
-            <img key={index} src={src.startsWith('http') || src.startsWith('blob') ? src : `http://localhost:3000${src}`} alt="Banner Preview" className="h-24 w-40 object-cover rounded-lg border" />
+            <img
+              key={index}
+              src={
+                src.startsWith("http") || src.startsWith("blob")
+                  ? src
+                  : `http://localhost:3001${src}`
+              }
+              alt="Banner Preview"
+              className="h-24 w-40 object-cover rounded-lg border"
+            />
           ))}
         </div>
       </div>

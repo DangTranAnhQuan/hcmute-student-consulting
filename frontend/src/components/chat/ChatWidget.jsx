@@ -4,7 +4,10 @@ import { createChatSocket } from "../../services/socket";
 import { chatAPI } from "../../services/chatService";
 
 const ChatMessageRow = ({ message, currentUserId }) => {
-  const isFromCurrentUser = message.senderId === currentUserId;
+  const messageSenderId = String(
+    message.senderId || message.senderId?._id || "",
+  );
+  const isFromCurrentUser = messageSenderId === String(currentUserId);
   return (
     <div
       className={`flex ${isFromCurrentUser ? "justify-end" : "justify-start"}`}
@@ -39,6 +42,16 @@ const ChatWidget = () => {
   const [unreadCount, setUnreadCount] = React.useState(0);
   const messagesEndRef = React.useRef(null);
   const isOpenRef = React.useRef(isOpen);
+  const addMessage = React.useCallback((message) => {
+    if (!message) return;
+    const messageId = message.id || message._id;
+    if (!messageId) return;
+
+    setMessages((prev) => {
+      if (prev.some((item) => (item.id || item._id) === messageId)) return prev;
+      return [...prev, { ...message, id: messageId }];
+    });
+  }, []);
 
   React.useEffect(() => {
     isOpenRef.current = isOpen;
@@ -59,11 +72,18 @@ const ChatWidget = () => {
 
     chatSocket.on("chat:message", (payload) => {
       if (!payload) return;
+      const payloadReceiverId = String(
+        payload.receiverUserId || payload.receiverUserId?._id || "",
+      );
+      const payloadSenderId = String(
+        payload.senderId || payload.senderId?._id || "",
+      );
+      const currentId = String(user.id || user._id || "");
       const relevant =
-        payload.receiverUserId === user.id || payload.senderId === user.id;
+        payloadReceiverId === currentId || payloadSenderId === currentId;
       if (!relevant) return;
 
-      setMessages((prev) => [...prev, payload]);
+      addMessage(payload);
       if (!isOpenRef.current) {
         setUnreadCount((count) => count + 1);
       }
@@ -100,7 +120,13 @@ const ChatWidget = () => {
     const content = newMessage.trim();
     if (!content || !socket) return;
 
-    socket.emit("chat:send", { content });
+    socket.emit("chat:send", { content }, (message) => {
+      if (message?.error) {
+        console.error("Chat send failed", message.error);
+        return;
+      }
+      addMessage(message);
+    });
     setNewMessage("");
   };
 
@@ -111,7 +137,7 @@ const ChatWidget = () => {
     }
   };
 
-  if (!user) {
+  if (!user || user.role === "admin") {
     return null;
   }
 
@@ -146,9 +172,9 @@ const ChatWidget = () => {
             ) : (
               messages.map((message) => (
                 <ChatMessageRow
-                  key={message.id}
+                  key={message.id || message._id}
                   message={message}
-                  currentUserId={user.id}
+                  currentUserId={user.id || user._id}
                 />
               ))
             )}

@@ -97,7 +97,7 @@ app.get("/api/health", (req, res) => {
   res.json({ message: "Server is running" });
 });
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3001;
 server.listen(PORT, () => {
   console.log(`🚀 Server đang chạy tại http://localhost:${PORT}`);
 });

@@ -2,7 +2,7 @@ import axios from "axios";
 import store from "../redux/store";
 import { setBannedStatus } from "../redux/authSlice";
 
-const API_URL = process.env.REACT_APP_API_URL || "http://localhost:3000/api";
+const API_URL = process.env.REACT_APP_API_URL || "http://localhost:3001/api";
 
 const api = axios.create({
   baseURL: API_URL,
@@ -161,8 +161,10 @@ export const consultationOrderAPI = {
 
 export const adminUserAPI = {
   list: (params) => api.get("/admin/users", { params }),
-  updateRole: (id, newRole) => api.patch(`/admin/users/${id}/role`, { newRole }),
-  toggleBan: (id, isBanned) => api.patch(`/admin/users/${id}/ban`, { isBanned }),
+  updateRole: (id, newRole) =>
+    api.patch(`/admin/users/${id}/role`, { newRole }),
+  toggleBan: (id, isBanned) =>
+    api.patch(`/admin/users/${id}/ban`, { isBanned }),
 };
 
 export const systemSettingsAPI = {

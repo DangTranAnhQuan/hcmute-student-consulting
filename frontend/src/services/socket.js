@@ -2,7 +2,7 @@ import { io } from "socket.io-client";
 
 const normalizeSocketUrl = (value) => {
   const input = String(value || "").trim();
-  if (!input) return "http://localhost:3000";
+  if (!input) return "http://localhost:3001";
   return input.replace(/\/api\/?$/, "").replace(/\/$/, "");
 };
 

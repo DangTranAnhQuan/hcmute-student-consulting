@@ -4,9 +4,8 @@ import {
   Routes,
   Route,
   Navigate,
-  useLocation,
 } from "react-router-dom";
-import { useSelector, useDispatch } from "react-redux";
+import { useDispatch } from "react-redux";
 
 // Pages
 import HomePage from "./pages/HomePage";
@@ -63,7 +62,7 @@ function AppContent() {
         })
         .catch((err) => {});
     }
-  }, [dispatch, user?.id]);
+  }, [dispatch, user?.id, user?.fullName]);
 
   const handleLogout = () => {
     logout();
@@ -234,7 +233,7 @@ function AppContent() {
       </main>
 
       <Footer />
-      <ChatWidget />
+      {user?.role !== "admin" && <ChatWidget />}
 
       {/* Custom Modal thông báo tài khoản bị khóa (Redux-based) */}
       <ConfirmModal

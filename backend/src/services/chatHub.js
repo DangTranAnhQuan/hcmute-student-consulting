@@ -10,11 +10,17 @@ const setChatIO = (server) => {
 
 const toPlain = (doc) => {
   const value = doc.toObject ? doc.toObject() : doc;
+  const senderId =
+    value.senderId?._id?.toString?.() || value.senderId?.toString?.();
+  const receiverUserId =
+    value.receiverUserId?._id?.toString?.() ||
+    value.receiverUserId?.toString?.();
+
   return {
     ...value,
     id: value._id?.toString?.() || value._id,
-    senderId: value.senderId?.toString?.() || value.senderId,
-    receiverUserId: value.receiverUserId?.toString?.() || value.receiverUserId,
+    senderId: senderId || value.senderId,
+    receiverUserId: receiverUserId || value.receiverUserId,
   };
 };
 
@@ -71,7 +77,7 @@ const attachChatHandlers = async (socket) => {
   socket.user = user;
   joinChatRooms(socket, user);
 
-  socket.on("chat:send", async (payload) => {
+  socket.on("chat:send", async (payload, callback) => {
     if (!socket.user || !payload?.content?.trim()) {
       return;
     }
@@ -94,9 +100,16 @@ const attachChatHandlers = async (socket) => {
         receiverUserId,
         content,
       });
+      const payloadMessage = toPlain(message);
       emitChatMessage(message);
+      if (typeof callback === "function") {
+        callback(payloadMessage);
+      }
     } catch (error) {
       console.error("[chatHub] chat:send error", error);
+      if (typeof callback === "function") {
+        callback({ error: "Cannot send message" });
+      }
     }
   });
 };
