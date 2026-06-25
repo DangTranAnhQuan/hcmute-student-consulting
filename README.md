@@ -1,78 +1,20 @@
-# Hướng dẫn tổng quát - Dự án Tư vấn Sinh viên HCMUTE
+# Dự án Tư vấn Sinh viên HCMUTE - Nhóm 6
 
-## Bản hoàn chỉnh BT06 nhóm
-
-Bản `hcmute-student-consulting` đã áp dụng 03 yêu cầu của bài bán hàng vào đề tài tư vấn sinh viên:
-
-- Giỏ hàng tương ứng với **giỏ tư vấn**: người dùng chọn từng tư vấn viên/dịch vụ, có thể chọn riêng lẻ hoặc chọn một nhóm mục trong giỏ trước khi thanh toán. Dữ liệu giỏ lưu bằng MongoDB qua model `ConsultationCart`.
-- Thanh toán tương ứng với **xác nhận yêu cầu tư vấn**: hỗ trợ `COD` bắt buộc và `MoMo Sandbox`. MoMo không giả lập; nếu thiếu biến môi trường sandbox thì API trả lỗi thay vì tạo link ảo.
-- Theo dõi đơn hàng tương ứng với **theo dõi yêu cầu tư vấn**: người dùng xem lịch sử, chi tiết từng yêu cầu, timeline trạng thái, thanh toán lại MoMo khi thoát giữa chừng, và gửi/hủy yêu cầu theo đúng luật nghiệp vụ.
-- Admin có màn riêng `/admin/consultation-orders` để theo dõi đơn/yêu cầu, tiền COD chờ thu, tiền đã thu, yêu cầu hoàn tiền, yêu cầu hủy và cập nhật trạng thái.
-
-### Luồng nghiệp vụ chính
-
-1. Người dùng vào `/book-counselor`, chọn tư vấn viên, chủ đề, thời gian và thêm vào giỏ.
-2. Vào `/consultation-cart`, tick các mục muốn đặt. Không bắt buộc thanh toán toàn bộ giỏ.
-3. Vào `/consultation-checkout`, nhập thông tin liên hệ và chọn `COD` hoặc `MoMo Sandbox`.
-4. Với COD: đơn được tạo ở trạng thái `Yêu cầu mới`, tiền `Chưa thanh toán`; khi admin chuyển đến `Đã hoàn tất`, hệ thống ghi nhận tiền `Đã thanh toán`.
-5. Với MoMo: đơn được tạo ở trạng thái `Yêu cầu mới`, tiền `Chờ thanh toán`; nếu người dùng thoát khỏi trang MoMo mà chưa thanh toán thì đơn không được xác nhận/xử lý, sau 15 phút chuyển `Hết hạn thanh toán` và có nút thanh toán lại.
-6. Trạng thái xử lý gồm: `Yêu cầu mới`, `Đã xác nhận`, `Đang chuẩn bị hồ sơ`, `Đang tư vấn/đang xử lý`, `Đã hoàn tất`, `Đã hủy`, `Gửi yêu cầu hủy`.
-7. Hủy đơn: trước 30 phút hoặc đơn MoMo chưa thanh toán thì hủy trực tiếp; khi đã ở bước chuẩn bị hồ sơ thì chuyển thành yêu cầu hủy chờ admin duyệt; nếu đơn MoMo đã thanh toán và bị hủy thì đánh dấu `Cần xử lý hoàn tiền`.
-
-### Chạy bản hoàn chỉnh
-
-Backend:
-
-```bash
-cd backend
-npm install
-copy .env.example .env
-npm run seed
-npm run dev
-```
-
-Frontend:
-
-```bash
-cd frontend
-npm install
-copy .env.example .env
-npm start
-```
-
-Mặc định backend chạy `http://localhost:3000`, frontend chạy `http://localhost:3001`.
-
-Tài khoản demo sau khi chạy seed:
-
-- Admin: `admin@hcmute.edu.vn` / `123456`
-- User: `duy@student.hcmute.edu.vn` / `123456`
-
-### Cấu hình MoMo Sandbox
-
-Trong `backend/.env`, điền các biến:
-
-```env
-MOMO_PARTNER_CODE=...
-MOMO_ACCESS_KEY=...
-MOMO_SECRET_KEY=...
-MOMO_ENDPOINT=https://test-payment.momo.vn/v2/gateway/api/create
-MOMO_REQUEST_TYPE=captureWallet
-API_PUBLIC_URL=https://your-public-backend-url
-CLIENT_URL=http://localhost:3001
-```
-
-Khi test MoMo từ máy local, nên dùng tunnel như ngrok cho backend rồi đặt `API_PUBLIC_URL` bằng URL public đó để MoMo gọi được IPN. Nếu chỉ để `http://localhost:3000`, trình duyệt vẫn có thể quay về trang kết quả, nhưng server MoMo không gọi được IPN từ ngoài Internet.
+## 👥 Thành viên nhóm: Quân, Duy, Khang, Thiên
 
 ## 📋 Mục đích dự án
 
 Xây dựng website tư vấn sinh viên HCMUTE với đầy đủ tính năng:
 
-- ✅ Đăng ký tài khoản với OTP verification
-- ✅ Đăng nhập với JWT authentication
-- ✅ Quên mật khẩu với OTP reset
-- ✅ Quản lý hồ sơ người dùng
-- ✅ Phân quyền admin/user
-- ✅ Bảo mật toàn diện (rate limiting, validation, encryption)
+- **Quản lý tài khoản:** Đăng ký, đăng nhập, quên mật khẩu (OTP), quản lý hồ sơ.
+- **Phân quyền:** Admin và User với các chức năng riêng biệt.
+- **Tư vấn:** Người dùng xem danh sách, chọn tư vấn viên, chủ đề, và lịch hẹn.
+- **Giỏ tư vấn:** Thêm các buổi tư vấn vào giỏ, quản lý các mục đã chọn.
+- **Thanh toán:** Đặt lịch và thanh toán với 2 phương thức: `COD` (trả sau) và `MoMo`.
+- **Quản lý yêu cầu:** Theo dõi trạng thái yêu cầu tư vấn, lịch sử, hủy yêu cầu.
+- **Quản trị:** Admin quản lý các yêu cầu tư vấn, xác nhận thanh toán, duyệt hủy.
+- **Thông báo:** Gửi email thông báo khi đặt lịch thành công, lịch hẹn sắp diễn ra.
+- **Bảo mật:** Rate limiting, validation, mã hóa mật khẩu, JWT.
 
 ## 🏗️ Kiến trúc dự án
 
@@ -236,23 +178,27 @@ Request → OTP Sent → Verify OTP → New Password → Success
 ### MongoDB Collections
 
 - **users** - User accounts with profile info
+- **consultations** - Information about consultation sessions (topics, counselors, price)
+- **bookings** - User booking requests and their status
+- **transactions** - Payment records for bookings
 
 ### User Fields
 
 ```javascript
 {
-  (username,
-    email,
-    password,
-    role,
-    fullName,
-    phone,
-    address,
-    otp,
-    otpExpires,
-    isActivated,
-    createdAt,
-    updatedAt);
+  _id: ObjectId,
+  username: { type: String, required: true, unique: true },
+  email: { type: String, required: true, unique: true },
+  password: { type: String, required: true },
+  role: { type: String, enum: ['user', 'admin'], default: 'user' },
+  fullName: { type: String },
+  phone: { type: String },
+  address: { type: String },
+  otp: { type: String, default: null },
+  otpExpires: { type: Date, default: null },
+  isActivated: { type: Boolean, default: false },
+  createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now }
 }
 ```
 
