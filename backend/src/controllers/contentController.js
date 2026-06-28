@@ -70,7 +70,7 @@ exports.listPublic = async (req, res) => {
   try {
     const filter = buildFilter(req.query);
     const page = Number(req.query.page) || 1;
-    const limit = Number(req.query.limit) || 10;
+    const limit = Number(req.query.limit) || 12;
 
     const sortBy = req.query.sortBy || "latest";
     const sort =

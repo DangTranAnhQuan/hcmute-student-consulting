@@ -1,6 +1,7 @@
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
 const ChatMessage = require("../models/ChatMessage");
+const { createNotification } = require("./notificationHub");
 
 let io = null;
 
@@ -100,6 +101,26 @@ const attachChatHandlers = async (socket) => {
         receiverUserId,
         content,
       });
+
+      if (senderRole === "user") {
+        try {
+          const sender = await User.findById(socket.user.id).select(
+            "fullName username",
+          );
+          await createNotification({
+            targetRoles: ["admin"],
+            type: "new_chat_message",
+            title: "Tin nhắn hỗ trợ mới",
+            message: `${sender?.fullName || sender?.username || "Người dùng"} vừa gửi tin nhắn: "${content.length > 50 ? content.substring(0, 50) + "..." : content}"`,
+            link: "/admin/chat",
+            entityType: "ChatMessage",
+            entityId: message._id.toString(),
+          });
+        } catch (notifErr) {
+          console.error("[chatHub] notification error", notifErr);
+        }
+      }
+
       const payloadMessage = toPlain(message);
       emitChatMessage(message);
       if (typeof callback === "function") {

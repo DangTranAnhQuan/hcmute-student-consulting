@@ -37,15 +37,22 @@ const ArticlesPage = () => {
   const [items, setItems] = useState([]);
   const [categories, setCategories] = useState([]);
   const [suggestions, setSuggestions] = useState([]);
+  const [pagination, setPagination] = useState({
+    totalItems: 0,
+    totalPages: 1,
+    currentPage: 1,
+  });
   const [filters, setFilters] = useState({
     q: "",
     topic: "",
     sortBy: "latest",
   });
   const [viewMode, setViewMode] = useState("grid");
-  const [page, setPage] = useState(0);
+  const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
+  const pageSize = viewMode === "grid" ? GRID_PAGE_SIZE : LIST_PAGE_SIZE;
 
   const favoriteArticleIds = useMemo(() =>
     (user?.favoriteArticles || []).map(a => typeof a === 'string' ? a : a._id)
@@ -91,9 +98,16 @@ const ArticlesPage = () => {
           q: filters.q,
           topic: filters.topic,
           sortBy: filters.sortBy,
+          page,
+          limit: pageSize,
         });
         setItems(response.data.data || []);
         setCategories(response.data.categories || []);
+        setPagination(response.data.pagination || {
+          totalItems: response.data.data?.length || 0,
+          totalPages: 1,
+          currentPage: 1
+        });
       } catch (err) {
         setError(err.response?.data?.message || "Không tải được bài viết");
       } finally {
@@ -102,10 +116,10 @@ const ArticlesPage = () => {
     }, 250);
 
     return () => clearTimeout(timer);
-  }, [filters]);
+  }, [filters, page, pageSize]);
 
   React.useEffect(() => {
-    setPage(0);
+    setPage(1);
   }, [filters, viewMode]);
 
   const updateFilter = (key, value) => {
@@ -116,18 +130,16 @@ const ArticlesPage = () => {
     setFilters({ q: "", topic: "", sortBy: "latest" });
   };
 
-  const pageSize = viewMode === "grid" ? GRID_PAGE_SIZE : LIST_PAGE_SIZE;
-  const totalPages = Math.max(1, Math.ceil(items.length / pageSize));
-  const currentPage = Math.min(page, totalPages - 1);
-  const pageItems = items.slice(
-    currentPage * pageSize,
-    currentPage * pageSize + pageSize,
-  );
-  const rangeStart = items.length === 0 ? 0 : currentPage * pageSize + 1;
-  const rangeEnd = Math.min(items.length, (currentPage + 1) * pageSize);
-  const goPrev = () => setPage((current) => Math.max(0, current - 1));
+  const totalPages = pagination.totalPages;
+  const currentPage = page;
+  const pageItems = items; // Already paginated from server
+
+  const rangeStart = pagination.totalItems === 0 ? 0 : (currentPage - 1) * pageSize + 1;
+  const rangeEnd = Math.min(pagination.totalItems, currentPage * pageSize);
+
+  const goPrev = () => setPage((current) => Math.max(1, current - 1));
   const goNext = () =>
-    setPage((current) => Math.min(totalPages - 1, current + 1));
+    setPage((current) => Math.min(totalPages, current + 1));
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -294,7 +306,7 @@ const ArticlesPage = () => {
               <span className="font-semibold">
                 {rangeStart}-{rangeEnd}
               </span>{" "}
-              trong <span className="font-semibold">{items.length}</span> bài viết
+              trong <span className="font-semibold">{pagination.totalItems}</span> bài viết
             </p>
           </div>
 
@@ -359,18 +371,18 @@ const ArticlesPage = () => {
                   <button
                     type="button"
                     onClick={goPrev}
-                    disabled={currentPage === 0}
+                    disabled={currentPage === 1}
                     className="rounded-lg border border-gray-300 bg-white px-4 py-2 font-medium text-gray-700 hover:border-primary hover:text-primary disabled:cursor-not-allowed disabled:opacity-40"
                   >
                     Trước
                   </button>
                   <span className="text-sm font-medium text-gray-600">
-                    Trang {currentPage + 1}/{totalPages}
+                    Trang {currentPage}/{totalPages}
                   </span>
                   <button
                     type="button"
                     onClick={goNext}
-                    disabled={currentPage >= totalPages - 1}
+                    disabled={currentPage >= totalPages}
                     className="rounded-lg border border-gray-300 bg-white px-4 py-2 font-medium text-gray-700 hover:border-primary hover:text-primary disabled:cursor-not-allowed disabled:opacity-40"
                   >
                     Sau
@@ -420,18 +432,18 @@ const ArticlesPage = () => {
                   <button
                     type="button"
                     onClick={goPrev}
-                    disabled={currentPage === 0}
+                    disabled={currentPage === 1}
                     className="rounded-lg border border-gray-300 bg-white px-4 py-2 font-medium text-gray-700 hover:border-primary hover:text-primary disabled:cursor-not-allowed disabled:opacity-40"
                   >
                     Trước
                   </button>
                   <span className="text-sm font-medium text-gray-600">
-                    Trang {currentPage + 1}/{totalPages}
+                    Trang {currentPage}/{totalPages}
                   </span>
                   <button
                     type="button"
                     onClick={goNext}
-                    disabled={currentPage >= totalPages - 1}
+                    disabled={currentPage >= totalPages}
                     className="rounded-lg border border-gray-300 bg-white px-4 py-2 font-medium text-gray-700 hover:border-primary hover:text-primary disabled:cursor-not-allowed disabled:opacity-40"
                   >
                     Sau
