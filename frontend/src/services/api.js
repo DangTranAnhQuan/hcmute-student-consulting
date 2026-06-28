@@ -176,7 +176,7 @@ export const systemSettingsAPI = {
 };
 
 export const notificationAPI = {
-  list: () => api.get("/notifications"),
+  list: (params = {}) => api.get("/notifications", { params }),
   summary: () => api.get("/notifications/summary"),
   markRead: (id) => api.patch(`/notifications/${id}/read`),
   markAllRead: () => api.patch("/notifications/read-all"),

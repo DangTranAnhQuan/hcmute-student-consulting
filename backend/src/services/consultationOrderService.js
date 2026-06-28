@@ -547,19 +547,47 @@ exports.getAdminOrders = async (query) => {
     paymentMethod,
     search,
     sortBy = "latest",
+    dateFrom,
+    dateTo,
+    minTotal,
+    maxTotal,
   } = query;
 
   const filter = {};
   if (status) filter.status = status;
   if (paymentStatus) filter.paymentStatus = paymentStatus;
   if (paymentMethod) filter.paymentMethod = paymentMethod;
+
   if (search) {
-    const regex = new RegExp(search.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i");
+    const regex = new RegExp(
+      search.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"),
+      "i",
+    );
     filter.$or = [
       { orderCode: regex },
       { "contactInfo.fullName": regex },
       { "contactInfo.phone": regex },
+      { "contactInfo.email": regex },
+      { "contactInfo.studentCode": regex },
     ];
+  }
+
+  // Lọc theo ngày
+  if (dateFrom || dateTo) {
+    filter.createdAt = {};
+    if (dateFrom) filter.createdAt.$gte = new Date(dateFrom);
+    if (dateTo) {
+      const end = new Date(dateTo);
+      end.setHours(23, 59, 59, 999);
+      filter.createdAt.$lte = end;
+    }
+  }
+
+  // Lọc theo khoảng tiền
+  if (minTotal || maxTotal) {
+    filter.total = {};
+    if (minTotal) filter.total.$gte = Number(minTotal);
+    if (maxTotal) filter.total.$lte = Number(maxTotal);
   }
 
   const sortOptions = {
@@ -567,6 +595,8 @@ exports.getAdminOrders = async (query) => {
     oldest: { createdAt: 1 },
     totalDesc: { total: -1, createdAt: -1 },
     totalAsc: { total: 1, createdAt: -1 },
+    status: { status: 1, createdAt: -1 },
+    payment: { paymentStatus: 1, createdAt: -1 },
   };
 
   const result = await paginate(ConsultationOrder, filter, {
@@ -586,7 +616,7 @@ exports.getAdminOrders = async (query) => {
 
   return {
     data: result.data.map((o) => decorateOrder(o)),
-    pagination: result.pagination
+    pagination: result.pagination,
   };
 };
 
@@ -628,10 +658,15 @@ exports.updateOrderStatus = async (orderId, status, note = "") => {
   return decorateOrder(order);
 };
 
-exports.getOrderDetail = async (userId, orderId) => {
-  const order = await ConsultationOrder.findOne({ _id: orderId, userId });
+exports.getOrderDetail = async (user, orderId) => {
+  const userId = user._id || user.id;
+  const isAdmin = user.role === "admin";
+
+  const filter = isAdmin ? { _id: orderId } : { _id: orderId, userId };
+  const order = await ConsultationOrder.findOne(filter).populate("userId");
+
   if (!order) {
-    const error = new Error("Không tìm thấy yêu cầu");
+    const error = new Error("Không tìm thấy yêu cầu hoặc bạn không có quyền xem");
     error.statusCode = 404;
     throw error;
   }
@@ -642,7 +677,9 @@ exports.getOrderDetail = async (userId, orderId) => {
     if (changed) await syncSchedulesAfterOrderStatusChange(order);
   }
 
-  const reviews = await CounselorReview.find({ consultationOrderId: order._id }).sort({ itemIndex: 1 });
+  const reviews = await CounselorReview.find({
+    consultationOrderId: order._id,
+  }).sort({ itemIndex: 1 });
   return decorateOrder(order, reviews);
 };
 
@@ -828,24 +865,52 @@ exports.createMomoPayment = async (userId, orderId) => {
 
 exports.getAdminDashboard = async () => {
   const orders = await ConsultationOrder.find({});
+
+  // Cập nhật trạng thái tự động cho các đơn mới nếu cần mà không nhất thiết phải save từng cái một ở đây
+  // Việc save lẻ tẻ nên để ở getAdminOrders khi admin thực sự xem trang đó.
+  // Tuy nhiên để Dashboard chính xác, ta nên tính toán dựa trên trạng thái sau khi autoConfirm giả định.
+
+  const statusCounts = {};
+  let collectedRevenue = 0;
+  let pendingCOD = 0;
+  let refundRequired = 0;
+  let cancelRequests = 0;
+
   for (const order of orders) {
-    autoConfirmOrder(order);
-    await order.save();
+    // Giả lập autoConfirm để số liệu dashboard chính xác hơn
+    const tempOrder = order.toObject();
+    autoConfirmOrder(tempOrder);
+
+    const status = tempOrder.status;
+    const pStatus = tempOrder.paymentStatus;
+    const pMethod = tempOrder.paymentMethod;
+
+    statusCounts[status] = (statusCounts[status] || 0) + 1;
+
+    if (pStatus === PAYMENT_STATUS.PAID) {
+      collectedRevenue += tempOrder.total || 0;
+    }
+
+    if (pMethod === PAYMENT_METHOD.COD && pStatus === PAYMENT_STATUS.UNPAID) {
+      pendingCOD += tempOrder.total || 0;
+    }
+
+    if (pStatus === PAYMENT_STATUS.REFUND_REQUIRED) {
+      refundRequired += tempOrder.total || 0;
+    }
+
+    if (status === ORDER_STATUS.CANCEL_REQUESTED) {
+      cancelRequests += 1;
+    }
   }
-
-  const statusCounts = orders.reduce((acc, o) => {
-    acc[o.status] = (acc[o.status] || 0) + 1;
-    return acc;
-  }, {});
-
-  const collectedRevenue = orders
-    .filter((o) => o.paymentStatus === PAYMENT_STATUS.PAID)
-    .reduce((sum, o) => sum + (o.total || 0), 0);
 
   return {
     totalOrders: orders.length,
     statusCounts,
     collectedRevenue,
+    pendingCOD,
+    refundRequired,
+    cancelRequests,
   };
 };
 

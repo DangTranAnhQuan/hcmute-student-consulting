@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
+import { useSelector } from "react-redux";
 import { Spinner } from "../components/UI";
 import { consultationOrderAPI } from "../services/api";
 import {
@@ -38,6 +39,7 @@ const canRepay = (order) =>
 export default function ConsultationOrderDetailPage() {
   const { id } = useParams();
   const [searchParams] = useSearchParams();
+  const { user } = useSelector((state) => state.auth);
   const [order, setOrder] = useState(null);
   const [reason, setReason] = useState(REASONS[0]);
   const [reasonNote, setReasonNote] = useState("");
@@ -224,7 +226,11 @@ export default function ConsultationOrderDetailPage() {
       <div className="max-w-7xl mx-auto px-4">
         <div className="mb-8">
           <Link
-            to="/consultation-orders"
+            to={
+              user?.role === "admin"
+                ? "/admin/consultation-orders"
+                : "/consultation-orders"
+            }
             className="text-primary hover:text-primary-dark"
           >
             ← Quay lại lịch sử
@@ -294,7 +300,9 @@ export default function ConsultationOrderDetailPage() {
                           {ORDER_STATUS_LABELS[status]}
                         </p>
                         <p className="text-sm text-gray-600">
-                          {entry?.note || "Chưa thực hiện"}
+                          {entry
+                            ? entry.note || "Hệ thống đã ghi nhận trạng thái này"
+                            : "Chưa thực hiện"}
                         </p>
                         {entry?.at && (
                           <p className="mt-1 text-xs text-gray-500">
@@ -360,53 +368,66 @@ export default function ConsultationOrderDetailPage() {
                             <p className="mb-2 text-sm font-semibold text-blue-900">
                               Đánh giá tư vấn viên
                             </p>
-                            {reviewsByIndex[index] && (
-                              <p className="mb-2 text-xs text-blue-700">
-                                Bạn đã đánh giá {reviewsByIndex[index].rating}
-                                /5. Có thể cập nhật lại nếu cần.
-                              </p>
+                            {reviewsByIndex[index] ? (
+                              <div className="mb-3">
+                                <p className="text-xs font-bold text-blue-700">
+                                  {user?.role === "admin" ? "Sinh viên" : "Bạn"} đã đánh giá: {reviewsByIndex[index].rating}/5
+                                </p>
+                                <p className="mt-1 text-sm text-blue-800 italic">
+                                  "{reviewsByIndex[index].comment || "Không có nhận xét"}"
+                                </p>
+                              </div>
+                            ) : (
+                              user?.role === "admin" && (
+                                <p className="mb-3 text-xs text-slate-500 italic">
+                                  Sinh viên chưa gửi đánh giá cho buổi tư vấn này.
+                                </p>
+                              )
                             )}
-                            <div className="grid grid-cols-1 gap-3 md:grid-cols-[120px_1fr_auto]">
-                              <select
-                                value={reviewDrafts[index]?.rating || 5}
-                                onChange={(e) =>
-                                  updateReviewDraft(
-                                    index,
-                                    "rating",
-                                    e.target.value,
-                                  )
-                                }
-                                className="rounded-lg border border-blue-200 px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
-                              >
-                                {[5, 4, 3, 2, 1].map((value) => (
-                                  <option key={value} value={value}>
-                                    {value} sao
-                                  </option>
-                                ))}
-                              </select>
-                              <input
-                                value={reviewDrafts[index]?.comment || ""}
-                                onChange={(e) =>
-                                  updateReviewDraft(
-                                    index,
-                                    "comment",
-                                    e.target.value,
-                                  )
-                                }
-                                placeholder="Nhận xét ngắn sau buổi tư vấn"
-                                className="rounded-lg border border-blue-200 px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
-                              />
-                              <button
-                                type="button"
-                                onClick={() => submitReview(index)}
-                                disabled={reviewingIndex === index}
-                                className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary-dark disabled:opacity-60"
-                              >
-                                {reviewingIndex === index
-                                  ? "Đang lưu..."
-                                  : "Lưu"}
-                              </button>
-                            </div>
+
+                            {user?.role !== "admin" && (
+                              <div className="grid grid-cols-1 gap-3 md:grid-cols-[120px_1fr_auto]">
+                                <select
+                                  value={reviewDrafts[index]?.rating || 5}
+                                  onChange={(e) =>
+                                    updateReviewDraft(
+                                      index,
+                                      "rating",
+                                      e.target.value,
+                                    )
+                                  }
+                                  className="rounded-lg border border-blue-200 px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                                >
+                                  {[5, 4, 3, 2, 1].map((value) => (
+                                    <option key={value} value={value}>
+                                      {value} sao
+                                    </option>
+                                  ))}
+                                </select>
+                                <input
+                                  value={reviewDrafts[index]?.comment || ""}
+                                  onChange={(e) =>
+                                    updateReviewDraft(
+                                      index,
+                                      "comment",
+                                      e.target.value,
+                                    )
+                                  }
+                                  placeholder="Nhận xét ngắn sau buổi tư vấn"
+                                  className="rounded-lg border border-blue-200 px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => submitReview(index)}
+                                  disabled={reviewingIndex === index}
+                                  className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary-dark disabled:opacity-60"
+                                >
+                                  {reviewingIndex === index
+                                    ? "Đang lưu..."
+                                    : "Lưu"}
+                                </button>
+                              </div>
+                            )}
                             {rewardsByIndex[index] && (
                               <div className="mt-3 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-800">
                                 <span className="font-semibold">Phần thưởng đã nhận: </span>
@@ -525,7 +546,7 @@ export default function ConsultationOrderDetailPage() {
                 Hạn hủy trực tiếp: {formatDateTime(order.cancelDeadlineAt)}
               </p>
 
-              {order.cancelPolicy?.canCancel ? (
+              {order.cancelPolicy?.canCancel && user?.role !== "admin" ? (
                 <form onSubmit={submitCancel} className="space-y-3">
                   <select
                     value={reason}
@@ -562,7 +583,9 @@ export default function ConsultationOrderDetailPage() {
                 </form>
               ) : (
                 <div className="rounded-lg bg-gray-50 p-4 text-sm text-gray-600">
-                  Không thể gửi thao tác hủy ở trạng thái hiện tại.
+                  {user?.role === "admin"
+                    ? "Vui lòng sử dụng trang Quản trị để thay đổi trạng thái đơn hàng."
+                    : "Không thể gửi thao tác hủy ở trạng thái hiện tại."}
                 </div>
               )}
             </section>

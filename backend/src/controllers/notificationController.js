@@ -22,12 +22,26 @@ const buildScopeFilter = (user) => ({
 exports.list = async (req, res) => {
   try {
     const user = req.user;
-    const notifications = await Notification.find(buildScopeFilter(user))
-      .sort({ createdAt: -1 })
-      .limit(50);
+    const page = parseInt(req.query.page, 10) || 1;
+    const limit = parseInt(req.query.limit, 10) || 5;
+    const skip = (page - 1) * limit;
+
+    const [notifications, total] = await Promise.all([
+      Notification.find(buildScopeFilter(user))
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit),
+      Notification.countDocuments(buildScopeFilter(user)),
+    ]);
 
     res.json({
       data: notifications.map((item) => serializeNotification(item, user.id)),
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
     });
   } catch (error) {
     res.status(500).json({ message: error.message });

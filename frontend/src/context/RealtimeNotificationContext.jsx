@@ -15,34 +15,47 @@ export const RealtimeNotificationProvider = ({ children }) => {
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [connected, setConnected] = useState(false);
+  const [pagination, setPagination] = useState({
+    page: 1,
+    limit: 5,
+    total: 0,
+    totalPages: 1,
+  });
 
-  const refresh = useCallback(async () => {
-    if (!isAuthenticated) {
-      setNotifications([]);
-      setUnreadCount(0);
-      return;
-    }
+  const fetchNotifications = useCallback(async (page = 1) => {
+    if (!isAuthenticated) return;
 
     setLoading(true);
     try {
       const [listResponse, summaryResponse] = await Promise.all([
-        notificationAPI.list(),
+        notificationAPI.list({ page, limit: pagination.limit }),
         notificationAPI.summary(),
       ]);
-      setNotifications((listResponse.data.data || []).map(normalizeNotification));
+      setNotifications(
+        (listResponse.data.data || []).map(normalizeNotification),
+      );
+      setPagination(listResponse.data.pagination);
       setUnreadCount(summaryResponse.data.unreadCount || 0);
     } catch (error) {
-      setNotifications([]);
-      setUnreadCount(0);
+      console.error("Failed to fetch notifications", error);
     } finally {
       setLoading(false);
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, pagination.limit]);
 
   useEffect(() => {
-    refresh();
-  }, [refresh]);
+    fetchNotifications(1);
+  }, [fetchNotifications]);
+
+  const goToPage = useCallback((page) => {
+    fetchNotifications(page);
+  }, [fetchNotifications]);
+
+  const refresh = useCallback(() => {
+    fetchNotifications(1);
+  }, [fetchNotifications]);
 
   useEffect(() => {
     if (!isAuthenticated) return undefined;
@@ -56,7 +69,7 @@ export const RealtimeNotificationProvider = ({ children }) => {
     socket.on("disconnect", () => setConnected(false));
     socket.on("notification:new", (notification) => {
       const normalized = normalizeNotification(notification);
-      setNotifications((current) => [normalized, ...current].slice(0, 50));
+      setNotifications((current) => [normalized, ...current]);
       setUnreadCount((current) => current + 1);
     });
 
@@ -78,7 +91,9 @@ export const RealtimeNotificationProvider = ({ children }) => {
 
   const markAllRead = useCallback(async () => {
     await notificationAPI.markAllRead();
-    setNotifications((current) => current.map((item) => ({ ...item, isRead: true })));
+    setNotifications((current) =>
+      current.map((item) => ({ ...item, isRead: true })),
+    );
     setUnreadCount(0);
   }, []);
 
@@ -93,12 +108,25 @@ export const RealtimeNotificationProvider = ({ children }) => {
       unreadNotifications,
       unreadCount,
       loading,
+      pagination,
       connected,
       refresh,
+      goToPage,
       markRead,
       markAllRead,
     }),
-    [notifications, unreadNotifications, unreadCount, loading, connected, refresh, markRead, markAllRead],
+    [
+      notifications,
+      unreadNotifications,
+      unreadCount,
+      loading,
+      pagination,
+      connected,
+      refresh,
+      goToPage,
+      markRead,
+      markAllRead,
+    ],
   );
 
   return (

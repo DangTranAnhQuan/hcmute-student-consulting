@@ -1,4 +1,6 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
+import { useSelector } from "react-redux";
 import { useRealtimeNotifications } from "../context/RealtimeNotificationContext";
 import { Badge } from "../components/common/CommonUI";
 
@@ -14,14 +16,39 @@ const formatDateTime = (value) =>
     : "";
 
 const NotificationsPage = () => {
+  const navigate = useNavigate();
+  const { user } = useSelector((state) => state.auth);
   const {
     notifications,
     unreadCount,
     loading,
+    pagination,
+    goToPage,
     markRead,
     markAllRead,
     refresh,
   } = useRealtimeNotifications();
+
+  const handleOpenContent = (item) => {
+    if (!item.link) return;
+
+    // Tự động đánh dấu đã đọc khi mở nội dung
+    if (!item.isRead) {
+      markRead(item.id);
+    }
+
+    // Chuyển hướng thông minh dựa trên vai trò
+    if (user?.role === "admin" && item.link.startsWith("/consultation-orders/")) {
+      // Trích xuất mã đơn từ tiêu đề (ví dụ: TV171...)
+      const orderCodeMatch = item.title.match(/TV[A-Z0-9]+/);
+      const searchParam = orderCodeMatch ? `?search=${orderCodeMatch[0]}` : "";
+
+      navigate(`/admin/consultation-orders${searchParam}`);
+    } else {
+      // Chuyển hướng thông thường
+      navigate(item.link);
+    }
+  };
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6 lg:px-8">
@@ -65,58 +92,101 @@ const NotificationsPage = () => {
           Chưa có thông báo nào.
         </div>
       ) : (
-        <div className="space-y-4">
-          {notifications.map((item) => (
-            <div
-              key={item.id}
-              className={`rounded-2xl border p-5 shadow-sm transition ${
-                item.isRead
-                  ? "border-slate-200 bg-white"
-                  : "border-blue-200 bg-blue-50"
-              }`}
-            >
-              <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-                <div className="min-w-0 flex-1">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <h2 className="text-lg font-bold text-slate-950">
-                      {item.title}
-                    </h2>
-                    {!item.isRead && (
-                      <Badge variant="primary" size="sm">
-                        Mới
-                      </Badge>
+        <>
+          <div className="space-y-4">
+            {notifications.map((item) => (
+              <div
+                key={item.id}
+                className={`rounded-2xl border p-5 shadow-sm transition ${
+                  item.isRead
+                    ? "border-slate-200 bg-white"
+                    : "border-blue-200 bg-blue-50"
+                }`}
+              >
+                <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h2 className="text-lg font-bold text-slate-950">
+                        {item.title}
+                      </h2>
+                      {!item.isRead && (
+                        <Badge variant="primary" size="sm">
+                          Mới
+                        </Badge>
+                      )}
+                    </div>
+                    <p className="mt-2 text-sm leading-6 text-slate-600">
+                      {item.message}
+                    </p>
+                    {item.link && (
+                      <button
+                        type="button"
+                        onClick={() => handleOpenContent(item)}
+                        className="mt-3 inline-flex text-sm font-bold text-blue-700 hover:text-blue-900"
+                      >
+                        Mở nội dung
+                      </button>
                     )}
+                    <p className="mt-3 text-xs text-slate-500">
+                      {formatDateTime(item.createdAt)} · {item.type}
+                    </p>
                   </div>
-                  <p className="mt-2 text-sm leading-6 text-slate-600">
-                    {item.message}
-                  </p>
-                  {item.link && (
-                    <a
-                      href={item.link}
-                      className="mt-3 inline-flex text-sm font-bold text-blue-700 hover:text-blue-900"
-                    >
-                      Mở nội dung
-                    </a>
-                  )}
-                  <p className="mt-3 text-xs text-slate-500">
-                    {formatDateTime(item.createdAt)} · {item.type}
-                  </p>
+                  <button
+                    type="button"
+                    onClick={() => markRead(item.id)}
+                    disabled={item.isRead}
+                    className="rounded-lg border border-slate-200 px-3 py-2 text-xs font-bold text-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {item.isRead ? "Đã đọc" : "Đánh dấu đã đọc"}
+                  </button>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => markRead(item.id)}
-                  disabled={item.isRead}
-                  className="rounded-lg border border-slate-200 px-3 py-2 text-xs font-bold text-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  {item.isRead ? "Đã đọc" : "Đánh dấu đã đọc"}
-                </button>
               </div>
+            ))}
+          </div>
+
+          {pagination.totalPages > 1 && (
+            <div className="mt-8 flex items-center justify-center gap-2">
+              <button
+                type="button"
+                disabled={pagination.page === 1}
+                onClick={() => goToPage(pagination.page - 1)}
+                className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50 disabled:opacity-40"
+              >
+                Trước
+              </button>
+              <div className="flex items-center gap-1">
+                {Array.from({ length: pagination.totalPages }, (_, i) => i + 1).map(
+                  (p) => (
+                    <button
+                      key={p}
+                      type="button"
+                      onClick={() => goToPage(p)}
+                      className={`h-10 w-10 rounded-lg text-sm font-bold transition ${
+                        pagination.page === p
+                          ? "bg-blue-600 text-white"
+                          : "border border-slate-200 text-slate-700 hover:bg-slate-50"
+                      }`}
+                    >
+                      {p}
+                    </button>
+                  ),
+                )}
+              </div>
+              <button
+                type="button"
+                disabled={pagination.page === pagination.totalPages}
+                onClick={() => goToPage(pagination.page + 1)}
+                className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50 disabled:opacity-40"
+              >
+                Sau
+              </button>
             </div>
-          ))}
-        </div>
+          )}
+        </>
       )}
     </div>
   );
 };
 
 export default NotificationsPage;
+

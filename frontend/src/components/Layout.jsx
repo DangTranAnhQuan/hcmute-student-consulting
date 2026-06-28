@@ -235,8 +235,19 @@ export const Navbar = ({ user, onLogout }) => {
                 )}
               </div>
               {user && (
-                <NavItem to="/consultation-orders" active={isActive("/consultation-orders")}>
-                  Theo dõi yêu cầu
+                <NavItem
+                  to={
+                    user.role === "admin"
+                      ? "/admin/consultation-orders"
+                      : "/consultation-orders"
+                  }
+                  active={
+                    user.role === "admin"
+                      ? isActive("/admin/consultation-orders")
+                      : isActive("/consultation-orders")
+                  }
+                >
+                  {user.role === "admin" ? "Quản trị yêu cầu" : "Theo dõi yêu cầu"}
                 </NavItem>
               )}
             </div>

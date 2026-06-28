@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { Link, useSearchParams } from "react-router-dom";
 import { Spinner } from "../components/UI";
 import { consultationOrderAPI } from "../services/api";
 import {
@@ -89,9 +90,12 @@ const paymentActions = (order) => {
 };
 
 export default function ConsultationAdminOrdersPage() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const initialSearch = searchParams.get("search") || "";
+
   const [orders, setOrders] = useState([]);
   const [dashboard, setDashboard] = useState(null);
-  const [filters, setFilters] = useState(DEFAULT_FILTERS);
+  const [filters, setFilters] = useState({ ...DEFAULT_FILTERS, search: initialSearch });
   const [actionModal, setActionModal] = useState(null);
   const [loading, setLoading] = useState(true);
   const [updatingId, setUpdatingId] = useState("");
@@ -117,6 +121,19 @@ export default function ConsultationAdminOrdersPage() {
   useEffect(() => {
     loadData();
   }, [loadData]);
+
+  // Đồng bộ URL search với filters
+  useEffect(() => {
+    if (filters.search !== searchParams.get("search")) {
+      const newParams = new URLSearchParams(searchParams);
+      if (filters.search) {
+        newParams.set("search", filters.search);
+      } else {
+        newParams.delete("search");
+      }
+      setSearchParams(newParams, { replace: true });
+    }
+  }, [filters.search, searchParams, setSearchParams]);
 
   const activeFilterCount = useMemo(
     () =>
@@ -524,6 +541,12 @@ export default function ConsultationAdminOrdersPage() {
                         Không còn thao tác
                       </span>
                     )}
+                    <Link
+                      to={`/consultation-orders/${order._id}`}
+                      className="rounded-lg border border-primary px-3 py-2 text-sm font-semibold text-primary hover:bg-blue-50"
+                    >
+                      Chi tiết
+                    </Link>
                   </div>
                 </div>
               </div>

@@ -47,8 +47,8 @@ exports.getOrders = async (req, res) => {
 
 exports.getOrderDetail = async (req, res) => {
   try {
-    const userId = getUserId(req);
-    const order = await consultationOrderService.getOrderDetail(userId, req.params.id);
+    const user = req.user;
+    const order = await consultationOrderService.getOrderDetail(user, req.params.id);
     res.json(order);
   } catch (error) {
     res.status(error.statusCode || 500).json({ message: error.message });
