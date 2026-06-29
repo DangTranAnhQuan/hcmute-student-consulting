@@ -1,11 +1,9 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { openEditModal, deleteAdminItem } from "../../redux/adminSlice";
+import { openEditModal, deleteAdminItem, setPage } from "../../redux/adminSlice";
 import UserTable from "./UserTable";
 import SystemSettingsForm from "./SystemSettingsForm";
 import ConfirmModal from "../common/ConfirmModal";
-
-const PAGE_SIZE = 6;
 
 const statusLabels = {
   Draft: "Bản nháp",
@@ -47,14 +45,6 @@ const formatDateTime = (value) => {
     dateStyle: "short",
     timeStyle: "short",
   }).format(date);
-};
-
-const getSearchableText = (value) => {
-  if (Array.isArray(value)) return value.map(getSearchableText).join(" ");
-  if (value && typeof value === "object") {
-    return Object.values(value).map(getSearchableText).join(" ");
-  }
-  return String(value ?? "");
 };
 
 const getSnippet = (value, maxLength = 180) => {
@@ -269,17 +259,15 @@ const CounselorCard = ({ row, onDelete }) => {
 };
 
 const Pagination = ({ currentPage, totalPages, totalItems, onPageChange }) => {
-  if (totalItems <= PAGE_SIZE) return null;
+  if (totalPages <= 1) return null;
 
-  const start = (currentPage - 1) * PAGE_SIZE + 1;
-  const end = Math.min(currentPage * PAGE_SIZE, totalItems);
   const pageNumbers = getPageNumbers(currentPage, totalPages);
 
   return (
     <div className="mt-5 flex flex-col gap-3 border-t border-gray-100 pt-4 lg:flex-row lg:items-center lg:justify-between">
       <p className="text-sm text-gray-600">
-        Hiển thị <span className="font-semibold text-gray-900">{start}-{end}</span> trong{" "}
-        <span className="font-semibold text-gray-900">{totalItems}</span> bản ghi
+        Hiển thị trang <span className="font-semibold text-gray-900">{currentPage}</span> trên{" "}
+        <span className="font-semibold text-gray-900">{totalPages}</span> bài viết
       </p>
 
       <div className="flex flex-wrap items-center gap-2">
@@ -350,38 +338,17 @@ const Pagination = ({ currentPage, totalPages, totalItems, onPageChange }) => {
 
 const AdminDataTable = () => {
   const dispatch = useDispatch();
-  const { activeModule, data, searchQuery, isLoading, error } = useSelector(
+  const { activeModule, data, searchQuery, pagination, isLoading, error } = useSelector(
     (state) => state.admin,
   );
-  const [page, setPage] = useState(1);
   const [deleteTarget, setDeleteTarget] = useState(null);
 
-  const keyword = searchQuery.trim().toLowerCase();
-  const rows = useMemo(
-    () =>
-      (data[activeModule] || []).filter((item) => {
-        if (!keyword) return true;
-        return getSearchableText(item).toLowerCase().includes(keyword);
-      }),
-    [activeModule, data, keyword],
-  );
+  const rows = data[activeModule] || [];
+  const currentPagination = pagination[activeModule] || { page: 1, totalPages: 1, totalItems: 0 };
 
-  const totalPages = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
-  const currentPage = Math.min(page, totalPages);
-  const visibleRows = rows.slice(
-    (currentPage - 1) * PAGE_SIZE,
-    currentPage * PAGE_SIZE,
-  );
-
-  useEffect(() => {
-    setPage(1);
-  }, [activeModule, searchQuery]);
-
-  useEffect(() => {
-    if (page > totalPages) {
-      setPage(totalPages);
-    }
-  }, [page, totalPages]);
+  const onPageChange = (newPage) => {
+    dispatch(setPage({ resource: activeModule, page: newPage }));
+  };
 
   const removeRow = (row) => {
     setDeleteTarget(row);
@@ -434,12 +401,12 @@ const AdminDataTable = () => {
         </div>
       ) : (
         <>
-          <div className="space-y-3">{visibleRows.map(renderRow)}</div>
+          <div className="space-y-3">{rows.map(renderRow)}</div>
           <Pagination
-            currentPage={currentPage}
-            totalPages={totalPages}
-            totalItems={rows.length}
-            onPageChange={setPage}
+            currentPage={currentPagination.page}
+            totalPages={currentPagination.totalPages}
+            totalItems={currentPagination.totalItems}
+            onPageChange={onPageChange}
           />
         </>
       )}

@@ -292,8 +292,8 @@ exports.verifyOTP = async (email, otp) => {
   };
 };
 
-exports.getProfile = async (userId) => {
-  const user = await User.findById(userId)
+const populateUser = (query) => {
+  return query
     .select("-password -otp -otpExpires")
     .populate({
       path: "favoriteCounselors",
@@ -313,6 +313,10 @@ exports.getProfile = async (userId) => {
       path: "recentlyViewedArticles",
       select: "title image topic views createdAt",
     });
+};
+
+exports.getProfile = async (userId) => {
+  const user = await populateUser(User.findById(userId));
 
   if (!user) {
     const error = new Error("Không tìm thấy người dùng");
@@ -324,41 +328,25 @@ exports.getProfile = async (userId) => {
 };
 
 exports.updateProfile = async (userId, updateData) => {
-  const { username, fullName, phone, address, faculty, major, avatar } = updateData;
+  const { username, fullName, phone, address, faculty, major, avatar } =
+    updateData;
 
-  const user = await User.findByIdAndUpdate(
-    userId,
-    {
-      username,
-      fullName,
-      phone,
-      address,
-      faculty,
-      major,
-      avatar,
-      updatedAt: Date.now(),
-    },
-    { returnDocument: "after" },
-  )
-    .select("-password -otp -otpExpires")
-    .populate({
-      path: "favoriteCounselors",
-      select:
-        "fullName expertise hourlyRate rating image currentStatus currentStatusLabel",
-    })
-    .populate({
-      path: "favoriteArticles",
-      select: "title image topic views createdAt",
-    })
-    .populate({
-      path: "recentlyViewedCounselors",
-      select:
-        "fullName expertise hourlyRate rating image currentStatus currentStatusLabel",
-    })
-    .populate({
-      path: "recentlyViewedArticles",
-      select: "title image topic views createdAt",
-    });
+  const user = await populateUser(
+    User.findByIdAndUpdate(
+      userId,
+      {
+        username,
+        fullName,
+        phone,
+        address,
+        faculty,
+        major,
+        avatar,
+        updatedAt: Date.now(),
+      },
+      { returnDocument: "after" },
+    ),
+  );
 
   if (!user) {
     const error = new Error("Không tìm thấy người dùng");
@@ -386,14 +374,16 @@ exports.addFavoriteCounselor = async (userId, counselorId) => {
     error.statusCode = 404;
     throw error;
   }
-  const user = await User.findByIdAndUpdate(
-    userId,
-    {
-      $addToSet: { favoriteCounselors: counselorId },
-      updatedAt: Date.now(),
-    },
-    { returnDocument: "after" },
-  ).select("-password -otp -otpExpires");
+  const user = await populateUser(
+    User.findByIdAndUpdate(
+      userId,
+      {
+        $addToSet: { favoriteCounselors: counselorId },
+        updatedAt: Date.now(),
+      },
+      { returnDocument: "after" },
+    ),
+  );
   return user;
 };
 
@@ -403,14 +393,16 @@ exports.removeFavoriteCounselor = async (userId, counselorId) => {
     error.statusCode = 400;
     throw error;
   }
-  const user = await User.findByIdAndUpdate(
-    userId,
-    {
-      $pull: { favoriteCounselors: counselorId },
-      updatedAt: Date.now(),
-    },
-    { returnDocument: "after" },
-  ).select("-password -otp -otpExpires");
+  const user = await populateUser(
+    User.findByIdAndUpdate(
+      userId,
+      {
+        $pull: { favoriteCounselors: counselorId },
+        updatedAt: Date.now(),
+      },
+      { returnDocument: "after" },
+    ),
+  );
   return user;
 };
 
@@ -420,14 +412,16 @@ exports.addFavoriteArticle = async (userId, articleId) => {
     error.statusCode = 400;
     throw error;
   }
-  const user = await User.findByIdAndUpdate(
-    userId,
-    {
-      $addToSet: { favoriteArticles: articleId },
-      updatedAt: Date.now(),
-    },
-    { returnDocument: "after" },
-  ).select("-password -otp -otpExpires");
+  const user = await populateUser(
+    User.findByIdAndUpdate(
+      userId,
+      {
+        $addToSet: { favoriteArticles: articleId },
+        updatedAt: Date.now(),
+      },
+      { returnDocument: "after" },
+    ),
+  );
   return user;
 };
 
@@ -437,14 +431,16 @@ exports.removeFavoriteArticle = async (userId, articleId) => {
     error.statusCode = 400;
     throw error;
   }
-  const user = await User.findByIdAndUpdate(
-    userId,
-    {
-      $pull: { favoriteArticles: articleId },
-      updatedAt: Date.now(),
-    },
-    { returnDocument: "after" },
-  ).select("-password -otp -otpExpires");
+  const user = await populateUser(
+    User.findByIdAndUpdate(
+      userId,
+      {
+        $pull: { favoriteArticles: articleId },
+        updatedAt: Date.now(),
+      },
+      { returnDocument: "after" },
+    ),
+  );
   return user;
 };
 
@@ -475,7 +471,7 @@ exports.markViewedCounselor = async (userId, counselorId) => {
   ].slice(0, 10);
   user.updatedAt = Date.now();
   await user.save();
-  return user;
+  return await populateUser(User.findById(userId));
 };
 
 exports.markViewedArticle = async (userId, articleId) => {
@@ -493,14 +489,12 @@ exports.markViewedArticle = async (userId, articleId) => {
   user.recentlyViewedArticles = [
     articleId,
     ...new Set(
-      user.recentlyViewedArticles.filter(
-        (id) => id.toString() !== articleId,
-      ),
+      user.recentlyViewedArticles.filter((id) => id.toString() !== articleId),
     ),
   ].slice(0, 10);
   user.updatedAt = Date.now();
   await user.save();
-  return user;
+  return await populateUser(User.findById(userId));
 };
 
 exports.getFavorites = async (userId) => {

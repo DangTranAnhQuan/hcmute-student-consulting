@@ -46,23 +46,25 @@ import ConfirmModal from "./components/common/ConfirmModal";
 
 function AppContent() {
   const dispatch = useDispatch();
-  const { user, isBannedAccount, logout } = useAuth();
+  const { user, isAuthenticated, isBannedAccount, logout } = useAuth();
 
   React.useEffect(() => {
     dispatch(fetchSystemSettings());
   }, [dispatch]);
 
   React.useEffect(() => {
-    if (user && !user.fullName) {
-      // Chỉ fetch nếu chưa có thông tin đầy đủ
+    if (isAuthenticated) {
+      // Luôn đồng bộ profile đầy đủ (favorites, points...) khi load app
       authAPI
         .getProfile()
         .then((res) => {
           dispatch(getProfileSuccess(res.data));
         })
-        .catch((err) => {});
+        .catch((err) => {
+          console.error("Failed to sync profile on load", err);
+        });
     }
-  }, [dispatch, user?.id, user?.fullName]);
+  }, [dispatch, isAuthenticated]);
 
   const handleLogout = () => {
     logout();

@@ -99,7 +99,8 @@ export const authAPI = {
 };
 
 export const adminAPI = {
-  list: (resource, q = "") => api.get(`/admin/${resource}`, { params: { q } }),
+  list: (resource, params = {}) =>
+    api.get(`/admin/${resource}`, { params }),
   create: (resource, data) => api.post(`/admin/${resource}`, data),
   update: (resource, id, data) => api.put(`/admin/${resource}/${id}`, data),
   remove: (resource, id) => api.delete(`/admin/${resource}/${id}`),

@@ -10,16 +10,17 @@ import { useCustomToast } from "../context/CustomToastContext";
 const AdminPage = () => {
   const dispatch = useDispatch();
   const { showToast } = useCustomToast();
-  const { activeModule, error } = useSelector((state) => state.admin);
+  const { activeModule, searchQuery, pagination, error } = useSelector((state) => state.admin);
 
   useEffect(() => {
     // Xóa sạch lỗi cũ khi đổi tab để tránh hiện "Resource không tồn tại"
     dispatch(clearAdminError());
 
     if (["articles", "faqs", "counselors"].includes(activeModule)) {
-      dispatch(fetchAdminResource({ resource: activeModule }));
+      const page = pagination[activeModule]?.page || 1;
+      dispatch(fetchAdminResource({ resource: activeModule, q: searchQuery, page }));
     }
-  }, [dispatch, activeModule]);
+  }, [dispatch, activeModule, searchQuery, pagination[activeModule]?.page]);
 
   // Hiển thị Toast cho lỗi Rate Limit
   useEffect(() => {

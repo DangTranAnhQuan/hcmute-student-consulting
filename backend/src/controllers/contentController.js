@@ -56,10 +56,6 @@ const buildFilter = (query = {}) => {
       { title: regex },
       { excerpt: regex },
       { body: regex },
-      { topic: regex },
-      { author: regex },
-      { faculty: regex },
-      { tags: regex },
     ];
   }
 

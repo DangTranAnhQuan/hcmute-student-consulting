@@ -1,8 +1,10 @@
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo, useCallback } from "react";
 import { Link } from "react-router-dom";
+import { useDispatch } from "react-redux";
 import { Spinner } from "../components/UI";
 import { contentAPI, authAPI } from "../services/api";
 import { useAuth } from "../redux/hooks";
+import { updateProfileSuccess } from "../redux/authSlice";
 
 const categoryMeta = {
   "Academic Affairs": { icon: "📚", label: "Academic Affairs" },
@@ -33,6 +35,7 @@ const formatDate = (value) =>
   }).format(new Date(value));
 
 const ArticlesPage = () => {
+  const dispatch = useDispatch();
   const { user, getProfile } = useAuth();
   const [items, setItems] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -55,7 +58,10 @@ const ArticlesPage = () => {
   const pageSize = viewMode === "grid" ? GRID_PAGE_SIZE : LIST_PAGE_SIZE;
 
   const favoriteArticleIds = useMemo(() =>
-    (user?.favoriteArticles || []).map(a => typeof a === 'string' ? a : a._id)
+    (user?.favoriteArticles || []).map(a => {
+      const id = typeof a === 'string' ? a : (a._id || a.id);
+      return id ? String(id) : '';
+    })
   , [user]);
 
   const viewedArticles = useMemo(() =>
@@ -76,49 +82,58 @@ const ArticlesPage = () => {
 
   const toggleFavorite = async (id, e) => {
     e.preventDefault();
+    e.stopPropagation();
     if (!user) return;
     try {
+      let res;
       if (favoriteArticleIds.includes(id)) {
-        await authAPI.removeFavoriteArticle(id);
+        res = await authAPI.removeFavoriteArticle(id);
       } else {
-        await authAPI.addFavoriteArticle(id);
+        res = await authAPI.addFavoriteArticle(id);
       }
-      await getProfile(); // Sync Redux state
+
+      if (res.data.user) {
+        // Cập nhật Redux ngay lập tức để ProfilePage thấy dữ liệu mới
+        dispatch(updateProfileSuccess(res.data.user));
+      }
     } catch (err) {
       console.error("Toggle favorite failed", err);
     }
   };
 
-  React.useEffect(() => {
-    const timer = setTimeout(async () => {
-      try {
-        setLoading(true);
-        const response = await contentAPI.list({
-          contentType: "Article",
-          q: filters.q,
-          topic: filters.topic,
-          sortBy: filters.sortBy,
-          page,
-          limit: pageSize,
-        });
-        setItems(response.data.data || []);
-        setCategories(response.data.categories || []);
-        setPagination(response.data.pagination || {
-          totalItems: response.data.data?.length || 0,
-          totalPages: 1,
-          currentPage: 1
-        });
-      } catch (err) {
-        setError(err.response?.data?.message || "Không tải được bài viết");
-      } finally {
-        setLoading(false);
-      }
-    }, 250);
-
-    return () => clearTimeout(timer);
+  const fetchArticles = useCallback(async () => {
+    try {
+      setLoading(true);
+      const response = await contentAPI.list({
+        contentType: "Article",
+        q: filters.q,
+        topic: filters.topic,
+        sortBy: filters.sortBy,
+        page,
+        limit: pageSize,
+      });
+      setItems(response.data.data || []);
+      setCategories(response.data.categories || []);
+      setPagination(response.data.pagination || {
+        totalItems: response.data.data?.length || 0,
+        totalPages: 1,
+        currentPage: 1
+      });
+    } catch (err) {
+      setError(err.response?.data?.message || "Không tải được bài viết");
+    } finally {
+      setLoading(false);
+    }
   }, [filters, page, pageSize]);
 
-  React.useEffect(() => {
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      fetchArticles();
+    }, 250);
+    return () => clearTimeout(timer);
+  }, [fetchArticles]);
+
+  useEffect(() => {
     setPage(1);
   }, [filters, viewMode]);
 
@@ -132,7 +147,6 @@ const ArticlesPage = () => {
 
   const totalPages = pagination.totalPages;
   const currentPage = page;
-  const pageItems = items; // Already paginated from server
 
   const rangeStart = pagination.totalItems === 0 ? 0 : (currentPage - 1) * pageSize + 1;
   const rangeEnd = Math.min(pagination.totalItems, currentPage * pageSize);
@@ -274,7 +288,7 @@ const ArticlesPage = () => {
                 <h2 className="mb-4 text-lg font-bold text-gray-900">Đã xem gần đây</h2>
                 <div className="space-y-3">
                   {viewedArticles.slice(0, 3).map((a) => (
-                    <Link key={a._id} to={`/detail/article/${a._id}`} className="flex gap-3 items-center group">
+                    <Link key={a._id || a.id} to={`/detail/article/${a._id || a.id}`} className="flex gap-3 items-center group">
                       <img src={a.image} className="h-12 w-12 rounded object-cover" alt="" />
                       <p className="text-xs font-medium text-gray-700 group-hover:text-primary line-clamp-2">{a.title}</p>
                     </Link>
@@ -321,10 +335,10 @@ const ArticlesPage = () => {
           ) : viewMode === "grid" ? (
             <>
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                {pageItems.map((item) => (
-                  <a
+                {items.map((item) => (
+                  <Link
                     key={item.id}
-                    href={`/detail/article/${item.id}`}
+                    to={`/detail/article/${item.id}`}
                     className="group relative overflow-hidden rounded-lg bg-white shadow-md hover:shadow-lg transition"
                   >
                     <button
@@ -363,7 +377,7 @@ const ArticlesPage = () => {
                         <span>{item.views} lượt xem</span>
                       </div>
                     </div>
-                  </a>
+                  </Link>
                 ))}
               </div>
               {totalPages > 1 && (
@@ -393,10 +407,10 @@ const ArticlesPage = () => {
           ) : (
             <>
               <div className="space-y-4">
-                {pageItems.map((item) => (
-                  <a
+                {items.map((item) => (
+                  <Link
                     key={item.id}
-                    href={`/detail/article/${item.id}`}
+                    to={`/detail/article/${item.id}`}
                     className="flex flex-col gap-4 rounded-lg bg-white p-4 shadow-md hover:shadow-lg md:flex-row"
                   >
                     <img
@@ -424,7 +438,7 @@ const ArticlesPage = () => {
                         <span>{item.views} lượt xem</span>
                       </div>
                     </div>
-                  </a>
+                  </Link>
                 ))}
               </div>
               {totalPages > 1 && (

@@ -1,9 +1,11 @@
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo, useCallback } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
+import { useDispatch } from "react-redux";
 import { Spinner } from "../components/UI";
 import AvailableSlotPicker from "../components/booking/AvailableSlotPicker";
 import { consultationCartAPI, counselorAPI, userAPI } from "../services/api";
 import { useAppSelector } from "../redux/hooks";
+import { updateProfileSuccess } from "../redux/authSlice";
 import {
   defaultPreferredDate,
   formatCurrency,
@@ -34,6 +36,7 @@ const handleImageError = (event) => {
 export default function BookCounselorPage() {
   const { counselorId } = useParams();
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const [counselor, setCounselor] = useState(null);
   const [form, setForm] = useState({
     topic: "",
@@ -46,23 +49,19 @@ export default function BookCounselorPage() {
   const [error, setError] = useState("");
   const [similarCounselors, setSimilarCounselors] = useState([]);
   const [favoriteLoading, setFavoriteLoading] = useState(false);
-  const [localFavorite, setLocalFavorite] = useState(null);
   const [reviews, setReviews] = useState([]);
   const [reviewsTotal, setReviewsTotal] = useState(0);
   const [reviewsPage, setReviewsPage] = useState(1);
   const [reviewsLoading, setReviewsLoading] = useState(false);
 
   const { user } = useAppSelector((state) => state.auth);
+
   const isFavorite = useMemo(() => {
-    if (localFavorite !== null) {
-      return localFavorite;
-    }
-    return Boolean(
-      user?.favoriteCounselors?.some(
-        (favoriteId) => String(favoriteId) === String(counselor?._id),
-      ),
+    const favoriteIds = (user?.favoriteCounselors || []).map(c =>
+      typeof c === 'string' ? c : (c._id || c.id)
     );
-  }, [localFavorite, user, counselor]);
+    return favoriteIds.includes(String(counselorId));
+  }, [user, counselorId]);
 
   useEffect(() => {
     const loadCounselor = async () => {
@@ -76,7 +75,6 @@ export default function BookCounselorPage() {
         const response = await counselorAPI.detail(counselorId);
         const counselorData = response.data;
         setCounselor(counselorData);
-        setLocalFavorite(null);
         setForm((current) => ({
           ...current,
           topic: current.topic || defaultTopic(counselorData),
@@ -105,7 +103,7 @@ export default function BookCounselorPage() {
     };
 
     loadCounselor();
-  }, [counselorId, user]);
+  }, [counselorId, user?.id || user?._id]);
 
   const loadMoreReviews = async () => {
     try {
@@ -126,17 +124,18 @@ export default function BookCounselorPage() {
   };
 
   const toggleFavoriteCounselor = async () => {
-    if (!counselor) {
-      return;
-    }
+    if (!counselorId || !user) return;
     try {
       setFavoriteLoading(true);
+      let res;
       if (isFavorite) {
-        await userAPI.removeFavoriteCounselor(counselor._id);
-        setLocalFavorite(false);
+        res = await userAPI.removeFavoriteCounselor(counselorId);
       } else {
-        await userAPI.addFavoriteCounselor(counselor._id);
-        setLocalFavorite(true);
+        res = await userAPI.addFavoriteCounselor(counselorId);
+      }
+
+      if (res.data.user) {
+        dispatch(updateProfileSuccess(res.data.user));
       }
     } catch (err) {
       setError(
@@ -247,14 +246,16 @@ export default function BookCounselorPage() {
                   type="button"
                   onClick={toggleFavoriteCounselor}
                   disabled={favoriteLoading}
-                  className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition ${
+                  title={isFavorite ? "Bỏ yêu thích" : "Thêm vào yêu thích"}
+                  className={`inline-flex h-12 w-12 items-center justify-center rounded-full border shadow-sm transition ${
                     isFavorite
-                      ? "border-red-200 bg-red-50 text-red-700"
-                      : "border-gray-200 bg-white text-gray-700 hover:border-primary hover:bg-primary/5"
+                      ? "border-red-200 bg-red-500 text-white"
+                      : "border-gray-200 bg-white text-gray-400 hover:border-red-200 hover:text-red-500"
                   } disabled:cursor-not-allowed disabled:opacity-60`}
                 >
-                  <span>{isFavorite ? "Đã yêu thích" : "Yêu thích"}</span>
-                  <span aria-hidden="true">★</span>
+                  <svg className="w-6 h-6" fill={isFavorite ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                  </svg>
                 </button>
               </div>
               <div className="mt-3 flex flex-wrap gap-2">

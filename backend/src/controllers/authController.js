@@ -182,7 +182,7 @@ exports.addFavoriteCounselor = async (req, res) => {
     const userId = req.user?.id;
     const counselorId = req.params.id;
     const user = await authService.addFavoriteCounselor(userId, counselorId);
-    res.json(user);
+    res.json({ message: "Đã thêm vào danh sách yêu thích", user });
   } catch (err) {
     return sendServerError(res, "addFavoriteCounselor", err, {
       userId: req.user?.id,
@@ -196,7 +196,7 @@ exports.removeFavoriteCounselor = async (req, res) => {
     const userId = req.user?.id;
     const counselorId = req.params.id;
     const user = await authService.removeFavoriteCounselor(userId, counselorId);
-    res.json(user);
+    res.json({ message: "Đã xóa khỏi danh sách yêu thích", user });
   } catch (err) {
     return sendServerError(res, "removeFavoriteCounselor", err, {
       userId: req.user?.id,
@@ -210,7 +210,7 @@ exports.addFavoriteArticle = async (req, res) => {
     const userId = req.user?.id;
     const articleId = req.params.id;
     const user = await authService.addFavoriteArticle(userId, articleId);
-    res.json(user);
+    res.json({ message: "Đã thêm vào yêu thích", user });
   } catch (err) {
     return sendServerError(res, "addFavoriteArticle", err, {
       userId: req.user?.id,
@@ -224,7 +224,7 @@ exports.removeFavoriteArticle = async (req, res) => {
     const userId = req.user?.id;
     const articleId = req.params.id;
     const user = await authService.removeFavoriteArticle(userId, articleId);
-    res.json(user);
+    res.json({ message: "Đã xóa khỏi yêu thích", user });
   } catch (err) {
     return sendServerError(res, "removeFavoriteArticle", err, {
       userId: req.user?.id,

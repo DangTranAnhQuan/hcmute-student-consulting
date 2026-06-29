@@ -61,8 +61,13 @@ const ChatWidget = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, []);
 
+  const userId = React.useMemo(() => {
+    const id = user?.id || user?._id;
+    return id ? String(id) : null;
+  }, [user?.id, user?._id]);
+
   React.useEffect(() => {
-    if (!token || !user) return;
+    if (!token || !userId) return;
 
     const chatSocket = createChatSocket({ token });
 
@@ -78,9 +83,8 @@ const ChatWidget = () => {
       const payloadSenderId = String(
         payload.senderId || payload.senderId?._id || "",
       );
-      const currentId = String(user.id || user._id || "");
       const relevant =
-        payloadReceiverId === currentId || payloadSenderId === currentId;
+        payloadReceiverId === userId || payloadSenderId === userId;
       if (!relevant) return;
 
       addMessage(payload);
@@ -94,7 +98,7 @@ const ChatWidget = () => {
     return () => {
       chatSocket.disconnect();
     };
-  }, [token, user]);
+  }, [token, userId]);
 
   React.useEffect(() => {
     if (isOpen && user) {

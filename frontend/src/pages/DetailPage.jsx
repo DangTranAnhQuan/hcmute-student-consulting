@@ -23,6 +23,9 @@ const backUrl = {
   article: "/articles",
 };
 
+// Khóa bảo vệ toàn cục (giảm thiểu +2 view trong React Strict Mode)
+const globalFetchLock = new Set();
+
 const DetailPage = () => {
   const { type, id } = useParams();
   const { user } = useAuth();
@@ -38,24 +41,30 @@ const DetailPage = () => {
         const response = await contentAPI.detail(id);
         setDetailItem(response.data.item);
         setRelatedItems(response.data.related || []);
-
-        if (user && type === "article") {
-          authAPI.markViewedArticle(id).catch(() => {});
-        }
       } catch (err) {
         setError(err.response?.data?.message || "Không tải được nội dung");
       } finally {
         setLoading(false);
+        // Sau khi tải xong, cho phép gọi lại nếu ID thay đổi
+        setTimeout(() => globalFetchLock.delete(id), 1000);
       }
     };
 
     if (["news", "article", "event"].includes(type)) {
+      if (globalFetchLock.has(id)) return;
+      globalFetchLock.add(id);
       loadDetail();
     } else {
       setError("Loại nội dung không được hỗ trợ");
       setLoading(false);
     }
-  }, [id, type, user]);
+  }, [id, type]);
+
+  useEffect(() => {
+    if (user && type === "article" && detailItem) {
+      authAPI.markViewedArticle(id).catch(() => {});
+    }
+  }, [id, type, user, detailItem]);
 
   if (loading) {
     return (

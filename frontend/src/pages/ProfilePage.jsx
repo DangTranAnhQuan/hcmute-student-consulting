@@ -502,35 +502,39 @@ const ProfilePage = () => {
               <div className="space-y-4">
                 <div className="rounded-lg border border-gray-200 bg-gray-50 p-3">
                   <p className="text-xs font-bold text-gray-500 uppercase mb-2">Yêu thích</p>
-                  {favoriteCounselors.length > 0 ? (
-                    <ul className="space-y-2 text-sm text-gray-700">
-                      {favoriteCounselors.slice(0, 5).map((c) => (
-                        <li key={c._id || c}>
-                          <Link to={`/book-counselor/${c._id || c}`} className="font-semibold text-primary hover:underline">
-                            {counselorLabel(c)}
-                          </Link>
-                        </li>
-                      ))}
-                    </ul>
-                  ) : (
-                    <p className="text-xs text-gray-400 italic">Chưa có</p>
-                  )}
+                  <div className="max-h-48 overflow-y-auto pr-1 custom-scrollbar">
+                    {favoriteCounselors.length > 0 ? (
+                      <ul className="space-y-2 text-sm text-gray-700">
+                        {favoriteCounselors.map((c) => (
+                          <li key={c._id || c}>
+                            <Link to={`/book-counselor/${c._id || c}`} className="font-semibold text-primary hover:underline">
+                              {counselorLabel(c)}
+                            </Link>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="text-xs text-gray-400 italic">Chưa có</p>
+                    )}
+                  </div>
                 </div>
                 <div className="rounded-lg border border-gray-200 bg-gray-50 p-3">
                   <p className="text-xs font-bold text-gray-500 uppercase mb-2">Đã xem gần đây</p>
-                  {viewedCounselors.length > 0 ? (
-                    <ul className="space-y-2 text-sm text-gray-700">
-                      {viewedCounselors.slice(0, 5).map((c) => (
-                        <li key={c._id || c}>
-                          <Link to={`/book-counselor/${c._id || c}`} className="font-semibold text-primary hover:underline">
-                            {counselorLabel(c)}
-                          </Link>
-                        </li>
-                      ))}
-                    </ul>
-                  ) : (
-                    <p className="text-xs text-gray-400 italic">Chưa có</p>
-                  )}
+                  <div className="max-h-48 overflow-y-auto pr-1 custom-scrollbar">
+                    {viewedCounselors.length > 0 ? (
+                      <ul className="space-y-2 text-sm text-gray-700">
+                        {viewedCounselors.map((c) => (
+                          <li key={c._id || c}>
+                            <Link to={`/book-counselor/${c._id || c}`} className="font-semibold text-primary hover:underline">
+                              {counselorLabel(c)}
+                            </Link>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="text-xs text-gray-400 italic">Chưa có</p>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
@@ -540,35 +544,39 @@ const ProfilePage = () => {
               <div className="space-y-4">
                 <div className="rounded-lg border border-gray-200 bg-gray-50 p-3">
                   <p className="text-xs font-bold text-gray-500 uppercase mb-2">Yêu thích</p>
-                  {favoriteArticles.length > 0 ? (
-                    <ul className="space-y-2 text-sm text-gray-700">
-                      {favoriteArticles.slice(0, 5).map((a) => (
-                        <li key={a._id || a}>
-                          <Link to={`/detail/article/${a._id || a}`} className="font-semibold text-primary hover:underline line-clamp-1">
-                            {articleLabel(a)}
-                          </Link>
-                        </li>
-                      ))}
-                    </ul>
-                  ) : (
-                    <p className="text-xs text-gray-400 italic">Chưa có</p>
-                  )}
+                  <div className="max-h-48 overflow-y-auto pr-1 custom-scrollbar">
+                    {favoriteArticles.length > 0 ? (
+                      <ul className="space-y-2 text-sm text-gray-700">
+                        {favoriteArticles.map((a) => (
+                          <li key={a._id || a}>
+                            <Link to={`/detail/article/${a._id || a}`} className="font-semibold text-primary hover:underline line-clamp-1">
+                              {articleLabel(a)}
+                            </Link>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="text-xs text-gray-400 italic">Chưa có</p>
+                    )}
+                  </div>
                 </div>
                 <div className="rounded-lg border border-gray-200 bg-gray-50 p-3">
                   <p className="text-xs font-bold text-gray-500 uppercase mb-2">Đã xem gần đây</p>
-                  {viewedArticles.length > 0 ? (
-                    <ul className="space-y-2 text-sm text-gray-700">
-                      {viewedArticles.slice(0, 5).map((a) => (
-                        <li key={a._id || a}>
-                          <Link to={`/detail/article/${a._id || a}`} className="font-semibold text-primary hover:underline line-clamp-1">
-                            {articleLabel(a)}
-                          </Link>
-                        </li>
-                      ))}
-                    </ul>
-                  ) : (
-                    <p className="text-xs text-gray-400 italic">Chưa có</p>
-                  )}
+                  <div className="max-h-48 overflow-y-auto pr-1 custom-scrollbar">
+                    {viewedArticles.length > 0 ? (
+                      <ul className="space-y-2 text-sm text-gray-700">
+                        {viewedArticles.map((a) => (
+                          <li key={a._id || a}>
+                            <Link to={`/detail/article/${a._id || a}`} className="font-semibold text-primary hover:underline line-clamp-1">
+                              {articleLabel(a)}
+                            </Link>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="text-xs text-gray-400 italic">Chưa có</p>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>

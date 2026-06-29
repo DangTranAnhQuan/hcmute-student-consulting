@@ -1,9 +1,11 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
+import { useDispatch } from "react-redux";
 import { Spinner } from "../components/UI";
 import AvailableSlotPicker from "../components/booking/AvailableSlotPicker";
 import { consultationCartAPI, counselorAPI, userAPI } from "../services/api";
 import { useAuth } from "../redux/hooks";
+import { updateProfileSuccess } from "../redux/authSlice";
 import {
   defaultPreferredDate,
   formatCurrency,
@@ -70,8 +72,14 @@ const handleImageError = (event) => {
 };
 
 export default function CounselorsListPage() {
+  const dispatch = useDispatch();
   const { user, getProfile } = useAuth();
   const [counselors, setCounselors] = useState([]);
+  const [pagination, setPagination] = useState({
+    totalItems: 0,
+    totalPages: 1,
+    currentPage: 1,
+  });
   const [filterExpertise, setFilterExpertise] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [viewMode, setViewMode] = useState("compact");
@@ -84,19 +92,27 @@ export default function CounselorsListPage() {
   const [success, setSuccess] = useState("");
 
   const favoriteCounselorIds = useMemo(() =>
-    (user?.favoriteCounselors || []).map(c => typeof c === 'string' ? c : c._id)
+    (user?.favoriteCounselors || []).map(c => {
+      const id = typeof c === 'string' ? c : (c._id || c.id);
+      return id ? String(id) : '';
+    })
   , [user]);
 
   const toggleFavorite = async (id, e) => {
     e.preventDefault();
+    e.stopPropagation();
     if (!user) return;
     try {
-      if (favoriteCounselorIds.includes(id)) {
-        await userAPI.removeFavoriteCounselor(id);
+      let res;
+      if (favoriteCounselorIds.includes(String(id))) {
+        res = await userAPI.removeFavoriteCounselor(id);
       } else {
-        await userAPI.addFavoriteCounselor(id);
+        res = await userAPI.addFavoriteCounselor(id);
       }
-      await getProfile(); // Sync Redux state
+
+      if (res.data.user) {
+        dispatch(updateProfileSuccess(res.data.user));
+      }
     } catch (err) {
       console.error("Toggle favorite failed", err);
     }
@@ -106,7 +122,13 @@ export default function CounselorsListPage() {
     const loadCounselors = async () => {
       try {
         setLoading(true);
-        const response = await counselorAPI.list();
+        // Với tư vấn viên, chúng ta tải một lượng lớn hơn (vd: 100) để phục vụ search/filter client-side
+        // hoặc lý tưởng nhất là chuyển search/filter lên server.
+        // Tạm thời, để giữ logic filter phức tạp hiện tại, ta tăng limit fetch.
+        const response = await counselorAPI.list({
+          page: 1,
+          limit: 100
+        });
         setCounselors(response.data.data || []);
       } catch (err) {
         setError(err.response?.data?.message || "Không tải được danh sách tư vấn viên");
@@ -453,13 +475,14 @@ export default function CounselorsListPage() {
                       <div className="relative group">
                         <button
                           onClick={(e) => toggleFavorite(counselor._id, e)}
-                          className={`absolute top-2 right-2 z-10 p-1.5 rounded-full backdrop-blur-md transition ${
-                            favoriteCounselorIds.includes(counselor._id)
+                          title={favoriteCounselorIds.includes(String(counselor._id)) ? "Bỏ yêu thích" : "Thêm vào yêu thích"}
+                          className={`absolute top-3 right-3 z-10 p-2 rounded-full backdrop-blur-md transition ${
+                            favoriteCounselorIds.includes(String(counselor._id))
                               ? "bg-red-500 text-white"
-                              : "bg-white/30 text-white hover:bg-white/50"
+                              : "bg-white/20 text-white hover:bg-white/40"
                           }`}
                         >
-                          <svg className="w-4 h-4" fill={favoriteCounselorIds.includes(counselor._id) ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
+                          <svg className="w-5 h-5" fill={favoriteCounselorIds.includes(String(counselor._id)) ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
                           </svg>
                         </button>
